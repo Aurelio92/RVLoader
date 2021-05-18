@@ -1,0 +1,351 @@
+
+dolbooter.elf:     file format elf32-powerpc
+
+
+Disassembly of section .init:
+
+93000000 <_start>:
+93000000:	7c 60 00 a6 	mfmsr   r3
+93000004:	54 63 04 5e 	rlwinm  r3,r3,0,17,15
+93000008:	60 63 20 00 	ori     r3,r3,8192
+9300000c:	4c 00 01 2c 	isync
+93000010:	3c 20 93 01 	lis     r1,-27903
+93000014:	38 21 83 80 	addi    r1,r1,-31872
+93000018:	38 00 00 00 	li      r0,0
+9300001c:	94 01 ff c0 	stwu    r0,-64(r1)
+93000020:	3c 60 93 00 	lis     r3,-27904
+93000024:	38 63 03 68 	addi    r3,r3,872
+93000028:	38 80 00 00 	li      r4,0
+9300002c:	3c a0 93 00 	lis     r5,-27904
+93000030:	38 a5 03 68 	addi    r5,r5,872
+93000034:	7c a3 28 50 	subf    r5,r3,r5
+93000038:	48 00 00 31 	bl      93000068 <_memset>
+9300003c:	48 00 04 08 	b       93000444 <_main>
+
+Disassembly of section .text:
+
+93000040 <_memcpy>:
+93000040:	2c 05 00 00 	cmpwi   r5,0
+93000044:	4d 82 00 20 	beqlr
+93000048:	38 84 ff ff 	addi    r4,r4,-1
+9300004c:	38 63 ff ff 	addi    r3,r3,-1
+93000050:	7c a9 03 a6 	mtctr   r5
+93000054:	8d 24 00 01 	lbzu    r9,1(r4)
+93000058:	9d 23 00 01 	stbu    r9,1(r3)
+9300005c:	38 a5 ff ff 	addi    r5,r5,-1
+93000060:	42 00 ff f4 	bdnz    93000054 <_memcpy+0x14>
+93000064:	4e 80 00 20 	blr
+
+93000068 <_memset>:
+93000068:	2c 05 00 00 	cmpwi   r5,0
+9300006c:	4d 82 00 20 	beqlr
+93000070:	38 63 ff ff 	addi    r3,r3,-1
+93000074:	7c a9 03 a6 	mtctr   r5
+93000078:	9c 83 00 01 	stbu    r4,1(r3)
+9300007c:	38 a5 ff ff 	addi    r5,r5,-1
+93000080:	42 00 ff f8 	bdnz    93000078 <_memset+0x10>
+93000084:	4e 80 00 20 	blr
+
+93000088 <relocateDol>:
+93000088:	94 21 ff d0 	stwu    r1,-48(r1)
+9300008c:	7c 08 02 a6 	mflr    r0
+93000090:	90 01 00 34 	stw     r0,52(r1)
+93000094:	93 01 00 10 	stw     r24,16(r1)
+93000098:	93 21 00 14 	stw     r25,20(r1)
+9300009c:	93 41 00 18 	stw     r26,24(r1)
+930000a0:	93 61 00 1c 	stw     r27,28(r1)
+930000a4:	93 81 00 20 	stw     r28,32(r1)
+930000a8:	93 a1 00 24 	stw     r29,36(r1)
+930000ac:	93 c1 00 28 	stw     r30,40(r1)
+930000b0:	93 e1 00 2c 	stw     r31,44(r1)
+930000b4:	7c 7d 1b 78 	mr      r29,r3
+930000b8:	7c 9a 23 78 	mr      r26,r4
+930000bc:	81 23 00 d8 	lwz     r9,216(r3)
+930000c0:	3b 80 00 00 	li      r28,0
+930000c4:	3d 40 80 00 	lis     r10,-32768
+930000c8:	61 4a 34 00 	ori     r10,r10,13312
+930000cc:	7c 09 50 40 	cmplw   r9,r10
+930000d0:	40 81 00 20 	ble     930000f0 <relocateDol+0x68>
+930000d4:	81 43 00 dc 	lwz     r10,220(r3)
+930000d8:	7d 29 52 14 	add     r9,r9,r10
+930000dc:	3d 40 81 7f 	lis     r10,-32385
+930000e0:	61 4a ff fe 	ori     r10,r10,65534
+930000e4:	7d 29 50 10 	subfc   r9,r9,r10
+930000e8:	7f 9c e1 10 	subfe   r28,r28,r28
+930000ec:	3b 9c 00 01 	addi    r28,r28,1
+930000f0:	57 9c 06 3e 	clrlwi  r28,r28,24
+930000f4:	3b 7d 00 1c 	addi    r27,r29,28
+930000f8:	7f bf eb 78 	mr      r31,r29
+930000fc:	48 00 00 10 	b       9300010c <relocateDol+0x84>
+93000100:	3b ff 00 04 	addi    r31,r31,4
+93000104:	7c 1f d8 40 	cmplw   r31,r27
+93000108:	41 82 00 44 	beq     9300014c <relocateDol+0xc4>
+9300010c:	80 bf 00 90 	lwz     r5,144(r31)
+93000110:	2c 05 00 00 	cmpwi   r5,0
+93000114:	41 a2 ff ec 	beq     93000100 <relocateDol+0x78>
+93000118:	80 9f 00 00 	lwz     r4,0(r31)
+9300011c:	28 04 00 ff 	cmplwi  r4,255
+93000120:	40 a1 ff e0 	ble     93000100 <relocateDol+0x78>
+93000124:	7c 9d 22 14 	add     r4,r29,r4
+93000128:	80 7f 00 48 	lwz     r3,72(r31)
+9300012c:	4b ff ff 15 	bl      93000040 <_memcpy>
+93000130:	80 9f 00 90 	lwz     r4,144(r31)
+93000134:	80 7f 00 48 	lwz     r3,72(r31)
+93000138:	48 00 03 45 	bl      9300047c <DCFlushRange>
+9300013c:	80 9f 00 90 	lwz     r4,144(r31)
+93000140:	80 7f 00 48 	lwz     r3,72(r31)
+93000144:	48 00 03 6d 	bl      930004b0 <ICInvalidateRange>
+93000148:	4b ff ff b8 	b       93000100 <relocateDol+0x78>
+9300014c:	3b fd 00 1c 	addi    r31,r29,28
+93000150:	3b 7d 00 48 	addi    r27,r29,72
+93000154:	3b 20 00 00 	li      r25,0
+93000158:	3b 00 00 01 	li      r24,1
+9300015c:	48 00 00 2c 	b       93000188 <relocateDol+0x100>
+93000160:	55 3c 06 3e 	clrlwi  r28,r9,24
+93000164:	7c 9d 22 14 	add     r4,r29,r4
+93000168:	80 7e 00 48 	lwz     r3,72(r30)
+9300016c:	4b ff fe d5 	bl      93000040 <_memcpy>
+93000170:	80 9e 00 90 	lwz     r4,144(r30)
+93000174:	80 7e 00 48 	lwz     r3,72(r30)
+93000178:	48 00 03 05 	bl      9300047c <DCFlushRange>
+9300017c:	3b ff 00 04 	addi    r31,r31,4
+93000180:	7c 1f d8 40 	cmplw   r31,r27
+93000184:	41 82 00 5c 	beq     930001e0 <relocateDol+0x158>
+93000188:	7f fe fb 78 	mr      r30,r31
+9300018c:	80 bf 00 90 	lwz     r5,144(r31)
+93000190:	2c 05 00 00 	cmpwi   r5,0
+93000194:	41 a2 ff e8 	beq     9300017c <relocateDol+0xf4>
+93000198:	80 9f 00 00 	lwz     r4,0(r31)
+9300019c:	28 04 00 ff 	cmplwi  r4,255
+930001a0:	40 a1 ff dc 	ble     9300017c <relocateDol+0xf4>
+930001a4:	7f 29 cb 78 	mr      r9,r25
+930001a8:	2c 1c 00 00 	cmpwi   r28,0
+930001ac:	41 a2 ff b4 	beq     93000160 <relocateDol+0xd8>
+930001b0:	81 1f 00 48 	lwz     r8,72(r31)
+930001b4:	81 5d 00 d8 	lwz     r10,216(r29)
+930001b8:	7c e5 42 14 	add     r7,r5,r8
+930001bc:	7f 09 c3 78 	mr      r9,r24
+930001c0:	7c 07 50 40 	cmplw   r7,r10
+930001c4:	40 a1 ff 9c 	ble     93000160 <relocateDol+0xd8>
+930001c8:	81 3d 00 dc 	lwz     r9,220(r29)
+930001cc:	7d 4a 4a 14 	add     r10,r10,r9
+930001d0:	7d 4a 40 10 	subfc   r10,r10,r8
+930001d4:	7d 29 49 10 	subfe   r9,r9,r9
+930001d8:	39 29 00 01 	addi    r9,r9,1
+930001dc:	4b ff ff 84 	b       93000160 <relocateDol+0xd8>
+930001e0:	2c 1c 00 00 	cmpwi   r28,0
+930001e4:	40 82 00 58 	bne     9300023c <relocateDol+0x1b4>
+930001e8:	2c 1a 00 00 	cmpwi   r26,0
+930001ec:	41 82 00 18 	beq     93000204 <relocateDol+0x17c>
+930001f0:	81 5a 00 00 	lwz     r10,0(r26)
+930001f4:	3d 20 5f 61 	lis     r9,24417
+930001f8:	61 29 72 67 	ori     r9,r9,29287
+930001fc:	7c 0a 48 00 	cmpw    r10,r9
+93000200:	41 82 00 5c 	beq     9300025c <relocateDol+0x1d4>
+93000204:	80 7d 00 e0 	lwz     r3,224(r29)
+93000208:	64 63 80 00 	oris    r3,r3,32768
+9300020c:	80 01 00 34 	lwz     r0,52(r1)
+93000210:	7c 08 03 a6 	mtlr    r0
+93000214:	83 01 00 10 	lwz     r24,16(r1)
+93000218:	83 21 00 14 	lwz     r25,20(r1)
+9300021c:	83 41 00 18 	lwz     r26,24(r1)
+93000220:	83 61 00 1c 	lwz     r27,28(r1)
+93000224:	83 81 00 20 	lwz     r28,32(r1)
+93000228:	83 a1 00 24 	lwz     r29,36(r1)
+9300022c:	83 c1 00 28 	lwz     r30,40(r1)
+93000230:	83 e1 00 2c 	lwz     r31,44(r1)
+93000234:	38 21 00 30 	addi    r1,r1,48
+93000238:	4e 80 00 20 	blr
+9300023c:	80 bd 00 dc 	lwz     r5,220(r29)
+93000240:	38 80 00 00 	li      r4,0
+93000244:	80 7d 00 d8 	lwz     r3,216(r29)
+93000248:	4b ff fe 21 	bl      93000068 <_memset>
+9300024c:	80 9d 00 dc 	lwz     r4,220(r29)
+93000250:	80 7d 00 d8 	lwz     r3,216(r29)
+93000254:	48 00 02 29 	bl      9300047c <DCFlushRange>
+93000258:	4b ff ff 90 	b       930001e8 <relocateDol+0x160>
+9300025c:	80 7d 00 e0 	lwz     r3,224(r29)
+93000260:	38 a0 00 18 	li      r5,24
+93000264:	7f 44 d3 78 	mr      r4,r26
+93000268:	38 63 00 08 	addi    r3,r3,8
+9300026c:	4b ff fd d5 	bl      93000040 <_memcpy>
+93000270:	80 7d 00 e0 	lwz     r3,224(r29)
+93000274:	38 80 00 18 	li      r4,24
+93000278:	38 63 00 08 	addi    r3,r3,8
+9300027c:	48 00 02 01 	bl      9300047c <DCFlushRange>
+93000280:	4b ff ff 84 	b       93000204 <relocateDol+0x17c>
+
+93000284 <relocateExecutable>:
+93000284:	94 21 ff e0 	stwu    r1,-32(r1)
+93000288:	7c 08 02 a6 	mflr    r0
+9300028c:	90 01 00 24 	stw     r0,36(r1)
+93000290:	93 c1 00 18 	stw     r30,24(r1)
+93000294:	93 e1 00 1c 	stw     r31,28(r1)
+93000298:	7c 7f 1b 78 	mr      r31,r3
+9300029c:	7c 9e 23 78 	mr      r30,r4
+930002a0:	89 23 00 00 	lbz     r9,0(r3)
+930002a4:	2c 09 00 7f 	cmpwi   r9,127
+930002a8:	40 82 00 10 	bne     930002b8 <relocateExecutable+0x34>
+930002ac:	89 23 00 01 	lbz     r9,1(r3)
+930002b0:	2c 09 00 45 	cmpwi   r9,69
+930002b4:	41 82 00 28 	beq     930002dc <relocateExecutable+0x58>
+930002b8:	7f c4 f3 78 	mr      r4,r30
+930002bc:	7f e3 fb 78 	mr      r3,r31
+930002c0:	4b ff fd c9 	bl      93000088 <relocateDol>
+930002c4:	80 01 00 24 	lwz     r0,36(r1)
+930002c8:	7c 08 03 a6 	mtlr    r0
+930002cc:	83 c1 00 18 	lwz     r30,24(r1)
+930002d0:	83 e1 00 1c 	lwz     r31,28(r1)
+930002d4:	38 21 00 20 	addi    r1,r1,32
+930002d8:	4e 80 00 20 	blr
+930002dc:	89 23 00 02 	lbz     r9,2(r3)
+930002e0:	2c 09 00 4c 	cmpwi   r9,76
+930002e4:	40 82 ff d4 	bne     930002b8 <relocateExecutable+0x34>
+930002e8:	89 23 00 03 	lbz     r9,3(r3)
+930002ec:	2c 09 00 46 	cmpwi   r9,70
+930002f0:	40 82 ff c8 	bne     930002b8 <relocateExecutable+0x34>
+930002f4:	93 61 00 0c 	stw     r27,12(r1)
+930002f8:	93 81 00 10 	stw     r28,16(r1)
+930002fc:	93 a1 00 14 	stw     r29,20(r1)
+93000300:	a1 23 00 2c 	lhz     r9,44(r3)
+93000304:	2c 09 00 00 	cmpwi   r9,0
+93000308:	41 82 00 74 	beq     9300037c <relocateExecutable+0xf8>
+9300030c:	3b 60 00 00 	li      r27,0
+93000310:	48 00 00 14 	b       93000324 <relocateExecutable+0xa0>
+93000314:	3b 7b 00 01 	addi    r27,r27,1
+93000318:	a1 3f 00 2c 	lhz     r9,44(r31)
+9300031c:	7c 09 d8 00 	cmpw    r9,r27
+93000320:	40 81 00 5c 	ble     9300037c <relocateExecutable+0xf8>
+93000324:	57 7d 28 34 	rlwinm  r29,r27,5,0,26
+93000328:	81 3f 00 1c 	lwz     r9,28(r31)
+9300032c:	7f bd 4a 14 	add     r29,r29,r9
+93000330:	7f 9f ea 14 	add     r28,r31,r29
+93000334:	80 7c 00 08 	lwz     r3,8(r28)
+93000338:	80 9c 00 10 	lwz     r4,16(r28)
+9300033c:	64 63 80 00 	oris    r3,r3,32768
+93000340:	48 00 01 3d 	bl      9300047c <DCFlushRange>
+93000344:	80 7c 00 08 	lwz     r3,8(r28)
+93000348:	80 9c 00 10 	lwz     r4,16(r28)
+9300034c:	64 63 80 00 	oris    r3,r3,32768
+93000350:	48 00 01 61 	bl      930004b0 <ICInvalidateRange>
+93000354:	7d 3f e8 2e 	lwzx    r9,r31,r29
+93000358:	2c 09 00 01 	cmpwi   r9,1
+9300035c:	40 82 ff b8 	bne     93000314 <relocateExecutable+0x90>
+93000360:	80 9c 00 04 	lwz     r4,4(r28)
+93000364:	80 7c 00 08 	lwz     r3,8(r28)
+93000368:	80 bc 00 10 	lwz     r5,16(r28)
+9300036c:	7c 9f 22 14 	add     r4,r31,r4
+93000370:	64 63 80 00 	oris    r3,r3,32768
+93000374:	4b ff fc cd 	bl      93000040 <_memcpy>
+93000378:	4b ff ff 9c 	b       93000314 <relocateExecutable+0x90>
+9300037c:	a1 3f 00 30 	lhz     r9,48(r31)
+93000380:	2c 09 00 00 	cmpwi   r9,0
+93000384:	41 82 00 64 	beq     930003e8 <relocateExecutable+0x164>
+93000388:	3b 60 00 00 	li      r27,0
+9300038c:	3b 80 00 00 	li      r28,0
+93000390:	48 00 00 18 	b       930003a8 <relocateExecutable+0x124>
+93000394:	3b 9c 00 01 	addi    r28,r28,1
+93000398:	3b 7b 00 28 	addi    r27,r27,40
+9300039c:	a1 3f 00 30 	lhz     r9,48(r31)
+930003a0:	7c 09 e0 00 	cmpw    r9,r28
+930003a4:	40 81 00 44 	ble     930003e8 <relocateExecutable+0x164>
+930003a8:	83 bf 00 20 	lwz     r29,32(r31)
+930003ac:	7f bb ea 14 	add     r29,r27,r29
+930003b0:	7f bf ea 14 	add     r29,r31,r29
+930003b4:	81 3d 00 04 	lwz     r9,4(r29)
+930003b8:	2c 09 00 08 	cmpwi   r9,8
+930003bc:	40 82 ff d8 	bne     93000394 <relocateExecutable+0x110>
+930003c0:	80 7d 00 0c 	lwz     r3,12(r29)
+930003c4:	80 bd 00 14 	lwz     r5,20(r29)
+930003c8:	38 80 00 00 	li      r4,0
+930003cc:	64 63 80 00 	oris    r3,r3,32768
+930003d0:	4b ff fc 99 	bl      93000068 <_memset>
+930003d4:	80 7d 00 0c 	lwz     r3,12(r29)
+930003d8:	80 9d 00 14 	lwz     r4,20(r29)
+930003dc:	64 63 80 00 	oris    r3,r3,32768
+930003e0:	48 00 00 9d 	bl      9300047c <DCFlushRange>
+930003e4:	4b ff ff b0 	b       93000394 <relocateExecutable+0x110>
+930003e8:	2c 1e 00 00 	cmpwi   r30,0
+930003ec:	41 82 00 18 	beq     93000404 <relocateExecutable+0x180>
+930003f0:	81 5e 00 00 	lwz     r10,0(r30)
+930003f4:	3d 20 5f 61 	lis     r9,24417
+930003f8:	61 29 72 67 	ori     r9,r9,29287
+930003fc:	7c 0a 48 00 	cmpw    r10,r9
+93000400:	41 82 00 1c 	beq     9300041c <relocateExecutable+0x198>
+93000404:	80 7f 00 18 	lwz     r3,24(r31)
+93000408:	64 63 80 00 	oris    r3,r3,32768
+9300040c:	83 61 00 0c 	lwz     r27,12(r1)
+93000410:	83 81 00 10 	lwz     r28,16(r1)
+93000414:	83 a1 00 14 	lwz     r29,20(r1)
+93000418:	4b ff fe ac 	b       930002c4 <relocateExecutable+0x40>
+9300041c:	80 7f 00 18 	lwz     r3,24(r31)
+93000420:	38 a0 00 18 	li      r5,24
+93000424:	7f c4 f3 78 	mr      r4,r30
+93000428:	38 63 00 08 	addi    r3,r3,8
+9300042c:	4b ff fc 15 	bl      93000040 <_memcpy>
+93000430:	80 7f 00 18 	lwz     r3,24(r31)
+93000434:	38 80 00 18 	li      r4,24
+93000438:	38 63 00 08 	addi    r3,r3,8
+9300043c:	48 00 00 41 	bl      9300047c <DCFlushRange>
+93000440:	4b ff ff c4 	b       93000404 <relocateExecutable+0x180>
+
+93000444 <_main>:
+93000444:	94 21 ff f0 	stwu    r1,-16(r1)
+93000448:	7c 08 02 a6 	mflr    r0
+9300044c:	90 01 00 14 	stw     r0,20(r1)
+93000450:	4c 00 01 2c 	isync
+93000454:	3c 80 93 20 	lis     r4,-27872
+93000458:	3c 60 92 00 	lis     r3,-28160
+9300045c:	4b ff fe 29 	bl      93000284 <relocateExecutable>
+93000460:	4c 00 01 2c 	isync
+93000464:	7c 69 03 a6 	mtctr   r3
+93000468:	4e 80 04 21 	bctrl
+9300046c:	80 01 00 14 	lwz     r0,20(r1)
+93000470:	7c 08 03 a6 	mtlr    r0
+93000474:	38 21 00 10 	addi    r1,r1,16
+93000478:	4e 80 00 20 	blr
+
+9300047c <DCFlushRange>:
+9300047c:	28 04 00 00 	cmplwi  r4,0
+93000480:	4c 81 00 20 	blelr
+93000484:	54 65 06 ff 	clrlwi. r5,r3,27
+93000488:	41 82 00 08 	beq     93000490 <DCFlushRange+0x14>
+9300048c:	38 84 00 20 	addi    r4,r4,32
+93000490:	38 84 00 1f 	addi    r4,r4,31
+93000494:	54 84 d9 7e 	rlwinm  r4,r4,27,5,31
+93000498:	7c 89 03 a6 	mtctr   r4
+9300049c:	7c 00 18 ac 	dcbf    0,r3
+930004a0:	38 63 00 20 	addi    r3,r3,32
+930004a4:	42 00 ff f8 	bdnz    9300049c <DCFlushRange+0x20>
+930004a8:	44 00 00 02 	sc
+930004ac:	4e 80 00 20 	blr
+
+930004b0 <ICInvalidateRange>:
+930004b0:	28 04 00 00 	cmplwi  r4,0
+930004b4:	4c 81 00 20 	blelr
+930004b8:	54 65 06 ff 	clrlwi. r5,r3,27
+930004bc:	41 82 00 08 	beq     930004c4 <ICInvalidateRange+0x14>
+930004c0:	38 84 00 20 	addi    r4,r4,32
+930004c4:	38 84 00 1f 	addi    r4,r4,31
+930004c8:	54 84 d9 7e 	rlwinm  r4,r4,27,5,31
+930004cc:	7c 89 03 a6 	mtctr   r4
+930004d0:	7c 00 1f ac 	icbi    0,r3
+930004d4:	38 63 00 20 	addi    r3,r3,32
+930004d8:	42 00 ff f8 	bdnz    930004d0 <ICInvalidateRange+0x20>
+930004dc:	7c 00 04 ac 	hwsync
+930004e0:	4c 00 01 2c 	isync
+930004e4:	4e 80 00 20 	blr
+
+Disassembly of section .comment:
+
+00000000 <.comment>:
+   0:	47 43 43 3a 	.long 0x4743433a
+   4:	20 28 64 65 	subfic  r1,r8,25701
+   8:	76 6b 69 74 	andis.  r11,r19,26996
+   c:	50 50 43 20 	rlwimi  r16,r2,8,12,16
+  10:	72 65 6c 65 	andi.   r5,r19,27749
+  14:	61 73 65 20 	ori     r19,r11,25888
+  18:	33 38 29 20 	addic   r25,r24,10528
+  1c:	31 30 2e 32 	addic   r9,r16,11826
+  20:	Address 0x0000000000000020 is out of bounds.
+

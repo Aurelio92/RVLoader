@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<theme>
+    <gcview position="0 40" active="true" focus="true" switchable="true" id="GCGamesView" script="scripts/gamesview.lua" />
+    <wiiview position="0 40" active="false" switchable="true" id="WiiGamesView" script="scripts/gamesview.lua" />
+    <vcview position="0 40" active="false" switchable="true" id="VCGamesView" script="scripts/gamesview.lua" />
+    <chanview position="0 40" active="false" switchable="true" id="WiiChannelsView" script="scripts/gamesview.lua" />
+    <hbview position="0 40" active="false" switchable="true" id="WiiHBView" script="scripts/homebrewsview.lua" />
+    <luaelement position="0 40" active="false" switchable="true" id="SettingsView" script="scripts/settings.lua" />
+    <luaelement position="0 0" active="true" id="TopBar" script="scripts/topbar.lua" />
+</theme>

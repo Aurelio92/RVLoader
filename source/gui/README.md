@@ -1,0 +1,3 @@
+Each GUI element carries a lua_State object. This is useful to run custom scripts for each element.
+GUI element are organized in a tree structure.
+Elements can communicate with each others by means of messages. Each message will have an unique message ID, sender GUI ID and custom data. The unique message ID and sender GUI ID are useful in case answers are given. Messages will be stored in a list readable and clear-able only by the recipient.
