@@ -491,19 +491,19 @@ function handleGC2WiimoteConf()
                 end
             elseif GamesView.getGC2WiimoteGameConfigValue("Wiimote extension") == GamesView.GC2Wiimote.EXT_NUNCHUK then
                 if configMode == configModeEnum["CHANGE_MAPPING_BUTTON"] or configMode == configModeEnum["CHANGE_MAPPING_STICK"] then
-                    GamesView.setGC2WiimoteGameConfigValue(nuEmuEntriesEnum[wmEmuSelectedEntry].name, GamesView.getGC2WiimoteMapValue(held))
+                    GamesView.setGC2WiimoteGameConfigValue(nuEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, GamesView.getGC2WiimoteMapValue(held))
                 elseif configMode == configModeEnum["CHANGE_MODIFIER"] then
-                    GamesView.setGC2WiimoteGameConfigModifier(nuEmuEntriesEnum[wmEmuSelectedEntry].name, GamesView.getGC2WiimoteMapValue(held))
+                    GamesView.setGC2WiimoteGameConfigModifier(nuEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, GamesView.getGC2WiimoteMapValue(held))
                 elseif configMode == configModeEnum["CHANGE_NEG_MODIFIER"] then
-                    GamesView.setGC2WiimoteGameConfigNegModifier(nuEmuEntriesEnum[wmEmuSelectedEntry].name, GamesView.getGC2WiimoteMapValue(held))
+                    GamesView.setGC2WiimoteGameConfigNegModifier(nuEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, GamesView.getGC2WiimoteMapValue(held))
                 end
             elseif GamesView.getGC2WiimoteGameConfigValue("Wiimote extension") == GamesView.GC2Wiimote.EXT_CLASSIC then
                 if configMode == configModeEnum["CHANGE_MAPPING_BUTTON"] or configMode == configModeEnum["CHANGE_MAPPING_STICK"] then
-                    GamesView.setGC2WiimoteGameConfigValue(EmuEntriesEnum[wmEmuSelectedEntry].name, GamesView.getGC2WiimoteMapValue(held))
+                    GamesView.setGC2WiimoteGameConfigValue(ccEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, GamesView.getGC2WiimoteMapValue(held))
                 elseif configMode == configModeEnum["CHANGE_MODIFIER"] then
-                    GamesView.setGC2WiimoteGameConfigModifier(EmuEntriesEnum[wmEmuSelectedEntry].name, GamesView.getGC2WiimoteMapValue(held))
+                    GamesView.setGC2WiimoteGameConfigModifier(ccEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, GamesView.getGC2WiimoteMapValue(held))
                 elseif configMode == configModeEnum["CHANGE_NEG_MODIFIER"] then
-                    GamesView.setGC2WiimoteGameConfigNegModifier(EmuEntriesEnum[wmEmuSelectedEntry].name, GamesView.getGC2WiimoteMapValue(held))
+                    GamesView.setGC2WiimoteGameConfigNegModifier(ccEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, GamesView.getGC2WiimoteMapValue(held))
                 end
             end
 
@@ -521,19 +521,19 @@ function handleGC2WiimoteConf()
                 end
             elseif GamesView.getGC2WiimoteGameConfigValue("Wiimote extension") == GamesView.GC2Wiimote.EXT_NUNCHUK then
                 if configMode == configModeEnum["CHANGE_MAPPING_BUTTON"] or configMode == configModeEnum["CHANGE_MAPPING_STICK"] then
-                    GamesView.setGC2WiimoteGameConfigValue(nuEmuEntriesEnum[wmEmuSelectedEntry].name, 0)
+                    GamesView.setGC2WiimoteGameConfigValue(nuEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, 0)
                 elseif configMode == configModeEnum["CHANGE_MODIFIER"] then
-                    GamesView.setGC2WiimoteGameConfigModifier(nuEmuEntriesEnum[wmEmuSelectedEntry].name, 0)
+                    GamesView.setGC2WiimoteGameConfigModifier(nuEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, 0)
                 elseif configMode == configModeEnum["CHANGE_NEG_MODIFIER"] then
-                    GamesView.setGC2WiimoteGameConfigNegModifier(nuEmuEntriesEnum[wmEmuSelectedEntry].name, 0)
+                    GamesView.setGC2WiimoteGameConfigNegModifier(nuEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, 0)
                 end
             elseif GamesView.getGC2WiimoteGameConfigValue("Wiimote extension") == GamesView.GC2Wiimote.EXT_CLASSIC then
                 if configMode == configModeEnum["CHANGE_MAPPING_BUTTON"] or configMode == configModeEnum["CHANGE_MAPPING_STICK"] then
-                    GamesView.setGC2WiimoteGameConfigValue(EmuEntriesEnum[wmEmuSelectedEntry].name, 0)
+                    GamesView.setGC2WiimoteGameConfigValue(ccEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, 0)
                 elseif configMode == configModeEnum["CHANGE_MODIFIER"] then
-                    GamesView.setGC2WiimoteGameConfigModifier(EmuEntriesEnum[wmEmuSelectedEntry].name, 0)
+                    GamesView.setGC2WiimoteGameConfigModifier(ccEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, 0)
                 elseif configMode == configModeEnum["CHANGE_NEG_MODIFIER"] then
-                    GamesView.setGC2WiimoteGameConfigNegModifier(EmuEntriesEnum[wmEmuSelectedEntry].name, 0)
+                    GamesView.setGC2WiimoteGameConfigNegModifier(ccEmuEntriesEnum[wmEmuSelectedEntry - wmEmuEntriesEnum.size].name, 0)
                 end
             end
 
