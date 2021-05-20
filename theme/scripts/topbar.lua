@@ -42,7 +42,7 @@ function draw(onFocus)
     Gfx.print(fonts[16], 16, 16, topBarMessage)
 
     if Time.available() then
-        local timeStr = os.date("%I:%M%p")
+        local timeStr = os.date("!%I:%M%p")
         Gfx.print(fonts[16], (getDimensions()[1] - Gfx.getTextWidth(fonts[16], timeStr)) // 2, 16, timeStr)
     end
 
