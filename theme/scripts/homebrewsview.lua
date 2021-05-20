@@ -130,7 +130,7 @@ function handleInputs()
         end
     end
 
-    if down.BUTTON_A then
+    if down.BUTTON_A and hbCount > 0 then
         HBView.bootHB(selectedHB)
     end
 end

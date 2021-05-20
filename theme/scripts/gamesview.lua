@@ -251,16 +251,18 @@ function handleInputs(onFocus)
             end
         end
 
-        --Boot game if requested
-        if down.BUTTON_A then
-            GamesView.bootGame(selectedGame)
-        end
+        if gamesCount > 0 then
+            --Boot game if requested
+            if down.BUTTON_A then
+                GamesView.bootGame(selectedGame)
+            end
 
-        --Show game config if requested
-        if down.BUTTON_B then
-            GamesView.openGameConfig(selectedGame)
-            showingGameConfig = true
-            return
+            --Show game config if requested
+            if down.BUTTON_B then
+                GamesView.openGameConfig(selectedGame)
+                showingGameConfig = true
+                return
+            end
         end
     end
 end
