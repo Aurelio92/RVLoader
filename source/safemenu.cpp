@@ -72,12 +72,13 @@ void safeMenu() {
 
     //VIDEO_Init disables VGA, so we need to enable it again
     i2c_init();
-    if (isVGAEnabled()) {
+    if (isVGAEnabled() || (held & PAD_BUTTON_B)) {
+        setVGAEnabled(true);
         aveEnableVGA();
     }
     i2c_deinit();
 
-    printf("\x1b[2;0HPMv2 safe menu\n\nSelect your option:\n");
+    printf("\x1b[2;0HRVL safe menu\n\nSelect your option:\n");
     printf("> Boot priiloader\n");
     printf("- Reset GC+ sticks\n");
     printf("- Exit to System Menu\n");

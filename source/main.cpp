@@ -33,7 +33,10 @@
 
 #include "textures.h"
 #include "textures_tpl.h"
+#include "opensans_ttf.h"
 #include "notosans_ttf.h"
+
+#include "testelement_lua.h"
 
 #define HUD_CONFIG_PATH "/rvloader/hud.conf"
 
@@ -81,6 +84,10 @@ Vector2 getScreenSize() {
 
 bool isVGAEnabled() {
     return VGAEnabled;
+}
+
+void setVGAEnabled(bool en) {
+    VGAEnabled = en;
 }
 
 void shutdownCB() {

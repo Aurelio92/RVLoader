@@ -18,3 +18,4 @@ void lockSIMutex();
 void unlockSIMutex();
 Vector2 getScreenSize();
 bool isVGAEnabled();
+void setVGAEnabled(bool en);
