@@ -13,7 +13,7 @@ But RVLoader is not just a simple GUI! It comes packed with features, quite a fe
  
  - Wii game loading from USB via Hiidra
  - Gamecube game loading from USB via Nintendont
- - Direct Homebrew loading [incl. ELF support]
+ - Direct Homebrew loading [incl. ELF support]Nold360:f_gitignorefile
  - Wii channels support
  - VirtualConsole/WiiWare titles are supported [experimental]
  - Built-in installer that automatically detects if RVL is not installed and prompts the user to install it
@@ -33,7 +33,7 @@ But RVLoader is not just a simple GUI! It comes packed with features, quite a fe
  - Integrated GC+2.0 and PMS2 settings
  - Per-game GC+2.0 [custom controller PCB] remappable buttons
  - RVL-DD [DirectDrive custom PCB] in-game brightness setting
- - WiiHUD [OnScreen Display]
+ - UAMP2 [Custom audio amplifier with on-screen control]
 
 ## Install
 
@@ -58,7 +58,7 @@ From now on RVLoader will boot automatically when turning your Wii on.
  - IOS58-64-v6176.wad
  - IOS80-64-v6944.wad
 
-We won't provide these files, but you can obtain them easily.
+These files can be legally downloaded through NUS Downloader: http://wiibrew.org/wiki/NUS_Downloader
 
 ## Build From Source
 
@@ -68,8 +68,12 @@ Build binaries using `make` and clean up using: `make clean`.
 
 DevkitPro with packages:
  - wii-dev
- - gamecube-dev
+ - libfat-ogc
  - ppc-mxml
+ - ppc-libpng
+ - ppc-freetype
+ - ppc-zlib
+ - ppc-bzip2
 
 
 
@@ -97,8 +101,9 @@ Enter safe menu by holding `L + R + Z` on boot
 
 To force VGA in safe menu hold `R + L + Z + B` on boot
 
-#### WiiHud
- - `Z + Y + [Dpad Up/Down]` - increase / decrease audio volume
+#### RVL-HUD
+ - `Z + Y + [Dpad Up/Down]` - increase / decrease UAMP2 audio volume
+ - `Z + X + [Dpad Up/Down]` - increase / decrease RVL-DD backlight brightness
 
 
 
@@ -148,15 +153,6 @@ Game covers can be downloaded from [GameTDB](https://www.gametdb.com). Use the s
 Save a cover shown on the right and place in `USB:/rvloader/covers/`.
 
 Covers are 160px × 224px PNG files and need to be named the same as the game ID (Eg. GMSE01.png)
- 
-
-
-## Links
-
- - [RVLoader Release-Thread @BitBuilt](https://bitbuilt.net/forums/index.php?threads/rvloader-v1-0.4295/)
- - [RVLoader FAQ @BitBuilt](https://bitbuilt.net/forums/index.php?threads/rvloader-f-a-q.3721/)
- - [Support Forum @BitBuilt](https://bitbuilt.net/forums/index.php?forums/rvloader.182/)
- - [Support Discord @BitBuilt](https://discord.gg/S2Ve5SaS)
 
 
 ## Support
