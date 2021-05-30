@@ -180,6 +180,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Video mode", NIN_VID_AUTO);
             if (!gameConfig.getValue("Language", &tempVal))
                 gameConfig.setValue("Language", NIN_LAN_AUTO);
+            if (!gameConfig.getValue("Memory Card Emulation", &tempVal))
+                gameConfig.setValue("Memory Card Emulation", 1);
 
             //GC+2.0 mapping
             if (!gameConfig.getValue("GCPMap_A", &tempVal))
@@ -564,7 +566,6 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             cfg.Version = NIN_CFG_VERSION;
             cfg.Config = NIN_CFG_AUTO_BOOT;
             cfg.Config |= NIN_CFG_USB;
-            cfg.Config |= NIN_CFG_MEMCARDEMU;
             cfg.Config |= NIN_CFG_HID;
 
             tempVal = 0;
@@ -604,6 +605,11 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             } else {
                 cfg.Language = NIN_LAN_AUTO;
             }
+
+            tempVal = 1;
+            thisView->gameConfig.getValue("Memory Card Emulation", &tempVal);
+            if (tempVal)
+                cfg.Config |= NIN_CFG_MEMCARDEMU;
 
             //GC+2.0 map
             thisView->gameConfig.getValue("GCPMap_A", &thisView->gcpMap[GCP_MAP_BUTTON_A_ID]);
