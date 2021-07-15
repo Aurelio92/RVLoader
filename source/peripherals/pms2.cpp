@@ -24,6 +24,7 @@
 #define CMD_PID_TARGET          0x08
 #define CMD_PD_PROFILES         0x09
 #define CMD_CONF0               0x0A
+#define CMD_SHIPPINGMODE        0x0B
 
 #define CMD_CHARGECURRENT       0x10
 #define CMD_TERMCURRENT         0x11
@@ -694,6 +695,21 @@ namespace PMS2 {
 
         u8 error;
         i2c_write16(PMS2_ADDR, CMD_BATDESIGNCAP, v, &error);
+    }
+
+    void enableShippingMode() {
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        u8 error;
+        u8 tempBuffer[4] = {0x50, 0x4D , 0x53, 0x32};
+        i2c_writeBuffer(PMS2_ADDR, CMD_SHIPPINGMODE, tempBuffer, 4, &error);
     }
 
     void flashConfig() {

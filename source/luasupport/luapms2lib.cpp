@@ -325,6 +325,17 @@ static int lua_PMS2_setBatDesignCapacity(lua_State* L) {
     return 0;
 }
 
+static int lua_PMS2_enableShippingMode(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    PMS2::enableShippingMode();
+
+    return 0;
+}
+
 static int lua_PMS2_flashConfig(lua_State* L) {
     int argc = lua_gettop(L);
     if (argc != 0) {
@@ -454,6 +465,7 @@ static const luaL_Reg PMS2_functions[] = {
     {"setChargeVoltage", lua_PMS2_setChargeVoltage},
     {"setTREG", lua_PMS2_setTREG},
     {"setBatDesignCapacity", lua_PMS2_setBatDesignCapacity},
+    {"enableShippingMode", lua_PMS2_enableShippingMode},
     {"flashConfig", lua_PMS2_flashConfig},
     {"reconfigureMAX", lua_PMS2_reconfigureMAX},
     {"getNTC", lua_PMS2_getNTC},

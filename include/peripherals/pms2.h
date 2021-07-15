@@ -36,6 +36,7 @@ namespace PMS2 {
     void setChargeVoltage(u16 v);
     void setTREG(u8 v);
     void setBatDesignCapacity(u16 v);
+    void enableShippingMode();
     void flashConfig();
     void reconfigureMAX();
     float NTCToCelsius(u16 ntc);
