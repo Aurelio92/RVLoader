@@ -50,9 +50,19 @@ function draw(onFocus)
         local batteryIcon_w, batteryIcon_h = Gfx.getImageSize(batteryIcon)
         local SOC = PMS2.getSOC()
         local SOCStr = string.format("%.0f", SOC) .. "%%"
+        local WiiTemperature = PMS2.getNTC()
+        local WiiTemperatureStr = string.format("%.1f", WiiTemperature) .. " °C"
+        local temperature_SOC_Str = ""
+
+        if WiiTemperature ~= WiiTemperature then --Check is WiiTemperature is NaN, i.e. the NTC is disconnected
+            temperature_SOC_Str = SOCStr
+        else
+            temperature_SOC_Str = WiiTemperatureStr .. "  |  " .. SOCStr
+        end
+
         Gfx.pushMatrix()
         Gfx.translate(getDimensions()[1] - batteryIcon_w - sideMargin, 0)
-        Gfx.print(fonts[16], -Gfx.getTextWidth(fonts[16], SOCStr) - 8, 16, SOCStr)
+        Gfx.print(fonts[16], -Gfx.getTextWidth(fonts[16], temperature_SOC_Str) - 8, 16, temperature_SOC_Str)
         Gfx.pushMatrix()
         Gfx.translate(0, (sideMargin + 40 - batteryIcon_h) / 2)
         Gfx.drawImage(batteryIcon)
