@@ -7,11 +7,13 @@ function initPower()
     pms2NewVersion = 0.0
     pms2UpdateTime = Time.getms() - pms2UpdateTimeout
 
+    showingShippingModeDialog = false
+
     powerAUTO_INCREASE_DELAY = 500
     powerAUTO_INCREASE_TIME = 100
     powerAutoIncreaseTime = 0
 
-    powerSelectedEnum = enum({"batCapacity", "chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "saveConfig", "firmwareUpdate"})
+    powerSelectedEnum = enum({"batCapacity", "chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "saveConfig", "firmwareUpdate", "shippingMode"})
     powerSelected = powerSelectedEnum[1]
 
     powerBatteryCapacity = PMS2.getBatDesignCapacity()
@@ -95,7 +97,22 @@ function drawPower(onFocus)
         menuSystem.printLineValue("Addressable", ((powerConf0 ~ powerOldConf0) & PMS2.STAT_LED_TYPE) ~= 0)
     end
     menuSystem.printLine("Save config", powerSelected.id)
-    menuSystem.printLine("Firmware Update", powerSelected.id)
+    menuSystem.printLine("Firmware update", powerSelected.id)
+    menuSystem.printLine("Enable shipping mode", powerSelected.id)
+
+    if showingShippingModeDialog then
+        local dialogText = {"The system will turn off.", "Power can be re-enabled only by plugging in a charger.", "Press A to confirm, B to cancel."}
+
+        Gfx.pushMatrix()
+        Gfx.identity()
+        Gfx.pushIdentityScissorBox()
+        Gfx.drawRectangle(0, 0, Gui.getScreenSize().x, Gui.getScreenSize().y, Gfx.RGBA8(0x00, 0x00, 0x00, 0xA0))
+        for i = 1, #dialogText do
+            Gfx.print(menuSystem.font, leftColumnWidth + (getDimensions()[1] - leftColumnWidth - Gfx.getTextWidth(menuSystem.font, dialogText[i])) / 2, 100 + i * menuSystem.lineHeight, dialogText[i])
+        end
+        Gfx.popScissorBox()
+        Gfx.popMatrix()
+    end
 end
 
 function handlePower(onFocus)
@@ -105,6 +122,19 @@ function handlePower(onFocus)
 
     local down = Pad.gendown(0)
     local held = Pad.genheld(0)
+
+    if showingShippingModeDialog then
+        if down.BUTTON_A then
+            PMS2.enableShippingMode()
+        end
+
+        if down.BUTTON_B then
+            showingShippingModeDialog = false
+            topBarEnableWheel()
+        end
+        return
+    end
+
     local curId = powerSelected.id
 
     if down.BUTTON_B then
@@ -146,6 +176,9 @@ function handlePower(onFocus)
             topBarDisableWheel()
             pms2OldVersion = PMS2.getVer()
             PMS2.startUpdate("/pms2.bin")
+        elseif powerSelected == powerSelectedEnum.shippingMode then
+            topBarDisableWheel()
+            showingShippingModeDialog = true
         end
     elseif down.BUTTON_RIGHT or (held.BUTTON_RIGHT and Time.getms() > powerAutoIncreaseTime) then
         if powerSelected == powerSelectedEnum.batCapacity then
