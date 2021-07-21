@@ -50,9 +50,9 @@ function init()
 
     if GamesView.getGamesType() == GamesView.gameType.GC_GAME then
         if Gcp.isV2() then
-            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Language", "Memory Card Emulation", "Configure GC+2.0 map"})
+            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Language", "Enable Cheats", "Memory Card Emulation", "Configure GC+2.0 map"})
         else
-            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Memory Card Emulation", "Language"})
+            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Enable Cheats", "Memory Card Emulation", "Language"})
         end
     elseif GamesView.getGamesType() == GamesView.gameType.WII_GAME then
         gameConfigSelectedEnum = enum({"Enable WiFi", "Enable Bluetooth", "Enable USB saves", "Enable GC2Wiimote", "Configure GC2Wiimote"})
@@ -352,6 +352,15 @@ function drawGameConfig()
             val = "Italian"
         elseif val == GamesView.nintendont.LANG_DUTCH then
             val = "Dutch"
+        end
+        menuSystem.printLineValue(val, false)
+
+        menuSystem.printLine("Enable Cheats", gameConfigSelected.id)
+        local val = GamesView.getGameConfigValue("Enable Cheats")
+        if val == GamesView.config.YES then
+            val = "Yes"
+        else
+            val = "No"
         end
         menuSystem.printLineValue(val, false)
 

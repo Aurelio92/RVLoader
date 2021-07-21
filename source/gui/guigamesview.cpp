@@ -180,6 +180,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Video mode", NIN_VID_AUTO);
             if (!gameConfig.getValue("Language", &tempVal))
                 gameConfig.setValue("Language", NIN_LAN_AUTO);
+            if (!gameConfig.getValue("Enable Cheats", &tempVal))
+                gameConfig.setValue("Enable Cheats", 0);
             if (!gameConfig.getValue("Memory Card Emulation", &tempVal))
                 gameConfig.setValue("Memory Card Emulation", 1);
 
@@ -605,6 +607,11 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             } else {
                 cfg.Language = NIN_LAN_AUTO;
             }
+
+            tempVal = 0;
+            thisView->gameConfig.getValue("Enable Cheats", &tempVal);
+            if (tempVal)
+                cfg.Config |= NIN_CFG_CHEATS;
 
             tempVal = 1;
             thisView->gameConfig.getValue("Memory Card Emulation", &tempVal);
