@@ -364,7 +364,7 @@ static int lua_PMS2_getNTC(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    lua_pushnumber(L, PMS2::NTCToCelsius(PMS2::getNTC()));
+    lua_pushnumber(L, PMS2::getNTC());
 
     return 1;
 }
