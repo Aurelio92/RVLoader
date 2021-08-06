@@ -11,7 +11,7 @@ include $(DEVKITPPC)/wii_rules
 
 # Must be integers
 RVLOADERVERSION_MAJOR := 1
-RVLOADERVERSION_MINOR := 2
+RVLOADERVERSION_MINOR := 3
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
