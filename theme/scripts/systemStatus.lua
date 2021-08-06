@@ -11,6 +11,9 @@ function drawSystemStatus(onFocus)
     if UAMP.isConnected() then
         menuSystem.printLine("UAMP HUD detected")
     end
+    if Time.available() then
+        menuSystem.printLine("MX-Chip detected")
+    end
 
     if PMS2.isConnected() then
         local chargeStatus = PMS2.getChargeStatus()
