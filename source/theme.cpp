@@ -97,11 +97,72 @@ static int lua_Theme_setTheme(lua_State* L) {
     return 0;
 }
 
+static int lua_Theme_getBackgrounds(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_newtable(L);
+
+    struct dirent *dirp;
+    DIR* dp = opendir("/rvloader/backgrounds");
+    int index = 1;
+
+    if (dp != NULL) {
+        while ((dirp = readdir(dp)) != NULL) {
+            if (dirp->d_name == NULL)
+            continue;
+
+            if (dirp->d_name[0] == '.')
+                continue;
+
+            if (dirp->d_type == DT_DIR)
+                continue;
+
+            luaSetArrayStringField(L, index++, dirp->d_name);
+        }
+        closedir(dp);
+    }
+
+    return 1;
+}
+
+static int lua_Theme_getLoadedBackground(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    std::string curBackground;
+    if (mainConfig.getValue("background", &curBackground)) {
+        lua_pushstring(L, curBackground.c_str());
+    } else {
+        lua_pushstring(L, "main");
+    }
+
+    return 1;
+}
+
+static int lua_Theme_setBackground(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 1) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    mainConfig.setValue("background", luaL_checkstring(L, 1));
+    mainConfig.save(MAINCONFIG_PATH);
+
+    return 0;
+}
 static const luaL_Reg Theme_functions[] = {
     {"sendMessage", lua_Theme_sendMessage},
     {"getThemes", lua_Theme_getThemes},
     {"getLoadedTheme", lua_Theme_getLoadedTheme},
     {"setTheme", lua_Theme_setTheme},
+    {"getBackgrounds", lua_Theme_getBackgrounds},
+    {"getLoadedBackground", lua_Theme_getLoadedBackground},
+    {"setBackground", lua_Theme_setBackground},
     {NULL, NULL}
 };
 

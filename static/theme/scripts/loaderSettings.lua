@@ -4,17 +4,28 @@ Launch installer
 
 ]]
 function initLoader()
-    loaderSelectedEnum = enum({"selTheme", "saveConfig", "bootPriiloader", "runInstaller"})
+    loaderSelectedEnum = enum({"selTheme", "selBackground", "saveConfig", "bootPriiloader", "runInstaller"})
     loaderSelected = loaderSelectedEnum[1]
 
     loaderThemes = Theme.getThemes()
     loaderCurTheme = Theme.getLoadedTheme()
     loaderCurThemeId = 1
 
+    loaderBackgrounds = Theme.getBackgrounds()
+    loaderCurBackground = Theme.getLoadedBackground()
+    loaderCurBackgroundId = 1
+
     for i = 1, #loaderThemes do
         Sys.debug("Theme: " .. loaderThemes[i])
         if loaderThemes[i] == loaderCurTheme then
             loaderCurThemeId = i
+        end
+    end
+
+    for i = 1, #loaderBackgrounds do
+        Sys.debug("Background: " .. loaderBackgrounds[i])
+        if loaderBackgrounds[i] == loaderCurBackground then
+            loaderCurBackgroundId = i
         end
     end
 end
@@ -28,6 +39,8 @@ function drawLoader(onFocus)
     menuSystem.reset()
     menuSystem.printLine("Selected theme:", loaderSelected.id)
     menuSystem.printLineValue(loaderThemes[loaderCurThemeId], loaderThemes[loaderCurThemeId] ~= loaderCurTheme)
+    menuSystem.printLine("Background image:", loaderSelected.id)
+    menuSystem.printLineValue(loaderBackgrounds[loaderCurBackgroundId], loaderBackgrounds[loaderCurBackgroundId] ~= loaderCurBackground)
     menuSystem.printLine("Save config", loaderSelected.id)
     menuSystem.printLine("Boot priiloader", loaderSelected.id)
     menuSystem.printLine("Run installer", loaderSelected.id)
@@ -57,6 +70,10 @@ function handleLoader(onFocus)
                 Theme.setTheme(loaderThemes[loaderCurThemeId])
                 Sys.reboot()
             end
+            if loaderBackgrounds[loaderCurBackgroundId] ~= loaderCurBackground then
+                Theme.setBackground(loaderBackgrounds[loaderCurBackgroundId])
+                Sys.reboot()
+            end
         elseif loaderSelected == loaderSelectedEnum.bootPriiloader then
             Sys.bootPriiloader()
         elseif loaderSelected == loaderSelectedEnum.runInstaller then
@@ -68,12 +85,22 @@ function handleLoader(onFocus)
             if loaderCurThemeId > #loaderThemes then
                 loaderCurThemeId = 1
             end
+        elseif loaderSelected == loaderSelectedEnum.selBackground then
+            loaderCurBackgroundId = loaderCurBackgroundId + 1
+            if loaderCurBackgroundId > #loaderBackgrounds then
+                loaderCurBackgroundId = 1
+            end
         end
     elseif down.BUTTON_LEFT then
         if loaderSelected == loaderSelectedEnum.selTheme then
             loaderCurThemeId = loaderCurThemeId - 1
             if loaderCurThemeId < 1 then
                 loaderCurThemeId = #loaderThemes
+            end
+        elseif loaderSelected == loaderSelectedEnum.selBackground then
+            loaderCurBackgroundId = loaderCurBackgroundId - 1
+            if loaderCurBackgroundId < 1 then
+                loaderCurBackgroundId = #loaderBackgrounds
             end
         end
     end
