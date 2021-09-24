@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <theme>
+    <luaelement position="0 0" active="true" id="background" script="scripts/background.lua"/>
     <gcview position="0 40" active="true" focus="true" switchable="true" id="GCGamesView" script="scripts/gamesview.lua" />
     <wiiview position="0 40" active="false" switchable="true" id="WiiGamesView" script="scripts/gamesview.lua" />
     <vcview position="0 40" active="false" switchable="true" id="VCGamesView" script="scripts/gamesview.lua" />
