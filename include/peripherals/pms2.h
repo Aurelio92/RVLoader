@@ -6,6 +6,7 @@
 #define CHG_STAT_DONE       3
 
 namespace PMS2 {
+    bool isLite();
     u32 getUpdateProgress();
     bool isUpdating();
     bool hasUpdateSucceeded();

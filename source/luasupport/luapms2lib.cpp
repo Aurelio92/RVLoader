@@ -5,6 +5,17 @@
 #include "luasupport.h"
 #include "pms2.h"
 
+static int lua_PMS2_isLite(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushboolean(L, PMS2::isLite());
+
+    return 1;
+}
+
 static int lua_PMS2_getUpdateProgress(lua_State* L) {
     int argc = lua_gettop(L);
     if (argc != 0) {
@@ -436,6 +447,7 @@ static int lua_PMS2_setFanPIDTarget(lua_State* L) {
 }
 
 static const luaL_Reg PMS2_functions[] = {
+    {"isLite", lua_PMS2_isLite},
     {"getUpdateProgress", lua_PMS2_getUpdateProgress},
     {"isUpdating", lua_PMS2_isUpdating},
     {"startUpdate", lua_PMS2_startUpdate},

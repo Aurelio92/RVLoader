@@ -28,6 +28,8 @@ function drawSystemStatus(onFocus)
         end
         menuSystem.printLine(string.format("Battery SOC: %.1f", PMS2.getSOC()) .. "%%")
         menuSystem.printLine(string.format("Battery voltage: %.0f mV", PMS2.getVCell()))
-        menuSystem.printLine(string.format("Battery current: %.0f mA", PMS2.getCurrent()))
+        if not PMS2.isLite() then
+            menuSystem.printLine(string.format("Battery current: %.0f mA", PMS2.getCurrent()))
+        end
     end
 end

@@ -1,4 +1,5 @@
 #include <string>
+#include <string.h>
 #include <malloc.h>
 #include <gccore.h>
 #include <math.h>
@@ -9,6 +10,7 @@
 #include "debug.h"
 
 #define PMS2_ADDR (0x20 << 1)
+#define PMS2L_ADDR (0x21 << 1)
 
 #define PGM_BLOCK_SIZE  0x80UL      //bytes
 #define PMS2_PAYLOAD_ADDR 0x2000UL
@@ -65,10 +67,19 @@ namespace PMS2 {
     static bool updateSuccess = false;
     static std::string updatePath;
 
+    static u8 curPMSAddress = PMS2_ADDR;
+
+    bool isLite() {
+        return (curPMSAddress == PMS2L_ADDR);
+    }
+
     static void* updateThread(void* arg) {
         u8 error;
         u8 tempBuffer[5 + PGM_BLOCK_SIZE];
         u8 unlockBuffer[4] = {0x50, 0x4D , 0x53, 0x32};
+        const u8 PMS2Magic[8] = {'P', 'M', 'S', '2', ' ', '4', 'L', 'T'};
+        const u8 PMS2LMagic[8] = {'P', 'M', 'S', '2', 'L', '4', 'L', 'T'};
+        u8 magic[8];
 
         Debug("PMS2 update thread started\n");
         u8 verBuffer[3];
@@ -85,19 +96,30 @@ namespace PMS2 {
             return NULL;
         }
 
+        //Check that the update file is for the right kind of PMS2
+        fread(magic, 1, sizeof(magic), fp);
+        if ((isLite() && memcmp(magic, PMS2LMagic, sizeof(magic))) || (!isLite() && memcmp(magic, PMS2Magic, sizeof(magic)))) {
+            fclose(fp);
+            LWP_MutexLock(updateMutex);
+            updateSuccess = false;
+            updating = false;
+            LWP_MutexUnlock(updateMutex);
+            return NULL;
+        }
+
         Debug("Reading version\n");
-        i2c_readBuffer(PMS2_ADDR, CMD_GETVER, &error, verBuffer, 3);
+        i2c_readBuffer(curPMSAddress, CMD_GETVER, &error, verBuffer, 3);
         version = verBuffer[1] | (verBuffer[2] << 8);
         minVer = (version & 0x0007);
         majVer = ((version >> 13) & 0x1FFF);
         Debug("Currently running: %s (v%u.%u)\n", verBuffer[0] ? "bootloader" : "payload", majVer, minVer);
         Debug("Attempting to boot bootloader\n");
         Debug("PMS2 booting bootloader\n");
-        i2c_writeBuffer(PMS2_ADDR, CMD_BOOTBL, unlockBuffer, 4, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_BOOTBL, unlockBuffer, 4, &error);
         Debug("Waiting...\n");
         udelay(100000);
         Debug("Reading version\n");
-        i2c_readBuffer(PMS2_ADDR, CMD_GETVER, &error, verBuffer, 3);
+        i2c_readBuffer(curPMSAddress, CMD_GETVER, &error, verBuffer, 3);
         version = verBuffer[1] | (verBuffer[2] << 8);
         minVer = (version & 0x0007);
         majVer = ((version >> 13) & 0x1FFF);
@@ -117,7 +139,7 @@ namespace PMS2 {
             tempBuffer[1] = (address >> 8) & 0xFF;
             tempBuffer[2] = (address >> 16) & 0xFF;
             fread(&tempBuffer[3], 1, PGM_BLOCK_SIZE + 2, fp);
-            i2c_writeBuffer(PMS2_ADDR, CMD_WRITEFLASH, tempBuffer, 5 + PGM_BLOCK_SIZE, &error);
+            i2c_writeBuffer(curPMSAddress, CMD_WRITEFLASH, tempBuffer, 5 + PGM_BLOCK_SIZE, &error);
             flashedSize += PGM_BLOCK_SIZE + 2;
             tempSize -= PGM_BLOCK_SIZE + 2;
             address += PGM_BLOCK_SIZE;
@@ -129,7 +151,7 @@ namespace PMS2 {
         fclose(fp);
 
         Debug("PMS2 booting payload\n");
-        i2c_writeBuffer(PMS2_ADDR, CMD_BOOTPAYLOAD, unlockBuffer, 4, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_BOOTPAYLOAD, unlockBuffer, 4, &error);
         udelay(100000);
 
         LWP_MutexLock(updateMutex);
@@ -208,10 +230,20 @@ namespace PMS2 {
             ret = true;
             i2c_start();
             i2cRet = i2c_sendByte(PMS2_ADDR);
-            if (!i2cRet) {
-                ret = false;
-            }
             i2c_stop();
+            if (!i2cRet) {
+                //Try PMS2 lite
+                i2c_start();
+                i2cRet = i2c_sendByte(PMS2L_ADDR);
+                i2c_stop();
+                if (!i2cRet) {
+                    ret = false;
+                } else {
+                    curPMSAddress = PMS2L_ADDR;
+                }
+            } else {
+                curPMSAddress = PMS2_ADDR;
+            }
             _CPU_ISR_Restore(level);
         }
         return ret;
@@ -220,7 +252,7 @@ namespace PMS2 {
     float getVer() {
         u8 error;
         u8 verBuffer[3];
-        i2c_readBuffer(PMS2_ADDR, CMD_GETVER, &error, verBuffer, 3);
+        i2c_readBuffer(curPMSAddress, CMD_GETVER, &error, verBuffer, 3);
         u16 version = verBuffer[1] | (verBuffer[2] << 8);
         float ret = ((version >> 3) & 0x1FFF) + (version & 0x0007) / 10.0f;
         return ret;
@@ -237,7 +269,7 @@ namespace PMS2 {
         LWP_MutexUnlock(updateMutex);
 
         u8 error;
-        i2c_readBuffer(PMS2_ADDR, CMD_PD_PROFILES, &error, (u8*)profiles, 11 * sizeof(u32));
+        i2c_readBuffer(curPMSAddress, CMD_PD_PROFILES, &error, (u8*)profiles, 11 * sizeof(u32));
         for (int i = 0; i < 11; i++)
             swap32((u8*)&profiles[i]);
     }
@@ -260,7 +292,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read8(PMS2_ADDR, CMD_CONF0, &error);
+        ret = i2c_read8(curPMSAddress, CMD_CONF0, &error);
         return ret;
     }
 
@@ -282,7 +314,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read16(PMS2_ADDR, CMD_CHARGECURRENT, &error);
+        ret = i2c_read16(curPMSAddress, CMD_CHARGECURRENT, &error);
         return ret;
     }
 
@@ -304,7 +336,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read16(PMS2_ADDR, CMD_TERMCURRENT, &error);
+        ret = i2c_read16(curPMSAddress, CMD_TERMCURRENT, &error);
         return ret;
     }
 
@@ -326,7 +358,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read16(PMS2_ADDR, CMD_PRECHARGECURRENT, &error);
+        ret = i2c_read16(curPMSAddress, CMD_PRECHARGECURRENT, &error);
         return ret;
     }
 
@@ -348,7 +380,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read16(PMS2_ADDR, CMD_CHARGEVOLTAGE, &error);
+        ret = i2c_read16(curPMSAddress, CMD_CHARGEVOLTAGE, &error);
         return ret;
     }
 
@@ -370,7 +402,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read8(PMS2_ADDR, CMD_TREG, &error);
+        ret = i2c_read8(curPMSAddress, CMD_TREG, &error);
         return ret;
     }
 
@@ -392,7 +424,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read8(PMS2_ADDR, CMD_CHARGESTATUS, &error);
+        ret = i2c_read8(curPMSAddress, CMD_CHARGESTATUS, &error);
         return ret;
     }
 
@@ -400,6 +432,10 @@ namespace PMS2 {
         u8 error;
         static u64 lastTime = 0;
         static u16 ret = 0;
+
+        //This command is not available on PMS2 lite
+        if (curPMSAddress == PMS2L_ADDR)
+            return ret;
 
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
@@ -414,7 +450,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read16(PMS2_ADDR, CMD_BATDESIGNCAP, &error);
+        ret = i2c_read16(curPMSAddress, CMD_BATDESIGNCAP, &error);
         return ret;
     }
 
@@ -436,7 +472,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        u16 soc = i2c_read16(PMS2_ADDR, CMD_BATSOC, &error);
+        u16 soc = i2c_read16(curPMSAddress, CMD_BATSOC, &error);
         ret = (float)soc / 256.0f;
         return ret;
     }
@@ -459,7 +495,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read16(PMS2_ADDR, CMD_BATSOC, &error);
+        ret = i2c_read16(curPMSAddress, CMD_BATSOC, &error);
         return ret;
     }
 
@@ -481,7 +517,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        u16 vcell = i2c_read16(PMS2_ADDR, CMD_BATVOLTAGE, &error);
+        u16 vcell = i2c_read16(curPMSAddress, CMD_BATVOLTAGE, &error);
         ret = 78.125f * (float)vcell / 1000.0f;
         return ret;
     }
@@ -490,6 +526,10 @@ namespace PMS2 {
         u8 error;
         static u64 lastTime = 0;
         static float ret = 0.0f;
+
+        //This command is not available on PMS2 lite
+        if (curPMSAddress == PMS2L_ADDR)
+            return ret;
 
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
@@ -504,7 +544,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        s16 current = (s16)i2c_read16(PMS2_ADDR, CMD_BATCURRENT, &error);
+        s16 current = (s16)i2c_read16(curPMSAddress, CMD_BATCURRENT, &error);
         ret = 312.5f * (float)current / 1000.0f;
         return ret;
     }
@@ -527,7 +567,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = i2c_read16(PMS2_ADDR, CMD_BATVOLTAGE, &error);
+        ret = i2c_read16(curPMSAddress, CMD_BATVOLTAGE, &error);
         return ret;
     }
 
@@ -536,6 +576,10 @@ namespace PMS2 {
         static u64 lastTime = 0;
         static s16 ret = 0;
 
+        //This command is not available on PMS2 lite
+        if (curPMSAddress == PMS2L_ADDR)
+            return ret;
+
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
         LWP_MutexLock(updateMutex);
@@ -549,7 +593,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        ret = (s16)i2c_read16(PMS2_ADDR, CMD_BATCURRENT, &error);
+        ret = (s16)i2c_read16(curPMSAddress, CMD_BATCURRENT, &error);
         return ret;
     }
 
@@ -558,6 +602,10 @@ namespace PMS2 {
         static u64 lastTime = 0;
         static u32 ret = 0;
 
+        //This command is not available on PMS2 lite
+        if (curPMSAddress == PMS2L_ADDR)
+            return ret;
+
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
         LWP_MutexLock(updateMutex);
@@ -571,7 +619,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        u16 tte  = i2c_read16(PMS2_ADDR, CMD_TTE, &error);
+        u16 tte  = i2c_read16(curPMSAddress, CMD_TTE, &error);
         ret = (u32)round(5.625f * (float)tte / 60.0f);
         return ret;
     }
@@ -581,6 +629,10 @@ namespace PMS2 {
         static u64 lastTime = 0;
         static u32 ret = 0;
 
+        //This command is not available on PMS2 lite
+        if (curPMSAddress == PMS2L_ADDR)
+            return ret;
+
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
         LWP_MutexLock(updateMutex);
@@ -594,7 +646,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        u16 ttf  = i2c_read16(PMS2_ADDR, CMD_TTF, &error);
+        u16 ttf  = i2c_read16(curPMSAddress, CMD_TTF, &error);
         ret = (u32)round(5.625f * (float)ttf / 60.0f);
         return ret;
     }
@@ -610,7 +662,7 @@ namespace PMS2 {
         LWP_MutexUnlock(updateMutex);
 
         u8 error;
-        i2c_write8(PMS2_ADDR, CMD_CONF0, v, &error);
+        i2c_write8(curPMSAddress, CMD_CONF0, v, &error);
     }
 
     void setChargeCurrent(u16 v) {
@@ -624,7 +676,7 @@ namespace PMS2 {
         LWP_MutexUnlock(updateMutex);
 
         u8 error;
-        i2c_write16(PMS2_ADDR, CMD_CHARGECURRENT, v, &error);
+        i2c_write16(curPMSAddress, CMD_CHARGECURRENT, v, &error);
     }
 
     void setTermCurrent(u16 v) {
@@ -638,7 +690,7 @@ namespace PMS2 {
         LWP_MutexUnlock(updateMutex);
 
         u8 error;
-        i2c_write16(PMS2_ADDR, CMD_TERMCURRENT, v, &error);
+        i2c_write16(curPMSAddress, CMD_TERMCURRENT, v, &error);
     }
 
     void setPreChargeCurrent(u16 v) {
@@ -652,7 +704,7 @@ namespace PMS2 {
         LWP_MutexUnlock(updateMutex);
 
         u8 error;
-        i2c_write16(PMS2_ADDR, CMD_PRECHARGECURRENT, v, &error);
+        i2c_write16(curPMSAddress, CMD_PRECHARGECURRENT, v, &error);
     }
 
     void setChargeVoltage(u16 v) {
@@ -666,7 +718,7 @@ namespace PMS2 {
         LWP_MutexUnlock(updateMutex);
 
         u8 error;
-        i2c_write16(PMS2_ADDR, CMD_CHARGEVOLTAGE, v, &error);
+        i2c_write16(curPMSAddress, CMD_CHARGEVOLTAGE, v, &error);
     }
 
     void setTREG(u8 v) {
@@ -680,10 +732,14 @@ namespace PMS2 {
         LWP_MutexUnlock(updateMutex);
 
         u8 error;
-        i2c_write8(PMS2_ADDR, CMD_TREG, v, &error);
+        i2c_write8(curPMSAddress, CMD_TREG, v, &error);
     }
 
     void setBatDesignCapacity(u16 v) {
+        //This command is not available on PMS2 lite
+        if (curPMSAddress == PMS2L_ADDR)
+            return;
+
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
         LWP_MutexLock(updateMutex);
@@ -694,7 +750,7 @@ namespace PMS2 {
         LWP_MutexUnlock(updateMutex);
 
         u8 error;
-        i2c_write16(PMS2_ADDR, CMD_BATDESIGNCAP, v, &error);
+        i2c_write16(curPMSAddress, CMD_BATDESIGNCAP, v, &error);
     }
 
     void enableShippingMode() {
@@ -709,7 +765,7 @@ namespace PMS2 {
 
         u8 error;
         u8 tempBuffer[4] = {0x50, 0x4D , 0x53, 0x32};
-        i2c_writeBuffer(PMS2_ADDR, CMD_SHIPPINGMODE, tempBuffer, 4, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_SHIPPINGMODE, tempBuffer, 4, &error);
     }
 
     void flashConfig() {
@@ -724,10 +780,14 @@ namespace PMS2 {
 
         u8 error;
         u8 tempBuffer[4] = {0x50, 0x4D , 0x53, 0x32};
-        i2c_writeBuffer(PMS2_ADDR, CMD_FLASHCONFIG, tempBuffer, 4, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_FLASHCONFIG, tempBuffer, 4, &error);
     }
 
     void reconfigureMAX() {
+        //This command is not available on PMS2 lite
+        if (curPMSAddress == PMS2L_ADDR)
+            return;
+
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
         LWP_MutexLock(updateMutex);
@@ -739,7 +799,7 @@ namespace PMS2 {
 
         u8 error;
         u8 tempBuffer[4] = {0x50, 0x4D , 0x53, 0x32};
-        i2c_writeBuffer(PMS2_ADDR, CMD_MAXRECONFIGURE, tempBuffer, 4, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_MAXRECONFIGURE, tempBuffer, 4, &error);
     }
 
     #define NTC_RBOT 2200.0f
@@ -782,7 +842,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        u16 ntc = i2c_read16(PMS2_ADDR, CMD_NTC, &error);
+        u16 ntc = i2c_read16(curPMSAddress, CMD_NTC, &error);
         ret = NTCToCelsius(ntc);
         return ret;
     }
@@ -799,8 +859,9 @@ namespace PMS2 {
 
         u8 error;
         u8 tempBuffer[5] = {0x50, 0x4D , 0x53, 0x32, speed};
-        i2c_writeBuffer(PMS2_ADDR, CMD_FAN, tempBuffer, 5, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_FAN, tempBuffer, 5, &error);
     }
+
     void freeFan() {
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
@@ -813,7 +874,7 @@ namespace PMS2 {
 
         u8 error;
         u8 tempBuffer[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
-        i2c_writeBuffer(PMS2_ADDR, CMD_FAN, tempBuffer, 5, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_FAN, tempBuffer, 5, &error);
     }
 
     void setFanPIDkP(float kP) {
@@ -828,7 +889,7 @@ namespace PMS2 {
 
         u8 error;
         swap32((u8*)&kP);
-        i2c_writeBuffer(PMS2_ADDR, CMD_PID_KP, (u8*)&kP, 4, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_PID_KP, (u8*)&kP, 4, &error);
     }
 
     void setFanPIDkI(float kI) {
@@ -843,7 +904,7 @@ namespace PMS2 {
 
         u8 error;
         swap32((u8*)&kI);
-        i2c_writeBuffer(PMS2_ADDR, CMD_PID_KI, (u8*)&kI, 4, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_PID_KI, (u8*)&kI, 4, &error);
     }
 
     void setFanPIDkD(float kD) {
@@ -858,7 +919,7 @@ namespace PMS2 {
 
         u8 error;
         swap32((u8*)&kD);
-        i2c_writeBuffer(PMS2_ADDR, CMD_PID_KD, (u8*)&kD, 4, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_PID_KD, (u8*)&kD, 4, &error);
     }
 
     void setFanPIDTarget(float target) {
@@ -873,6 +934,6 @@ namespace PMS2 {
 
         u8 error;
         swap32((u8*)&target);
-        i2c_writeBuffer(PMS2_ADDR, CMD_PID_TARGET, (u8*)&target, 4, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_PID_TARGET, (u8*)&target, 4, &error);
     }
 };

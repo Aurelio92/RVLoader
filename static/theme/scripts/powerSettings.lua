@@ -13,7 +13,11 @@ function initPower()
     powerAUTO_INCREASE_TIME = 100
     powerAutoIncreaseTime = 0
 
-    powerSelectedEnum = enum({"batCapacity", "chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "saveConfig", "firmwareUpdate", "shippingMode"})
+    if PMS2.isLite() then
+        powerSelectedEnum = enum({"chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "saveConfig", "firmwareUpdate", "shippingMode"})
+    else
+        powerSelectedEnum = enum({"batCapacity", "chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "saveConfig", "firmwareUpdate", "shippingMode"})
+    end
     powerSelected = powerSelectedEnum[1]
 
     powerBatteryCapacity = PMS2.getBatDesignCapacity()
@@ -53,7 +57,11 @@ function drawPower(onFocus)
                 menuSystem.printLine("Update complete! Will now return", 0)
             else
                 menuSystem.printLine("Update failed", 0)
-                menuSystem.printLine("Make sure you have /pms2.bin on your USB drive", 0)
+                if PMS2.isLite() then
+                    menuSystem.printLine("Make sure you have /pms2_lite.bin on your USB drive", 0)
+                else
+                    menuSystem.printLine("Make sure you have /pms2.bin on your USB drive", 0)
+                end
             end
         else
             menuSystem.printLine("Updating, don't power off!", 0)
@@ -66,8 +74,10 @@ function drawPower(onFocus)
         Gfx.drawRectangle(0, (powerSelected.id - 1) * lineHeight, colWidth, lineHeight, Gfx.RGBA8(0x1F, 0x22, 0x27, 0xFF));
     end
     menuSystem.reset()
-    menuSystem.printLine("Battery capacity:", powerSelected.id)
-    menuSystem.printLineValue(powerBatteryCapacity .. " mAh", powerBatteryCapacity ~= powerOldBatteryCapacity)
+    if not PMS2.isLite() then
+        menuSystem.printLine("Battery capacity:", powerSelected.id)
+        menuSystem.printLineValue(powerBatteryCapacity .. " mAh", powerBatteryCapacity ~= powerOldBatteryCapacity)
+    end
     menuSystem.printLine("Charging current:", powerSelected.id)
     menuSystem.printLineValue(powerChargingCurrent .. " mA", powerChargingCurrent ~= powerOldChargingCurrent)
     menuSystem.printLine("Termination current:", powerSelected.id)
@@ -175,7 +185,11 @@ function handlePower(onFocus)
         elseif powerSelected == powerSelectedEnum.firmwareUpdate then
             topBarDisableWheel()
             pms2OldVersion = PMS2.getVer()
-            PMS2.startUpdate("/pms2.bin")
+            if PMS2.isLite() then
+                PMS2.startUpdate("/pms2_lite.bin")
+            else
+                PMS2.startUpdate("/pms2.bin")
+            end
         elseif powerSelected == powerSelectedEnum.shippingMode then
             topBarDisableWheel()
             showingShippingModeDialog = true
