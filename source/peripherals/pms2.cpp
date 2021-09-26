@@ -49,6 +49,15 @@
 #define CMD_READFLASH           0xF1
 #define CMD_BOOTPAYLOAD         0xF2
 
+#define ERR_NONE                0x00
+#define ERR_LOCKED              0xFF
+#define ERR_WRONGARG            0xFE
+#define ERR_WRONGMODE           0xFD
+#define ERR_WRONGCRC            0xFC
+#define ERR_WRONGADDR           0xFB
+
+#define PMS_FLASH_RETRIES       5
+
 #define PMS_POLLUPDATE_TIMEOUT  200
 
 #define STACKSIZE 8192
@@ -76,10 +85,12 @@ namespace PMS2 {
     static void* updateThread(void* arg) {
         u8 error;
         u8 tempBuffer[5 + PGM_BLOCK_SIZE];
+        u8 readFlashBuffer[3 + PGM_BLOCK_SIZE]; //ERROR(1) + BLOCK(PGM_BLOCK_SIZE) + CRC(2)
         u8 unlockBuffer[4] = {0x50, 0x4D , 0x53, 0x32};
         const u8 PMS2Magic[8] = {'P', 'M', 'S', '2', ' ', '4', 'L', 'T'};
         const u8 PMS2LMagic[8] = {'P', 'M', 'S', '2', 'L', '4', 'L', 'T'};
         u8 magic[8];
+        u8 writeFlashError;
 
         Debug("PMS2 update thread started\n");
         u8 verBuffer[3];
@@ -135,11 +146,25 @@ namespace PMS2 {
         u32 address = PMS2_PAYLOAD_ADDR;
 
         while (tempSize) {
+            u8 retries = PMS_FLASH_RETRIES;
+            bool flashed = false;
+
             tempBuffer[0] = address & 0xFF;
             tempBuffer[1] = (address >> 8) & 0xFF;
             tempBuffer[2] = (address >> 16) & 0xFF;
             fread(&tempBuffer[3], 1, PGM_BLOCK_SIZE + 2, fp);
-            i2c_writeBuffer(curPMSAddress, CMD_WRITEFLASH, tempBuffer, 5 + PGM_BLOCK_SIZE, &error);
+            //i2c_writeBuffer(curPMSAddress, CMD_WRITEFLASH, tempBuffer, 5 + PGM_BLOCK_SIZE, &error);
+            while (retries-- && !flashed) {
+                i2c_writeReadBuffer(curPMSAddress, CMD_WRITEFLASH, tempBuffer, 5 + PGM_BLOCK_SIZE, &writeFlashError, 1, &error);
+
+                if (writeFlashError == ERR_NONE) {
+                    //Read back written flash and compare
+                    //We only need to send out address for CMD_READFLASH
+                    i2c_writeReadBuffer(curPMSAddress, CMD_READFLASH, tempBuffer, 3, readFlashBuffer, 3 + PGM_BLOCK_SIZE, &error);
+                    if (readFlashBuffer[0] == ERR_NONE && !memcmp(&readFlashBuffer[1], &tempBuffer[3], 2 + PGM_BLOCK_SIZE))
+                        flashed = true;
+                }
+            }
             flashedSize += PGM_BLOCK_SIZE + 2;
             tempSize -= PGM_BLOCK_SIZE + 2;
             address += PGM_BLOCK_SIZE;

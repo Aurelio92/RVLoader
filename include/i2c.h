@@ -40,6 +40,7 @@ void i2c_readBuffer(u8 addr, u8 reg, u8* error, u8* buffer, u16 len);
 void i2c_write8(u8 addr, u8 reg, u8 value, u8* error);
 void i2c_write16(u8 addr, u8 reg, u16 value, u8* error);
 void i2c_writeBuffer(u8 addr, u8 reg, u8* data, u16 len, u8* error);
+void i2c_writeReadBuffer(u8 addr, u8 reg, u8* dataOut, u16 lenOut, u8* dataIn, u16 lenIn, u8* error);
 
 #ifdef __cplusplus
 }

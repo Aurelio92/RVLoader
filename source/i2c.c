@@ -454,7 +454,6 @@ u16 i2c_read16(u8 addr, u8 reg, u8* error) {
 void i2c_readBuffer(u8 addr, u8 reg, u8* error, u8* buffer, u16 len) {
     LWP_MutexLock(_i2cMutex);
     u32 level;
-    u16 output;
     u8 ret;
     int i;
     if (error != NULL) *error = 0;
@@ -653,6 +652,76 @@ void i2c_writeBuffer(u8 addr, u8 reg, u8* data, u16 len, u8* error) {
             _CPU_ISR_Restore(level);
             LWP_MutexUnlock(_i2cMutex);
             return;
+        }
+    }
+
+    i2c_stop();
+
+    _CPU_ISR_Restore(level);
+    LWP_MutexUnlock(_i2cMutex);
+}
+
+void i2c_writeReadBuffer(u8 addr, u8 reg, u8* dataOut, u16 lenOut, u8* dataIn, u16 lenIn, u8* error) {
+    LWP_MutexLock(_i2cMutex);
+    u32 level;
+    u8 ret;
+    u16 i;
+
+    if (error != NULL) *error = 0;
+
+    _CPU_ISR_Disable(level);
+
+    i2c_start();
+
+    ret = i2c_sendByte(addr);
+    if (!ret) {
+        i2c_stop();
+        printf("Error at line: %d\n", __LINE__);
+        if (error != NULL) *error = 1;
+        _CPU_ISR_Restore(level);
+        LWP_MutexUnlock(_i2cMutex);
+        return;
+    }
+
+    ret = i2c_sendByte(reg);
+    if (!ret) {
+        i2c_stop();
+        printf("Error at line: %d\n", __LINE__);
+        if (error != NULL) *error = 1;
+        _CPU_ISR_Restore(level);
+        LWP_MutexUnlock(_i2cMutex);
+        return;
+    }
+
+    while(lenOut--) {
+        ret = i2c_sendByte(*dataOut++);
+        if (!ret) {
+            i2c_stop();
+            printf("Error at line: %d\n", __LINE__);
+            if (error != NULL) *error = 1;
+            _CPU_ISR_Restore(level);
+            LWP_MutexUnlock(_i2cMutex);
+            return;
+        }
+    }
+
+    i2c_restart();
+
+    ret = i2c_sendByte(addr | 1); //Read
+    if (!ret) {
+        i2c_stop();
+        printf("Error at line: %d\n", __LINE__);
+        if (error != NULL) *error = 1;
+        _CPU_ISR_Restore(level);
+        LWP_MutexUnlock(_i2cMutex);
+        return;
+    }
+    for (i = 0; i < lenIn; i++) {
+        dataIn[i] = i2c_getByte();
+        if (i == lenIn - 1) {
+            i2c_nack();
+        } else {
+            i2c_ack();
         }
     }
 
