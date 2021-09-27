@@ -112,15 +112,14 @@ static int lua_Theme_getBackgrounds(lua_State* L) {
     if (dp != NULL) {
         while ((dirp = readdir(dp)) != NULL) {
             if (dirp->d_name == NULL)
-            continue;
+                continue;
 
             if (dirp->d_name[0] == '.')
                 continue;
 
-            if (dirp->d_type == DT_DIR)
-                continue;
-
-            luaSetArrayStringField(L, index++, dirp->d_name);
+            //Only include .png files in the list
+            if (!strncmp(&dirp->d_name[strlen(dirp->d_name) - 4], ".png", 4) && dirp->d_type == DT_REG)
+                luaSetArrayStringField(L, index++, dirp->d_name);
         }
         closedir(dp);
     }
