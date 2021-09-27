@@ -18,7 +18,11 @@ function drawSystemStatus(onFocus)
     if PMS2.isConnected() then
         local chargeStatus = PMS2.getChargeStatus()
 
-        menuSystem.printLine("PMS2 detected")
+        if PMS2.isLite() then
+            menuSystem.printLine("PMS Lite detected")
+        else
+            menuSystem.printLine("PMS2 detected")
+        end
         if chargeStatus == PMS2.CHG_STAT_NOT_CHG then
             menuSystem.printLine("Not charging")
         elseif chargeStatus == PMS2.CHG_STAT_PRE_CHG or chargeStatus == PMS2.CHG_STAT_FAST_CHG then
