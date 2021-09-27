@@ -22,11 +22,19 @@ function initLoader()
         end
     end
 
-    for i = 1, #loaderBackgrounds do
-        Sys.debug("Background: " .. loaderBackgrounds[i])
-        if loaderBackgrounds[i] == loaderCurBackground then
-            loaderCurBackgroundId = i
+    if loaderCurBackground == "None" then
+        loaderCurBackgroundId = 0
+    else
+        for i = 1, #loaderBackgrounds do
+            Sys.debug("Background: " .. loaderBackgrounds[i])
+            if loaderBackgrounds[i] == loaderCurBackground then
+                loaderCurBackgroundId = i
+            end
         end
+    end
+
+    if #loaderBackgrounds == 0 then
+        loaderCurBackgroundId = 0
     end
 end
 
@@ -40,7 +48,11 @@ function drawLoader(onFocus)
     menuSystem.printLine("Selected theme:", loaderSelected.id)
     menuSystem.printLineValue(loaderThemes[loaderCurThemeId], loaderThemes[loaderCurThemeId] ~= loaderCurTheme)
     menuSystem.printLine("Background image:", loaderSelected.id)
-    menuSystem.printLineValue(loaderBackgrounds[loaderCurBackgroundId], loaderBackgrounds[loaderCurBackgroundId] ~= loaderCurBackground)
+    if loaderCurBackgroundId == 0 then
+        menuSystem.printLineValue("None", "None" ~= loaderCurBackground)
+    else
+        menuSystem.printLineValue(loaderBackgrounds[loaderCurBackgroundId], loaderBackgrounds[loaderCurBackgroundId] ~= loaderCurBackground)
+    end
     menuSystem.printLine("Save config", loaderSelected.id)
     menuSystem.printLine("Boot priiloader", loaderSelected.id)
     menuSystem.printLine("Run installer", loaderSelected.id)
@@ -70,7 +82,10 @@ function handleLoader(onFocus)
                 Theme.setTheme(loaderThemes[loaderCurThemeId])
                 Sys.reboot()
             end
-            if loaderBackgrounds[loaderCurBackgroundId] ~= loaderCurBackground then
+            if loaderCurBackgroundId == 0  and "None" ~= loaderCurBackground then
+                Theme.setBackground("None")
+                Sys.reboot()
+            elseif loaderBackgrounds[loaderCurBackgroundId] ~= loaderCurBackground then
                 Theme.setBackground(loaderBackgrounds[loaderCurBackgroundId])
                 Sys.reboot()
             end
@@ -88,7 +103,7 @@ function handleLoader(onFocus)
         elseif loaderSelected == loaderSelectedEnum.selBackground then
             loaderCurBackgroundId = loaderCurBackgroundId + 1
             if loaderCurBackgroundId > #loaderBackgrounds then
-                loaderCurBackgroundId = 1
+                loaderCurBackgroundId = 0
             end
         end
     elseif down.BUTTON_LEFT then
@@ -99,7 +114,7 @@ function handleLoader(onFocus)
             end
         elseif loaderSelected == loaderSelectedEnum.selBackground then
             loaderCurBackgroundId = loaderCurBackgroundId - 1
-            if loaderCurBackgroundId < 1 then
+            if loaderCurBackgroundId < 0 then
                 loaderCurBackgroundId = #loaderBackgrounds
             end
         end

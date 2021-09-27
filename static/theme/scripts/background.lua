@@ -3,10 +3,19 @@ function init()
     loaderCurBackground = Theme.getLoadedBackground()
     loaderCurBackgroundId = 1
 
-    for i = 1, #loaderBackgrounds do
-        Sys.debug("Background: " .. loaderBackgrounds[i])
-        if loaderBackgrounds[i] == loaderCurBackground then
-            loaderCurBackgroundId = i
+    --Return if no backgrounds were found
+    if #loaderBackgrounds == 0 then
+        return
+    end
+
+    if loaderCurBackground == "None" then
+        return
+    else
+        for i = 1, #loaderBackgrounds do
+            Sys.debug("Background: " .. loaderBackgrounds[i] .. "\n")
+            if loaderBackgrounds[i] == loaderCurBackground then
+                loaderCurBackgroundId = i
+            end
         end
     end
 
