@@ -56,7 +56,7 @@
 #define ERR_WRONGCRC            0xFC
 #define ERR_WRONGADDR           0xFB
 
-#define PMS_FLASH_RETRIES       5
+#define PMS_FLASH_RETRIES       20
 
 #define PMS_POLLUPDATE_TIMEOUT  200
 
@@ -85,7 +85,6 @@ namespace PMS2 {
     static void* updateThread(void* arg) {
         u8 error;
         u8 tempBuffer[5 + PGM_BLOCK_SIZE];
-        u8 readFlashBuffer[3 + PGM_BLOCK_SIZE]; //ERROR(1) + BLOCK(PGM_BLOCK_SIZE) + CRC(2)
         u8 unlockBuffer[4] = {0x50, 0x4D , 0x53, 0x32};
         const u8 PMS2Magic[8] = {'P', 'M', 'S', '2', ' ', '4', 'L', 'T'};
         const u8 PMS2LMagic[8] = {'P', 'M', 'S', '2', 'L', '4', 'L', 'T'};
@@ -157,18 +156,10 @@ namespace PMS2 {
             while (retries-- && !flashed) {
                 i2c_writeReadBuffer(curPMSAddress, CMD_WRITEFLASH, tempBuffer, 5 + PGM_BLOCK_SIZE, &writeFlashError, 1, &error);
 
-                if (writeFlashError == ERR_NONE) {
-                    //Read back written flash and compare
-                    //We only need to send out address for CMD_READFLASH
-                    i2c_writeReadBuffer(curPMSAddress, CMD_READFLASH, tempBuffer, 3, readFlashBuffer, 3 + PGM_BLOCK_SIZE, &error);
-                    if (readFlashBuffer[0] == ERR_NONE && !memcmp(&readFlashBuffer[1], &tempBuffer[3], 2 + PGM_BLOCK_SIZE)) {
-                        flashed = true;
-                    } else {
-                        Debug("%06X: write mismatch\n", address);
-                    }
-                } else {
+                if (writeFlashError == ERR_NONE)
+                    flashed = true;
+                else
                     Debug("%06X: writeFlashError: %d\n", address, writeFlashError);
-                }
             }
 
             if (!flashed) {
