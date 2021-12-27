@@ -43,10 +43,15 @@ namespace PMS2 {
     float NTCToCelsius(u16 ntc);
     u16 CelsiusToNTC(float temperature);
     float getNTC();
+    u8 getFanSpeed();
     void setFanSpeed(u8 speed);
     void freeFan();
+    float getFanPIDkP();
     void setFanPIDkP(float kP);
+    float getFanPIDkI();
     void setFanPIDkI(float kI);
+    float getFanPIDkD();
     void setFanPIDkD(float kD);
+    float getFanPIDTarget();
     void setFanPIDTarget(float target);
 };

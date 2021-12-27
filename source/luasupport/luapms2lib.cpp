@@ -380,6 +380,17 @@ static int lua_PMS2_getNTC(lua_State* L) {
     return 1;
 }
 
+static int lua_PMS2_getFanSpeed(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushinteger(L, PMS2::getFanSpeed());
+
+    return 1;
+}
+
 static int lua_PMS2_setFanSpeed(lua_State* L) {
     int argc = lua_gettop(L);
     if (argc != 1) {
@@ -402,6 +413,17 @@ static int lua_PMS2_freeFan(lua_State* L) {
     return 0;
 }
 
+static int lua_PMS2_getFanPIDkP(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushnumber(L, PMS2::getFanPIDkP());
+
+    return 1;
+}
+
 static int lua_PMS2_setFanPIDkP(lua_State* L) {
     int argc = lua_gettop(L);
     if (argc != 1) {
@@ -411,6 +433,17 @@ static int lua_PMS2_setFanPIDkP(lua_State* L) {
     PMS2::setFanPIDkP(luaL_checknumber(L, 1));
 
     return 0;
+}
+
+static int lua_PMS2_getFanPIDkI(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushnumber(L, PMS2::getFanPIDkI());
+
+    return 1;
 }
 
 static int lua_PMS2_setFanPIDkI(lua_State* L) {
@@ -424,6 +457,17 @@ static int lua_PMS2_setFanPIDkI(lua_State* L) {
     return 0;
 }
 
+static int lua_PMS2_getFanPIDkD(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushnumber(L, PMS2::getFanPIDkD());
+
+    return 1;
+}
+
 static int lua_PMS2_setFanPIDkD(lua_State* L) {
     int argc = lua_gettop(L);
     if (argc != 1) {
@@ -433,6 +477,17 @@ static int lua_PMS2_setFanPIDkD(lua_State* L) {
     PMS2::setFanPIDkD(luaL_checknumber(L, 1));
 
     return 0;
+}
+
+static int lua_PMS2_getFanPIDTarget(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushnumber(L, PMS2::getFanPIDTarget());
+
+    return 1;
 }
 
 static int lua_PMS2_setFanPIDTarget(lua_State* L) {
@@ -481,11 +536,16 @@ static const luaL_Reg PMS2_functions[] = {
     {"flashConfig", lua_PMS2_flashConfig},
     {"reconfigureMAX", lua_PMS2_reconfigureMAX},
     {"getNTC", lua_PMS2_getNTC},
+    {"getFanSpeed", lua_PMS2_getFanSpeed},
     {"setFanSpeed", lua_PMS2_setFanSpeed},
     {"freeFan", lua_PMS2_freeFan},
+    {"getFanPIDkP", lua_PMS2_getFanPIDkP},
     {"setFanPIDkP", lua_PMS2_setFanPIDkP},
+    {"getFanPIDkI", lua_PMS2_getFanPIDkI},
     {"setFanPIDkI", lua_PMS2_setFanPIDkI},
+    {"getFanPIDkD", lua_PMS2_getFanPIDkD},
     {"setFanPIDkD", lua_PMS2_setFanPIDkD},
+    {"getFanPIDTarget", lua_PMS2_getFanPIDTarget},
     {"setFanPIDTarget", lua_PMS2_setFanPIDTarget},
     {NULL, NULL}
 };

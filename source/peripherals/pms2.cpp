@@ -882,6 +882,29 @@ namespace PMS2 {
         return ret;
     }
 
+    u8 getFanSpeed() {
+        u8 error;
+        static u64 lastTime = 0;
+        static u8 ret = 0;
+
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return ret;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        if ((diff_msec(gettime(), lastTime) < PMS_POLLUPDATE_TIMEOUT) && lastTime) {
+            return ret;
+        }
+        lastTime = gettime();
+        ret = i2c_read8(curPMSAddress, CMD_FAN, &error);
+
+        return ret;
+    }
+
     void setFanSpeed(u8 speed) {
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
@@ -912,6 +935,30 @@ namespace PMS2 {
         i2c_writeBuffer(curPMSAddress, CMD_FAN, tempBuffer, 5, &error);
     }
 
+    float getFanPIDkP() {
+        u8 error;
+        static u64 lastTime = 0;
+        static float ret = 0;
+
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return ret;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        if ((diff_msec(gettime(), lastTime) < PMS_POLLUPDATE_TIMEOUT) && lastTime) {
+            return ret;
+        }
+        lastTime = gettime();
+        i2c_readBuffer(curPMSAddress, CMD_PID_KP, &error, (u8*)&ret, 4);
+        swap32((u8*)&ret);
+
+        return ret;
+    }
+
     void setFanPIDkP(float kP) {
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
@@ -925,6 +972,30 @@ namespace PMS2 {
         u8 error;
         swap32((u8*)&kP);
         i2c_writeBuffer(curPMSAddress, CMD_PID_KP, (u8*)&kP, 4, &error);
+    }
+
+    float getFanPIDkI() {
+        u8 error;
+        static u64 lastTime = 0;
+        static float ret = 0;
+
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return ret;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        if ((diff_msec(gettime(), lastTime) < PMS_POLLUPDATE_TIMEOUT) && lastTime) {
+            return ret;
+        }
+        lastTime = gettime();
+        i2c_readBuffer(curPMSAddress, CMD_PID_KI, &error, (u8*)&ret, 4);
+        swap32((u8*)&ret);
+
+        return ret;
     }
 
     void setFanPIDkI(float kI) {
@@ -942,6 +1013,30 @@ namespace PMS2 {
         i2c_writeBuffer(curPMSAddress, CMD_PID_KI, (u8*)&kI, 4, &error);
     }
 
+    float getFanPIDkD() {
+        u8 error;
+        static u64 lastTime = 0;
+        static float ret = 0;
+
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return ret;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        if ((diff_msec(gettime(), lastTime) < PMS_POLLUPDATE_TIMEOUT) && lastTime) {
+            return ret;
+        }
+        lastTime = gettime();
+        i2c_readBuffer(curPMSAddress, CMD_PID_KD, &error, (u8*)&ret, 4);
+        swap32((u8*)&ret);
+
+        return ret;
+    }
+
     void setFanPIDkD(float kD) {
         if (!updateMutex)
             LWP_MutexInit(&updateMutex, false);
@@ -955,6 +1050,30 @@ namespace PMS2 {
         u8 error;
         swap32((u8*)&kD);
         i2c_writeBuffer(curPMSAddress, CMD_PID_KD, (u8*)&kD, 4, &error);
+    }
+
+    float getFanPIDTarget() {
+        u8 error;
+        static u64 lastTime = 0;
+        static float ret = 0;
+
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return ret;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        if ((diff_msec(gettime(), lastTime) < PMS_POLLUPDATE_TIMEOUT) && lastTime) {
+            return ret;
+        }
+        lastTime = gettime();
+        i2c_readBuffer(curPMSAddress, CMD_PID_TARGET, &error, (u8*)&ret, 4);
+        swap32((u8*)&ret);
+
+        return ret;
     }
 
     void setFanPIDTarget(float target) {
