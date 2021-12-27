@@ -9,6 +9,8 @@ endif
 
 include $(DEVKITPPC)/wii_rules
 
+SUBPROJECTS := installer
+
 # Must be integers
 RVLOADERVERSION_MAJOR := 1
 RVLOADERVERSION_MINOR := 4
@@ -22,11 +24,11 @@ RVLOADERVERSION_MINOR := 4
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source source/titles source/gui \
-				source/luasupport source/peripherals
+				source/luasupport source/peripherals common/source
 DATA		:=	data
 TEXTURES	:=	textures
 INCLUDES	:=	include include/titles include/gui \
-				include/peripherals
+				include/peripherals common/include
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -108,10 +110,19 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
 export LIBPATHS	:= -L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
-.PHONY: $(BUILD) clean
+.PHONY: $(BUILD) clean $(SUBPROJECTS)
+
+all: $(BUILD)
 
 #---------------------------------------------------------------------------------
-$(BUILD):
+installer:
+	@echo " "
+	@echo "Building RVLoader installer"
+	@echo " "
+	$(MAKE) -C installer
+
+#---------------------------------------------------------------------------------
+$(BUILD): $(SUBPROJECTS)
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 	@cp $(OUTPUT).dol boot.dol
@@ -119,6 +130,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
+	$(MAKE) -C installer clean
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------

@@ -9,6 +9,8 @@ endif
 
 include $(DEVKITPPC)/wii_rules
 
+SUBPROJECTS := bootloader
+
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -17,9 +19,9 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source
+SOURCES		:=	source ../common/source
 DATA		:=	data
-INCLUDES	:=	include
+INCLUDES	:=	include ../common/include
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -93,10 +95,19 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
 export LIBPATHS	:= -L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
-.PHONY: $(BUILD) clean
+.PHONY: $(BUILD) clean $(SUBPROJECTS)
+
+all: $(BUILD)
 
 #---------------------------------------------------------------------------------
-$(BUILD):
+bootloader:
+	@echo " "
+	@echo "Building RVLoader bootloader"
+	@echo " "
+	$(MAKE) -C ../bootloader
+
+#---------------------------------------------------------------------------------
+$(BUILD): $(SUBPROJECTS)
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 	@cp $(TARGET).dol boot.dol
@@ -104,6 +115,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
+	$(MAKE) -C ../bootloader clean
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------
