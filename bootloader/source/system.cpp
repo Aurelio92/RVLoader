@@ -10,6 +10,7 @@
 #include <wiiuse/wpad.h>
 #include <unistd.h>
 #include "dolbooter_bin.h"
+#include "usbstorage_ogc.h"
 
 typedef void (*entrypoint) (void);
 
@@ -101,8 +102,8 @@ bool initFAT() {
     bool usbInserted = false;
 
     /*for (int i = 0; i < 50 && !usbInserted; i++) {
-        Debug("%u %u\n", __io_usbstorage.startup(), __io_usbstorage.isInserted());
-        if (__io_usbstorage.startup() && __io_usbstorage.isInserted()) {
+        Debug("%u %u\n", __io_custom_usbstorage.startup(), __io_custom_usbstorage.isInserted());
+        if (__io_custom_usbstorage.startup() && __io_custom_usbstorage.isInserted()) {
             usbInserted = true;
         }
         udelay(100000); //100ms
@@ -111,14 +112,14 @@ bool initFAT() {
     if (!usbInserted)
         return false;
 
-    if (fatMount("usb", &__io_usbstorage, 0, 32, 64)) {
+    if (fatMount("usb", &__io_custom_usbstorage, 0, 32, 64)) {
         chdir("usb:/");
         _fatInitialized = true;
         return true;
     }*/
 
     for (int i = 0; i < 50 && !_fatInitialized; i++) {
-        if (fatMountSimple("usb", &__io_usbstorage)) {
+        if (fatMountSimple("usb", &__io_custom_usbstorage)) {
             chdir("usb:/");
             _fatInitialized = true;
             return true;
@@ -128,9 +129,9 @@ bool initFAT() {
 
     //Wait up to 2 seconds
     /*for (int i = 0; i < 20 && !_fatInitialized; i++) {
-        if (__io_usbstorage.startup()) { //Try USB
-            if (__io_usbstorage.isInserted()) {
-                if (fatMountSimple("usb", &__io_usbstorage)) {
+        if (__io_custom_usbstorage.startup()) { //Try USB
+            if (__io_custom_usbstorage.isInserted()) {
+                if (fatMountSimple("usb", &__io_custom_usbstorage)) {
                     chdir("usb:/");
                     _fatInitialized = true;
                     return true;
@@ -146,7 +147,7 @@ static void shutdown() {
     if (_fatInitialized) {
         _fatInitialized = false;
         fatUnmount("usb:/");
-        __io_usbstorage.shutdown();
+        __io_custom_usbstorage.shutdown();
     }
 
     USB_Deinitialize();
