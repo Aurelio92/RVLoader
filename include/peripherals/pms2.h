@@ -6,6 +6,11 @@
 #define CHG_STAT_DONE       3
 
 namespace PMS2 {
+    typedef struct {
+        u8 min;
+        u8 max;
+    } fanRange_t;
+
     bool isLite();
     u32 getUpdateProgress();
     bool isUpdating();
@@ -54,4 +59,6 @@ namespace PMS2 {
     void setFanPIDkD(float kD);
     float getFanPIDTarget();
     void setFanPIDTarget(float target);
+    fanRange_t getFanRange();
+    void setFanRange(fanRange_t range);
 };

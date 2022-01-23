@@ -501,6 +501,43 @@ static int lua_PMS2_setFanPIDTarget(lua_State* L) {
     return 0;
 }
 
+static int lua_PMS2_getFanRange(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    PMS2::fanRange_t range = PMS2::getFanRange();
+
+    lua_newtable(L);
+    luaSetTableIntField(L, "min", range.min);
+    luaSetTableIntField(L, "max", range.max);
+
+    return 1;
+}
+
+static int lua_PMS2_setFanRange(lua_State* L) {
+    PMS2::fanRange_t range;
+    int argc = lua_gettop(L);
+    if (argc != 1) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    luaL_checktype(L, 1, LUA_TTABLE);
+    //Grab fields
+    lua_getfield(L, 1, "min");
+    lua_getfield(L, 1, "max");
+
+    range.min = luaL_checkinteger(L, -2);
+    range.max = luaL_checkinteger(L, -1);
+
+    lua_pop(L, 3); //Pop table and range data
+
+    PMS2::setFanRange(range);
+
+    return 0;
+}
+
 static const luaL_Reg PMS2_functions[] = {
     {"isLite", lua_PMS2_isLite},
     {"getUpdateProgress", lua_PMS2_getUpdateProgress},
@@ -547,6 +584,8 @@ static const luaL_Reg PMS2_functions[] = {
     {"setFanPIDkD", lua_PMS2_setFanPIDkD},
     {"getFanPIDTarget", lua_PMS2_getFanPIDTarget},
     {"setFanPIDTarget", lua_PMS2_setFanPIDTarget},
+    {"getFanRange", lua_PMS2_getFanRange},
+    {"setFanRange", lua_PMS2_setFanRange},
     {NULL, NULL}
 };
 
@@ -560,8 +599,9 @@ void luaRegisterPMS2Lib(lua_State* L) {
     luaSetTableIntField(L, "PWR_BTN_ACTHI", 0x02);
     luaSetTableIntField(L, "PWR_BTN_POLARITY", 0x02);
     luaSetTableIntField(L, "STAT_LED_STD", 0x00);
-    luaSetTableIntField(L, "STAT_LED_WS", 0x04);
-    luaSetTableIntField(L, "STAT_LED_TYPE", 0x04);
+    luaSetTableIntField(L, "STAT_LED_WSD", 0x04);
+    luaSetTableIntField(L, "STAT_LED_WSB", 0x08);
+    luaSetTableIntField(L, "STAT_LED_TYPE", 0x0C);
     luaSetTableIntField(L, "CHG_STAT_NOT_CHG", CHG_STAT_NOT_CHG);
     luaSetTableIntField(L, "CHG_STAT_PRE_CHG", CHG_STAT_PRE_CHG);
     luaSetTableIntField(L, "CHG_STAT_FAST_CHG", CHG_STAT_FAST_CHG);

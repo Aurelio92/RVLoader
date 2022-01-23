@@ -8,6 +8,7 @@
 #include <ogc/lwp_threads.h>
 #include "i2c.h"
 #include "debug.h"
+#include "pms2.h"
 
 #define PMS2_ADDR (0x20 << 1)
 #define PMS2L_ADDR (0x21 << 1)
@@ -27,6 +28,7 @@
 #define CMD_PD_PROFILES         0x09
 #define CMD_CONF0               0x0A
 #define CMD_SHIPPINGMODE        0x0B
+#define CMD_FANRANGE            0x0C
 
 #define CMD_CHARGECURRENT       0x10
 #define CMD_TERMCURRENT         0x11
@@ -328,6 +330,8 @@ namespace PMS2 {
         }
         lastTime = gettime();
         ret = i2c_read8(curPMSAddress, CMD_CONF0, &error);
+
+        Debug("Conf0: %02X\n", ret);
         return ret;
     }
 
@@ -1089,5 +1093,42 @@ namespace PMS2 {
         u8 error;
         swap32((u8*)&target);
         i2c_writeBuffer(curPMSAddress, CMD_PID_TARGET, (u8*)&target, 4, &error);
+    }
+
+    fanRange_t getFanRange() {
+        u8 error;
+        static u64 lastTime = 0;
+        static fanRange_t ret = {0, 255};
+
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return ret;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        if ((diff_msec(gettime(), lastTime) < PMS_POLLUPDATE_TIMEOUT) && lastTime) {
+            return ret;
+        }
+        lastTime = gettime();
+        i2c_readBuffer(curPMSAddress, CMD_FANRANGE, &error, (u8*)&ret, 2);
+
+        return ret;
+    }
+
+    void setFanRange(fanRange_t range) {
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        u8 error;
+        i2c_writeBuffer(curPMSAddress, CMD_FANRANGE, (u8*)&range, 2, &error);
     }
 };
