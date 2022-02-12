@@ -13,7 +13,7 @@ SUBPROJECTS := installer
 
 # Must be integers
 RVLOADERVERSION_MAJOR := 1
-RVLOADERVERSION_MINOR := 5
+RVLOADERVERSION_MINOR := 6
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output

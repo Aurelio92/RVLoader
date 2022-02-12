@@ -6,6 +6,7 @@
 #include "luasupport.h"
 #include "system.h"
 #include "debug.h"
+#include "sha1.h"
 
 GuiLuaElement::GuiLuaElement() {
     L = NULL;
@@ -18,8 +19,23 @@ GuiLuaElement::~GuiLuaElement() {
     lua_close(L);
 }
 
+int GuiLuaElement::compilerWriter(lua_State* L, const void* p, size_t size, void* u) {
+    return (fwrite(p,size,1,(FILE*)u)!=1) && (size!=0);
+}
+
+extern "C" {
+    void SHA1File(const char* filename, unsigned char* outbuf);
+}
+
 void GuiLuaElement::onActiveEvent() {
     if (hasToLoadScript) {
+        FILE* SHA1Fp;
+        u8 scriptSHA1[20];
+        u8 compiledScriptSHA1[20];
+
+        memset(scriptSHA1, 0, 20);
+        memset(compiledScriptSHA1, 0, 20);
+
         hasToLoadScript = false;
 
         char oldPath[PATH_MAX];
@@ -30,9 +46,44 @@ void GuiLuaElement::onActiveEvent() {
 
         luaSetGuiParentWindow((GuiWindow*)this->parentElement);
 
-        if (int err = luaL_dofile(L, scriptPath.c_str())) {
+        if (int err = luaL_loadfile(L, scriptPath.c_str())) {
             systemError("LUA error! loadScript", "Error %d %s", err, lua_tostring(L, -1));
         }
+
+        //Read the last compiled script SHA1 hash
+        SHA1Fp = fopen((scriptPath + ".sha").c_str(), "rb");
+        if (SHA1Fp) {
+            if (fread(compiledScriptSHA1, 1, 20, SHA1Fp) != 20)
+                memset(compiledScriptSHA1, 0, 20);
+            fclose(SHA1Fp);
+        }
+
+        SHA1File(scriptPath.c_str(), scriptSHA1);
+
+        //Check if the LUA script was changed wrt the last compiled one
+        if (memcmp(scriptSHA1, compiledScriptSHA1, 20)) {
+            //Compile source again
+            FILE* compiledFP = fopen((scriptPath + "c").c_str(), "wb");
+            if (compiledFP) {
+                Debug("Compiling %s\n", (scriptPath + "c").c_str());
+                lua_dump(L, GuiLuaElement::compilerWriter, compiledFP, 1);
+                if (!ferror(compiledFP)) {
+                    fclose(compiledFP);
+                }
+            }
+
+            //Save script SHA1
+            SHA1Fp = fopen((scriptPath + ".sha").c_str(), "wb");
+            if (SHA1Fp) {
+                fwrite(scriptSHA1, 1, 20, SHA1Fp);
+                fclose(SHA1Fp);
+            }
+        }
+
+        if (int err = lua_pcall(L, 0, LUA_MULTRET, 0)) {
+            systemError("LUA error! loadScript", "Error %d %s", err, lua_tostring(L, -1));
+        }
+
         //Call init in LUA if it exists
         lua_getglobal(L, "init");
         if (int err = lua_pcall(L, 0, 0, 0)) {

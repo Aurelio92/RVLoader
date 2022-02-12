@@ -330,8 +330,6 @@ namespace PMS2 {
         }
         lastTime = gettime();
         ret = i2c_read8(curPMSAddress, CMD_CONF0, &error);
-
-        Debug("Conf0: %02X\n", ret);
         return ret;
     }
 

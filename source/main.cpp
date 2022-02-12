@@ -7,6 +7,9 @@
 #include <libgui.h>
 #include <mxml.h>
 #include <lua.hpp>
+
+#include <lauxlib.h>
+
 #include <vector>
 #include <algorithm>
 #include <clocale>
@@ -120,6 +123,9 @@ int main(int argc, char **argv) {
         i2c_setMode(I2C_MODE_PUSHPULL);
 
     DebugStart();
+
+    //Set environment for lua interpreter (used by 'require')
+    setenv("LUA_PATH", "./?.luac;./?.lua", 1);
 
     PAD_Init();
     SI_DisablePolling(0xf0000000);

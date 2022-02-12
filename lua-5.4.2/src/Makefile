@@ -25,7 +25,7 @@ MYLDFLAGS=
 MYLIBS=
 MYOBJS=
 
-LUA_PATH= ./?.lua
+LUA_PATH= ./?.luac;./?.lua
 
 # Special flags for compiler modules; -Os reduces code size.
 CMCFLAGS=
@@ -101,7 +101,7 @@ guess:
 	@$(MAKE) `$(UNAME)`
 
 wii:
-	$(MAKE) $(ALL_A) AR="$(DEVKITPPC)/bin/powerpc-eabi-gcc-ar -rc" CC="$(DEVKITPPC)/bin/powerpc-eabi-gcc" RANLIB="$(DEVKITPPC)/bin/powerpc-eabi-gcc-ranlib" CFLAGS="-g -O2 -Wall -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float -DLUA_32BITS -DLUA_COMPAT_5_3 -DLUA_PATH_DEFAULT=\\\"$(LUA_PATH)\\\"" SYSLDFLAGS="-g -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float"
+	$(MAKE) $(ALL_A) AR="$(DEVKITPPC)/bin/powerpc-eabi-gcc-ar -rc" CC="$(DEVKITPPC)/bin/powerpc-eabi-gcc" RANLIB="$(DEVKITPPC)/bin/powerpc-eabi-gcc-ranlib" CFLAGS="-g -O2 -Wall -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float -DLUA_32BITS -DLUA_COMPAT_5_3 -DLUA_PATH_DEFAULT='\"$(LUA_PATH)\"'" SYSLDFLAGS="-g -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float"
 
 AIX aix:
 	$(MAKE) $(ALL) CC="xlc" CFLAGS="-O2 -DLUA_USE_POSIX -DLUA_USE_DLOPEN" SYSLIBS="-ldl" SYSLDFLAGS="-brtl -bexpall"

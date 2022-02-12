@@ -13,6 +13,8 @@ class GuiLuaElement : public GuiElement {
 
         virtual void initLUA();
 
+        static int compilerWriter(lua_State* L, const void* p, size_t size, void* u);
+
     public:
         GuiLuaElement();
         ~GuiLuaElement();
