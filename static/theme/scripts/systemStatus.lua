@@ -1,40 +1,58 @@
-function initSystemStatus()
+require 'scripts/enum'
+require 'scripts/class'
+require 'scripts/menuSystem'
+require 'scripts/settingsMenu'
+
+statusSettings = class(SettingsMenu)
+
+function statusSettings:init(font, lineHeight, columnWidth, sideMargin)
+    SettingsMenu.init(self, font, lineHeight, columnWidth, sideMargin)
 end
 
-function drawSystemStatus(onFocus)
-    menuSystem.reset()
+function statusSettings:draw(onFocus)
+    self.menuSystem:start(onFocus)
     if Gcp.isV1() then
-        menuSystem.printLine("GC+1.0 detected")
+        self.menuSystem:printLine("GC+1.0 detected")
     elseif Gcp.isV2() then
-        menuSystem.printLine("GC+2.0 detected")
+        self.menuSystem:printLine("GC+2.0 detected")
     end
     if UAMP.isConnected() then
-        menuSystem.printLine("UAMP HUD detected")
+        self.menuSystem:printLine("UAMP HUD detected")
     end
     if Time.available() then
-        menuSystem.printLine("MX-Chip detected")
+        self.menuSystem:printLine("MX-Chip detected")
     end
 
     if PMS2.isConnected() then
         local chargeStatus = PMS2.getChargeStatus()
 
         if PMS2.isLite() then
-            menuSystem.printLine("PMS Lite detected")
+            self.menuSystem:printLine("PMS Lite detected")
         else
-            menuSystem.printLine("PMS2 detected")
+            self.menuSystem:printLine("PMS2 detected")
         end
 
         if chargeStatus == PMS2.CHG_STAT_NOT_CHG then
-            menuSystem.printLine("Not charging")
+            self.menuSystem:printLine("Not charging")
         elseif chargeStatus == PMS2.CHG_STAT_PRE_CHG or chargeStatus == PMS2.CHG_STAT_FAST_CHG then
-            menuSystem.printLine("Charging")
+            self.menuSystem:printLine("Charging")
         else
-            menuSystem.printLine("Charging complete")
+            self.menuSystem:printLine("Charging complete")
         end
-        menuSystem.printLine(string.format("Battery SOC: %.1f", PMS2.getSOC()) .. "%%")
-        menuSystem.printLine(string.format("Battery voltage: %.0f mV", PMS2.getVCell()))
+        self.menuSystem:printLine(string.format("Battery SOC: %.1f", PMS2.getSOC()) .. "%%")
+        self.menuSystem:printLine(string.format("Battery voltage: %.0f mV", PMS2.getVCell()))
         if not PMS2.isLite() then
-            menuSystem.printLine(string.format("Battery current: %.0f mA", PMS2.getCurrent()))
+            self.menuSystem:printLine(string.format("Battery current: %.0f mA", PMS2.getCurrent()))
         end
+    end
+    self.menuSystem:finish()
+end
+
+function statusSettings:handleInputs(onFocus)
+    local down = Pad.gendown(0)
+
+    if down.BUTTON_B then
+        handlingLeftColumn = true
+        return
     end
 end

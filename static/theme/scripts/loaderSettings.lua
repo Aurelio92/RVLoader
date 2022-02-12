@@ -1,74 +1,75 @@
---[[
-Selected theme
-Launch installer
+require 'scripts/enum'
+require 'scripts/class'
+require 'scripts/menuSystem'
+require 'scripts/settingsMenu'
 
-]]
-function initLoader()
-    loaderSelectedEnum = enum({"selTheme", "selBackground", "saveConfig", "bootPriiloader", "runInstaller"})
-    loaderSelected = loaderSelectedEnum[1]
 
-    loaderThemes = Theme.getThemes()
-    loaderCurTheme = Theme.getLoadedTheme()
-    loaderCurThemeId = 1
+loaderSettings = class(SettingsMenu)
 
-    loaderBackgrounds = Theme.getBackgrounds()
-    loaderCurBackground = Theme.getLoadedBackground()
-    loaderCurBackgroundId = 1
+function loaderSettings:init(font, lineHeight, columnWidth, sideMargin)
+    SettingsMenu.init(self, font, lineHeight, columnWidth, sideMargin)
 
-    for i = 1, #loaderThemes do
-        Sys.debug("Theme: " .. loaderThemes[i])
-        if loaderThemes[i] == loaderCurTheme then
-            loaderCurThemeId = i
+    self.selectionEmu = enum({"selTheme", "selBackground", "saveConfig", "bootPriiloader", "runInstaller"})
+    self.selected = self.selectionEmu[1]
+
+    self.availThemes = Theme.getThemes()
+    self.curTheme = Theme.getLoadedTheme()
+    self.curThemeId = 1
+
+    self.availBackgrounds = Theme.getBackgrounds()
+    self.curBackground = Theme.getLoadedBackground()
+    self.curBackgroundId = 1
+
+    for i = 1, #self.availThemes do
+        Sys.debug("Theme: " .. self.availThemes[i] .. "\n")
+        if self.availThemes[i] == self.curTheme then
+            self.curThemeId = i
         end
     end
 
-    if loaderCurBackground == "None" then
-        loaderCurBackgroundId = 0
+    if self.curBackground == "None" then
+        self.curBackgroundId = 0
     else
-        for i = 1, #loaderBackgrounds do
-            Sys.debug("Background: " .. loaderBackgrounds[i])
-            if loaderBackgrounds[i] == loaderCurBackground then
-                loaderCurBackgroundId = i
+        for i = 1, #self.availBackgrounds do
+            Sys.debug("Background: " .. self.availBackgrounds[i] .. "\n")
+            if self.availBackgrounds[i] == self.curBackground then
+                self.curBackgroundId = i
             end
         end
     end
 
-    if #loaderBackgrounds == 0 then
-        loaderCurBackgroundId = 0
+    if #self.availBackgrounds == 0 then
+        self.curBackgroundId = 0
     end
 end
 
-function drawLoader(onFocus)
-    local colWidth = getDimensions()[1] - leftColumnWidth
-    if onFocus then
-        Gfx.drawRectangle(0, (loaderSelected.id - 1) * lineHeight, colWidth, lineHeight, Gfx.RGBA8(0x1F, 0x22, 0x27, 0xFF));
-    end
-
-    menuSystem.reset()
-    menuSystem.printLine("Selected theme:", loaderSelected.id)
-    menuSystem.printLineValue(loaderThemes[loaderCurThemeId], loaderThemes[loaderCurThemeId] ~= loaderCurTheme)
-    menuSystem.printLine("Background image:", loaderSelected.id)
-    if loaderCurBackgroundId == 0 then
-        menuSystem.printLineValue("None", "None" ~= loaderCurBackground)
+function loaderSettings:draw(onFocus)
+    self.menuSystem:start(onFocus)
+    self.menuSystem:printLine("Selected theme:", self.selected.id)
+    self.menuSystem:printLineValue(self.availThemes[self.curThemeId], self.availThemes[self.curThemeId] ~= self.curTheme)
+    self.menuSystem:printLine("Background image:", self.selected.id)
+    if self.curBackgroundId == 0 then
+        self.menuSystem:printLineValue("None", "None" ~= self.curBackground)
     else
-        menuSystem.printLineValue(loaderBackgrounds[loaderCurBackgroundId], loaderBackgrounds[loaderCurBackgroundId] ~= loaderCurBackground)
+        self.menuSystem:printLineValue(self.availBackgrounds[self.curBackgroundId], self.availBackgrounds[self.curBackgroundId] ~= self.curBackground)
     end
-    menuSystem.printLine("Save config", loaderSelected.id)
-    menuSystem.printLine("Boot priiloader", loaderSelected.id)
-    menuSystem.printLine("Run installer", loaderSelected.id)
+    self.menuSystem:printLine("Save config", self.selected.id)
+    self.menuSystem:printLine("Boot priiloader", self.selected.id)
+    self.menuSystem:printLine("Run installer", self.selected.id)
+    self.menuSystem:finish()
 end
 
-function handleLoader(onFocus)
+function loaderSettings:handleInputs(onFocus)
     local down = Pad.gendown(0)
     local held = Pad.genheld(0)
-    local curId = loaderSelected.id
+    local curId = self.selected.id
 
     if down.BUTTON_B then
         handlingLeftColumn = true
         return
     end
 
-    if down.BUTTON_DOWN and curId < loaderSelectedEnum.size then
+    if down.BUTTON_DOWN and curId < self.selectionEmu.size then
         curId = curId + 1
     end
 
@@ -77,48 +78,48 @@ function handleLoader(onFocus)
     end
 
     if down.BUTTON_A then
-        if loaderSelected == loaderSelectedEnum.saveConfig then
-            if loaderThemes[loaderCurThemeId] ~= loaderCurTheme then
-                Theme.setTheme(loaderThemes[loaderCurThemeId])
+        if self.selected == self.selectionEmu.saveConfig then
+            if self.availThemes[self.curThemeId] ~= self.curTheme then
+                Theme.setTheme(self.availThemes[self.curThemeId])
                 Sys.reboot()
             end
-            if loaderCurBackgroundId == 0  and "None" ~= loaderCurBackground then
+            if self.curBackgroundId == 0  and "None" ~= self.curBackground then
                 Theme.setBackground("None")
                 Sys.reboot()
-            elseif loaderBackgrounds[loaderCurBackgroundId] ~= loaderCurBackground then
-                Theme.setBackground(loaderBackgrounds[loaderCurBackgroundId])
+            elseif self.availBackgrounds[self.curBackgroundId] ~= self.curBackground then
+                Theme.setBackground(self.availBackgrounds[self.curBackgroundId])
                 Sys.reboot()
             end
-        elseif loaderSelected == loaderSelectedEnum.bootPriiloader then
+        elseif self.selected == self.selectionEmu.bootPriiloader then
             Sys.bootPriiloader()
-        elseif loaderSelected == loaderSelectedEnum.runInstaller then
+        elseif self.selected == self.selectionEmu.runInstaller then
             Sys.bootInstaller()
         end
     elseif down.BUTTON_RIGHT then
-        if loaderSelected == loaderSelectedEnum.selTheme then
-            loaderCurThemeId = loaderCurThemeId + 1
-            if loaderCurThemeId > #loaderThemes then
-                loaderCurThemeId = 1
+        if self.selected == self.selectionEmu.selTheme then
+            self.curThemeId = self.curThemeId + 1
+            if self.curThemeId > #self.availThemes then
+                self.curThemeId = 1
             end
-        elseif loaderSelected == loaderSelectedEnum.selBackground then
-            loaderCurBackgroundId = loaderCurBackgroundId + 1
-            if loaderCurBackgroundId > #loaderBackgrounds then
-                loaderCurBackgroundId = 0
+        elseif self.selected == self.selectionEmu.selBackground then
+            self.curBackgroundId = self.curBackgroundId + 1
+            if self.curBackgroundId > #self.availBackgrounds then
+                self.curBackgroundId = 0
             end
         end
     elseif down.BUTTON_LEFT then
-        if loaderSelected == loaderSelectedEnum.selTheme then
-            loaderCurThemeId = loaderCurThemeId - 1
-            if loaderCurThemeId < 1 then
-                loaderCurThemeId = #loaderThemes
+        if self.selected == self.selectionEmu.selTheme then
+            self.curThemeId = self.curThemeId - 1
+            if self.curThemeId < 1 then
+                self.curThemeId = #self.availThemes
             end
-        elseif loaderSelected == loaderSelectedEnum.selBackground then
-            loaderCurBackgroundId = loaderCurBackgroundId - 1
-            if loaderCurBackgroundId < 0 then
-                loaderCurBackgroundId = #loaderBackgrounds
+        elseif self.selected == self.selectionEmu.selBackground then
+            self.curBackgroundId = self.curBackgroundId - 1
+            if self.curBackgroundId < 0 then
+                self.curBackgroundId = #self.availBackgrounds
             end
         end
     end
 
-    loaderSelected = loaderSelectedEnum[curId]
+    self.selected = self.selectionEmu[curId]
 end

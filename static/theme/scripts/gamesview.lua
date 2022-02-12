@@ -1,8 +1,11 @@
-dofile("scripts/menuSystem.lua")
 dofile("scripts/enum.lua")
+dofile("scripts/class.lua")
+dofile("scripts/menuSystem.lua")
 dofile("scripts/gc2wiimote.lua")
 dofile("scripts/gc+map.lua")
 dofile("scripts/topbarcmd.lua")
+
+menuSystem = MenuSystem()
 
 function init()
     showingGameConfig = false
@@ -52,7 +55,7 @@ function init()
         if Gcp.isV2() then
             gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Language", "Enable Cheats", "Memory Card Emulation", "Configure GC+2.0 map"})
         else
-            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Enable Cheats", "Memory Card Emulation", "Language"})
+            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Language", "Enable Cheats", "Memory Card Emulation"})
         end
     elseif GamesView.getGamesType() == GamesView.gameType.WII_GAME then
         gameConfigSelectedEnum = enum({"Enable WiFi", "Enable Bluetooth", "Enable USB saves", "Enable GC2Wiimote", "Configure GC2Wiimote"})
@@ -283,45 +286,45 @@ function drawGameConfig()
 
     Gfx.drawRectangle(0, (gameConfigSelected.id - 1) * menuSystem.lineHeight, menuSystem.columnWidth, menuSystem.lineHeight, Gfx.RGBA8(0x1F, 0x22, 0x27, 0xB0))
 
-    menuSystem.reset()
+    menuSystem:reset()
     if GamesView.getGamesType() == GamesView.gameType.GC_GAME then
-        menuSystem.printLine("Force progressive", gameConfigSelected.id)
+        menuSystem:printLine("Force progressive", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Force progressive")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Force widescreen", gameConfigSelected.id)
+        menuSystem:printLine("Force widescreen", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Force widescreen")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Force RVL-DD stretching", gameConfigSelected.id)
+        menuSystem:printLine("Force RVL-DD stretching", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Force RVL-DD stretching")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Native SI", gameConfigSelected.id)
+        menuSystem:printLine("Native SI", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Native SI")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Video mode", gameConfigSelected.id)
+        menuSystem:printLine("Video mode", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Video mode")
         if val == GamesView.nintendont.VIDEO_AUTO then
             val = "Auto"
@@ -334,9 +337,9 @@ function drawGameConfig()
         elseif val == GamesView.nintendont.VIDEO_MPAL then
             val = "MPAL"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Language", gameConfigSelected.id)
+        menuSystem:printLine("Language", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Language")
         if val == GamesView.nintendont.LANG_AUTO then
             val = "Auto"
@@ -353,126 +356,126 @@ function drawGameConfig()
         elseif val == GamesView.nintendont.LANG_DUTCH then
             val = "Dutch"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Enable Cheats", gameConfigSelected.id)
+        menuSystem:printLine("Enable Cheats", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable Cheats")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Memory Card Emulation", gameConfigSelected.id)
+        menuSystem:printLine("Memory Card Emulation", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Memory Card Emulation")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
         if Gcp.isV2() then
-            menuSystem.printLine("Configure GC+2.0 map", gameConfigSelected.id)
+            menuSystem:printLine("Configure GC+2.0 map", gameConfigSelected.id)
         end
 
     elseif GamesView.getGamesType() == GamesView.gameType.WII_GAME then
-        menuSystem.printLine("Enable WiFi", gameConfigSelected.id)
+        menuSystem:printLine("Enable WiFi", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable WiFi")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Enable Bluetooth", gameConfigSelected.id)
+        menuSystem:printLine("Enable Bluetooth", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable Bluetooth")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Enable USB saves", gameConfigSelected.id)
+        menuSystem:printLine("Enable USB saves", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable USB saves")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Enable GC2Wiimote", gameConfigSelected.id)
+        menuSystem:printLine("Enable GC2Wiimote", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable GC2Wiimote")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Configure GC2Wiimote", gameConfigSelected.id)
+        menuSystem:printLine("Configure GC2Wiimote", gameConfigSelected.id)
     elseif GamesView.getGamesType() == GamesView.gameType.WII_CHANNEL then
-        menuSystem.printLine("Enable WiFi", gameConfigSelected.id)
+        menuSystem:printLine("Enable WiFi", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable WiFi")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Enable Bluetooth", gameConfigSelected.id)
+        menuSystem:printLine("Enable Bluetooth", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable Bluetooth")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Enable GC2Wiimote", gameConfigSelected.id)
+        menuSystem:printLine("Enable GC2Wiimote", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable GC2Wiimote")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Configure GC2Wiimote", gameConfigSelected.id)
+        menuSystem:printLine("Configure GC2Wiimote", gameConfigSelected.id)
     elseif GamesView.getGamesType() == GamesView.gameType.WII_VC then
-        menuSystem.printLine("Enable WiFi", gameConfigSelected.id)
+        menuSystem:printLine("Enable WiFi", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable WiFi")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Enable Bluetooth", gameConfigSelected.id)
+        menuSystem:printLine("Enable Bluetooth", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable Bluetooth")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Enable GC2Wiimote", gameConfigSelected.id)
+        menuSystem:printLine("Enable GC2Wiimote", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable GC2Wiimote")
         if val == GamesView.config.YES then
             val = "Yes"
         else
             val = "No"
         end
-        menuSystem.printLineValue(val, false)
+        menuSystem:printLineValue(val, false)
 
-        menuSystem.printLine("Configure GC2Wiimote", gameConfigSelected.id)
+        menuSystem:printLine("Configure GC2Wiimote", gameConfigSelected.id)
     end
 
     Gfx.popScissorBox()
