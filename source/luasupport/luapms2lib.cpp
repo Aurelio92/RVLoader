@@ -538,6 +538,28 @@ static int lua_PMS2_setFanRange(lua_State* L) {
     return 0;
 }
 
+static int lua_PMS2_getLEDIntensity(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushinteger(L, PMS2::getLEDIntensity());
+
+    return 1;
+}
+
+static int lua_PMS2_setLEDIntensity(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 1) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    PMS2::setLEDIntensity(luaL_checkinteger(L, 1));
+
+    return 0;
+}
+
 static const luaL_Reg PMS2_functions[] = {
     {"isLite", lua_PMS2_isLite},
     {"getUpdateProgress", lua_PMS2_getUpdateProgress},
@@ -586,6 +608,8 @@ static const luaL_Reg PMS2_functions[] = {
     {"setFanPIDTarget", lua_PMS2_setFanPIDTarget},
     {"getFanRange", lua_PMS2_getFanRange},
     {"setFanRange", lua_PMS2_setFanRange},
+    {"getLEDIntensity", lua_PMS2_getLEDIntensity},
+    {"setLEDIntensity", lua_PMS2_setLEDIntensity},
     {NULL, NULL}
 };
 

@@ -61,4 +61,6 @@ namespace PMS2 {
     void setFanPIDTarget(float target);
     fanRange_t getFanRange();
     void setFanRange(fanRange_t range);
+    uint8_t getLEDIntensity();
+    void setLEDIntensity(uint8_t intensity);
 };

@@ -29,13 +29,13 @@ function powerSettings:init(font, lineHeight, columnWidth, sideMargin)
 
     if PMS2.isLite() then
         if PMS2.getVer() >= 1.2 then
-            self.selectionEnum = enum({"chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "fanMin", "fanMax", "PIDTarget", "PIDkP", "PIDkI", "PIDkD", "runFanCalibration", "saveConfig", "firmwareUpdate", "shippingMode"})
+            self.selectionEnum = enum({"chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "statLEDIntensity", "fanMin", "fanMax", "PIDTarget", "PIDkP", "PIDkI", "PIDkD", "runFanCalibration", "saveConfig", "firmwareUpdate", "shippingMode"})
         else
             self.selectionEnum = enum({"chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "saveConfig", "firmwareUpdate", "shippingMode"})
         end
     else
         if PMS2.getVer() >= 1.2 then
-            self.selectionEnum = enum({"batCapacity", "chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "fanMin", "fanMax", "PIDTarget", "PIDkP", "PIDkI", "PIDkD", "runFanCalibration", "saveConfig", "firmwareUpdate", "shippingMode"})
+            self.selectionEnum = enum({"batCapacity", "chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "statLEDIntensity", "fanMin", "fanMax", "PIDTarget", "PIDkP", "PIDkI", "PIDkD", "runFanCalibration", "saveConfig", "firmwareUpdate", "shippingMode"})
         else
             self.selectionEnum = enum({"batCapacity", "chgCurrent", "termCurrent", "preCurrent", "chargeVoltage", "TREG", "pwrBtnType", "pwrBtnPol", "statLEDType", "saveConfig", "firmwareUpdate", "shippingMode"})
         end
@@ -49,6 +49,7 @@ function powerSettings:init(font, lineHeight, columnWidth, sideMargin)
     self.chargeVoltage = PMS2.getChargeVoltage()
     self.TREG = PMS2.getTREG()
     self.conf0 = PMS2.getConf0()
+    self.LEDIntensity = PMS2.getLEDIntensity()
     self.pms2Version = PMS2.getVer()
     if PMS2.getVer() >= 1.2 then
         self.fanRange = PMS2.getFanRange()
@@ -65,6 +66,7 @@ function powerSettings:init(font, lineHeight, columnWidth, sideMargin)
     self.oldChargeVoltage = self.chargeVoltage
     self.oldTREG = self.TREG
     self.oldConf0 = self.conf0
+    self.oldLEDIntensity = self.LEDIntensity
     self.oldVersion = self.pms2Version
     if PMS2.getVer() >= 1.2 then
         self.fanOldRange = PMS2.getFanRange()
@@ -154,22 +156,26 @@ function powerSettings:draw(onFocus)
         self.menuSystem:printLineValue("Addressable type B", ((self.conf0 ~ self.oldConf0) & PMS2.STAT_LED_TYPE) ~= 0)
     end
 
-    self.menuSystem:addSpacer("Fan")
-    self.menuSystem:printLine("Fan speed min:", self.selected.id)
-    self.menuSystem:printLineValue(string.format("%u", self.fanRange.min), self.fanRange.min ~= self.fanOldRange.min)
-    self.menuSystem:printLine("Fan speed max:", self.selected.id)
-    self.menuSystem:printLineValue(string.format("%u", self.fanRange.max), self.fanRange.max ~= self.fanOldRange.max)
-    self.menuSystem:printLine("Target temperature:", self.selected.id)
-    self.menuSystem:printLineValue(string.format("%.1f", self.PIDTarget) .. " °C", self.PIDTarget ~= self.oldPIDTarget)
-    self.menuSystem:printLine("PID kP:", self.selected.id)
-    self.menuSystem:printLineValue(string.format("%.4f", self.fankP), self.fankP ~= self.oldkP)
-    self.menuSystem:printLine("PID kI:", self.selected.id)
-    self.menuSystem:printLineValue(string.format("%.4f", self.fankI), self.fankI ~= self.oldkI)
-    self.menuSystem:printLine("PID kD:", self.selected.id)
-    self.menuSystem:printLineValue(string.format("%.4f", self.fankD), self.fankD ~= self.oldkD)
-    self.menuSystem:printLine("Run calibration", self.selected.id)
-    self.menuSystem:printInfoLine("Current fan speed:")
-    self.menuSystem:printLineValue(string.format("%u", PMS2.getFanSpeed()), false)
+    if self.pms2Version >= 1.2 then
+        self.menuSystem:printLine("Status LED intensity:", self.selected.id)
+        self.menuSystem:printLineValue(string.format("%u", self.LEDIntensity), self.LEDIntensity ~= self.oldLEDIntensity)
+        self.menuSystem:addSpacer("Fan")
+        self.menuSystem:printLine("Fan speed min:", self.selected.id)
+        self.menuSystem:printLineValue(string.format("%u", self.fanRange.min), self.fanRange.min ~= self.fanOldRange.min)
+        self.menuSystem:printLine("Fan speed max:", self.selected.id)
+        self.menuSystem:printLineValue(string.format("%u", self.fanRange.max), self.fanRange.max ~= self.fanOldRange.max)
+        self.menuSystem:printLine("Target temperature:", self.selected.id)
+        self.menuSystem:printLineValue(string.format("%.1f", self.PIDTarget) .. " °C", self.PIDTarget ~= self.oldPIDTarget)
+        self.menuSystem:printLine("PID kP:", self.selected.id)
+        self.menuSystem:printLineValue(string.format("%.4f", self.fankP), self.fankP ~= self.oldkP)
+        self.menuSystem:printLine("PID kI:", self.selected.id)
+        self.menuSystem:printLineValue(string.format("%.4f", self.fankI), self.fankI ~= self.oldkI)
+        self.menuSystem:printLine("PID kD:", self.selected.id)
+        self.menuSystem:printLineValue(string.format("%.4f", self.fankD), self.fankD ~= self.oldkD)
+        self.menuSystem:printLine("Run calibration", self.selected.id)
+        self.menuSystem:printInfoLine("Current fan speed:")
+        self.menuSystem:printLineValue(string.format("%u", PMS2.getFanSpeed()), false)
+    end
 
     self.menuSystem:addSpacer("Save")
     self.menuSystem:printLine("Save config", self.selected.id)
@@ -240,6 +246,7 @@ function powerSettings:handleInputs(onFocus)
             PMS2.setTREG(self.TREG)
             PMS2.setConf0(self.conf0)
             if PMS2.getVer() >= 1.2 then
+                PMS2.setLEDIntensity(self.LEDIntensity)
                 PMS2.setFanPIDkP(self.fankP)
                 PMS2.setFanPIDkI(self.fankI)
                 PMS2.setFanPIDkD(self.fankD)
@@ -260,6 +267,7 @@ function powerSettings:handleInputs(onFocus)
             self.oldTREG = self.TREG
             self.oldConf0 = self.conf0
             if PMS2.getVer() >= 1.2 then
+                self.oldLEDIntensity = self.LEDIntensity
                 self.fanOldRange = PMS2.getFanRange()
                 self.oldkP = self.fankP
                 self.oldkI = self.fankI
@@ -323,6 +331,11 @@ function powerSettings:handleInputs(onFocus)
                 end
             elseif (self.conf0 & PMS2.STAT_LED_TYPE) == PMS2.STAT_LED_WSB then
                 self.conf0 = (self.conf0 & ~PMS2.STAT_LED_TYPE) | PMS2.STAT_LED_STD
+            end
+        elseif self.selected == self.selectionEnum.statLEDIntensity then
+            self.LEDIntensity = self.LEDIntensity + 5
+            if self.LEDIntensity > 255 then
+                self.LEDIntensity = 255
             end
         elseif self.selected == self.selectionEnum.fanMin then
             self.fanRange.min = self.fanRange.min + 5
@@ -413,6 +426,11 @@ function powerSettings:handleInputs(onFocus)
                 self.conf0 = (self.conf0 & ~PMS2.STAT_LED_TYPE) | PMS2.STAT_LED_STD
             elseif (self.conf0 & PMS2.STAT_LED_TYPE) == PMS2.STAT_LED_WSB then
                 self.conf0 = (self.conf0 & ~PMS2.STAT_LED_TYPE) | PMS2.STAT_LED_WSD
+            end
+        elseif self.selected == self.selectionEnum.statLEDIntensity then
+            self.LEDIntensity = self.LEDIntensity - 5
+            if self.LEDIntensity < 0 then
+                self.LEDIntensity = 0
             end
         elseif self.selected == self.selectionEnum.fanMin then
             self.fanRange.min = self.fanRange.min - 5

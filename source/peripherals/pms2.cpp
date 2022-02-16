@@ -29,6 +29,7 @@
 #define CMD_CONF0               0x0A
 #define CMD_SHIPPINGMODE        0x0B
 #define CMD_FANRANGE            0x0C
+#define CMD_LEDINTENSITY        0x0D
 
 #define CMD_CHARGECURRENT       0x10
 #define CMD_TERMCURRENT         0x11
@@ -1111,7 +1112,7 @@ namespace PMS2 {
             return ret;
         }
         lastTime = gettime();
-        i2c_readBuffer(curPMSAddress, CMD_FANRANGE, &error, (u8*)&ret, 2);
+        i2c_readBuffer(curPMSAddress, CMD_FANRANGE, &error, (u8*)&ret, sizeof(fanRange_t));
 
         return ret;
     }
@@ -1127,6 +1128,43 @@ namespace PMS2 {
         LWP_MutexUnlock(updateMutex);
 
         u8 error;
-        i2c_writeBuffer(curPMSAddress, CMD_FANRANGE, (u8*)&range, 2, &error);
+        i2c_writeBuffer(curPMSAddress, CMD_FANRANGE, (u8*)&range, sizeof(fanRange_t), &error);
+    }
+
+    uint8_t getLEDIntensity() {
+        u8 error;
+        static u64 lastTime = 0;
+        static uint8_t ret = 0;
+
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return ret;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        if ((diff_msec(gettime(), lastTime) < PMS_POLLUPDATE_TIMEOUT) && lastTime) {
+            return ret;
+        }
+        lastTime = gettime();
+        i2c_readBuffer(curPMSAddress, CMD_LEDINTENSITY, &error, (u8*)&ret, 1);
+
+        return ret;
+    }
+
+    void setLEDIntensity(uint8_t intensity) {
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        u8 error;
+        i2c_writeBuffer(curPMSAddress, CMD_LEDINTENSITY, &intensity, 1, &error);
     }
 };
