@@ -142,7 +142,7 @@ function controllerSettings:handleInputs(onFocus)
 
     if self.runningSticksWizard then
         topBarDisableWheel()
-        --self.sticksWizard:handleInputs(onFocus)
+        self.sticksWizard:handleInputs(onFocus)
         return
     end
 
@@ -170,7 +170,7 @@ function controllerSettings:handleInputs(onFocus)
         end
     elseif self.selected == self.selectionEmu.sticksWizard then
         if down.BUTTON_A then
-            sticksWizard:reset()
+            self.sticksWizard:reset()
             self.runningSticksWizard = true
         end
     elseif self.selected == self.selectionEmu.sticksDeadzone then

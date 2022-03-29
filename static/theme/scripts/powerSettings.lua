@@ -7,6 +7,7 @@ require 'scripts/menuSystem'
 require 'scripts/settingsMenu'
 
 powerSettings = class(SettingsMenu)
+fanCalibrationMenu = class(SettingsMenu)
 
 function powerSettings:init(font, lineHeight, columnWidth, sideMargin)
     SettingsMenu.init(self, font, lineHeight, columnWidth, sideMargin)
@@ -75,6 +76,9 @@ function powerSettings:init(font, lineHeight, columnWidth, sideMargin)
         self.oldkD = self.fankD
         self.oldPIDTarget = self.PIDTarget
     end
+
+    self.runningFanCalibration = false
+    self.fanCalibrationMenu = fanCalibrationMenu(font, lineHeight, columnWidth, sideMargin, self)
 end
 
 function powerSettings:draw(onFocus)
@@ -108,6 +112,10 @@ function powerSettings:draw(onFocus)
             self.updateMenuSystem:printLine("Updating, don't power off!", 0)
         end
         self.updateMenuSystem:finish()
+        return
+    end
+    if self.runningFanCalibration then
+        self.fanCalibrationMenu:draw(onFocus)
         return
     end
 
@@ -206,6 +214,11 @@ function powerSettings:handleInputs(onFocus)
         return
     end
 
+    if self.runningFanCalibration then
+        self.fanCalibrationMenu:handleInputs(onFocus)
+        return
+    end
+
     local down = Pad.gendown(0)
     local held = Pad.genheld(0)
 
@@ -274,6 +287,8 @@ function powerSettings:handleInputs(onFocus)
                 self.oldkD = self.fankD
                 self.oldPIDTarget = self.PIDTarget
             end
+        elseif self.selected == self.selectionEnum.runFanCalibration then
+            self.runningFanCalibration = true
         elseif self.selected == self.selectionEnum.firmwareUpdate then
             topBarDisableWheel()
             if PMS2.isLite() then
@@ -450,8 +465,8 @@ function powerSettings:handleInputs(onFocus)
             end
         elseif self.selected == self.selectionEnum.PIDTarget then
             self.PIDTarget = self.PIDTarget - 1
-            if self.PIDTarget < 35 then
-                self.PIDTarget = 35
+            if self.PIDTarget < 25 then
+                self.PIDTarget = 25
             end
         elseif self.selected == self.selectionEnum.PIDkP then
             self.fankP = self.fankP - 0.2
@@ -478,4 +493,91 @@ function powerSettings:handleInputs(onFocus)
     end
 
     self.selected = self.selectionEnum[curId]
+end
+
+function fanCalibrationMenu:init(font, lineHeight, columnWidth, sideMargin, parent)
+    SettingsMenu.init(self, font, lineHeight, columnWidth, sideMargin)
+
+    self.powerSettings = parent
+
+    self.calibrationStateEnum = enum({"init", "rangeWizard", "heating", "stablizing", "done"})
+    self.calibrationState = self.calibrationStateEnum[1]
+    --self.reset()
+end
+
+function fanCalibrationMenu:reset()
+    self.calibrationTimer = 0
+    self.CALIBRATION_TIME = 2 * 60000
+    self.calibrationLoop = 0
+    self.CALIBRATION_LOOPS = 3
+
+    self.fanMinSpeedWizard = 128
+    self.fanMinSpeedWizardRange = {0, 255}
+    self.fanLastMinSpinningSpeed = 0
+    self.fanMinSpeedWizardRestartTime = Time.getms()
+    self.fanMinSpeedWizardRestartTimeout = 1000
+    PMS2.setFanSpeed(self.fanMinSpeedWizardVar)
+end
+
+function fanCalibrationMenu:draw(onFocus)
+    self.menuSystem:start(onFocus)
+
+    if self.calibrationState == self.calibrationStateEnum.rangeWizard then
+        self.menuSystem:printInfoLine("Current fan speed:")
+        self.menuSystem:printLineValue(string.format("%u", self.fanMinSpeedWizard), false)
+        self.menuSystem:printInfoLine("Press A if you hear the fan spinning")
+        self.menuSystem:printInfoLine("Otherwise press B")
+    end
+
+    self.menuSystem.printInfoLine("Hold L+R to cancel calibration")
+
+    self.menuSystem:finish()
+end
+
+function fanCalibrationMenu:handleInputs(onFocus)
+    local down = Pad.gendown(0)
+    local held = Pad.genheld(0)
+
+    if held.TRIGGER_R and held.TRIGGER_L then
+        --Restore old fan settings
+        PMS2.setFanRange(self.powerSettings.fanOldRange)
+        PMS2.setFanPIDkP(self.powerSettings.oldkP)
+        PMS2.setFanPIDkI(self.powerSettings.oldkI)
+        PMS2.setFanPIDkD(self.powerSettings.oldkD)
+        PMS2.setFanPIDTarget(self.powerSettings.oldPIDTarget)
+        PMS2.freeFan()
+        topBarEnableWheel()
+        self.powerSettings.runningFanCalibration = false
+        return
+    end
+
+    if self.calibrationState == self.calibrationStateEnum.init then
+        self.reset()
+        self.calibrationState = self.calibrationStateEnum.rangeWizard
+    elseif self.calibrationState == self.calibrationStateEnum.rangeWizard then
+        --Set fan speed
+        if (Time.getms() - self.fanMinSpeedWizardRestartTime) < self.fanMinSpeedWizardRestartTimeout then
+            PMS2.setFanSpeed(0)
+        else
+            PMS2.setFanSpeed(self.fanMinSpeedWizardVar)
+        end
+
+        if down.BUTTON_A then
+            --Fan spinning, try reducing min speed
+            self.fanLastMinSpinningSpeed = self.fanMinSpeedWizard
+            self.fanMinSpeedWizardRange = {self.fanMinSpeedWizardRange[1], self.fanMinSpeedWizard}
+            self.fanMinSpeedWizard = (self.fanMinSpeedWizardRange[1] + self.fanMinSpeedWizardRange[2]) // 2
+            self.fanMinSpeedWizardRestartTime = Time.getms()
+        elseif down.BUTTON_B then
+            --Fan not spinning, try increasing max speed
+            self.fanMinSpeedWizardRange = {self.fanMinSpeedWizard, self.fanMinSpeedWizardRange[2]}
+            self.fanMinSpeedWizard = (self.fanMinSpeedWizardRange[1] + self.fanMinSpeedWizardRange[2]) // 2
+            self.fanMinSpeedWizardRestartTime = Time.getms()
+        end
+
+        --Min speed calibration done. Go to next step
+        if (down.BUTTON_A or down.BUTTON_B) and (self.fanMinSpeedWizardRange[2] - self.fanMinSpeedWizardRange[1]) < 8 then
+
+        end
+    end
 end
