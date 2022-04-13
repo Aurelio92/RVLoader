@@ -18,7 +18,7 @@ function MenuSystem:init()
 end
 
 function MenuSystem:drawSelectionRectangle()
-    Gfx.drawRectangle(0, (self.selLine- 1) * self.lineHeight, self.columnWidth, self.lineHeight, self.selectionBGColor)
+    Gfx.drawRectangle(0, (self.selLine - 1) * self.lineHeight, self.columnWidth, self.lineHeight, self.selectionBGColor)
 end
 
 function MenuSystem:reset()
