@@ -594,21 +594,13 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             if (tempVal)
                 cfg.Config |= NIN_CFG_NATIVE_SI;
 
-            tempVal = 0;
+            tempVal = NIN_VID_AUTO;
             thisView->gameConfig.getValue("Video mode", &tempVal);
-            if (tempVal) {
-                cfg.VideoMode = tempVal;
-            } else {
-                cfg.VideoMode = NIN_VID_AUTO;
-            }
+            cfg.VideoMode = tempVal;
 
-            tempVal = 0;
+            tempVal = NIN_LAN_AUTO;
             thisView->gameConfig.getValue("Language", &tempVal);
-            if (tempVal) {
-                cfg.Language = tempVal;
-            } else {
-                cfg.Language = NIN_LAN_AUTO;
-            }
+            cfg.Language = tempVal;
 
             tempVal = 0;
             thisView->gameConfig.getValue("Enable Cheats", &tempVal);
