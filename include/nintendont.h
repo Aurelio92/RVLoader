@@ -4,8 +4,6 @@
 
 #define NIN_CFG_VERSION     0x00000008
 
-#define NIN_CFG_MAXPAD 4
-
 typedef struct NIN_CFG
 {
     unsigned int        Magicbytes;     // 0x01070CF6

@@ -53,9 +53,9 @@ function init()
 
     if GamesView.getGamesType() == GamesView.gameType.GC_GAME then
         if Gcp.isV2() then
-            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Language", "Enable Cheats", "Memory Card Emulation", "Configure GC+2.0 map"})
+            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Language", "Enable Cheats", "Memory Card Emulation", "Max Pads", "Configure GC+2.0 map"})
         else
-            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Language", "Enable Cheats", "Memory Card Emulation"})
+            gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Language", "Enable Cheats", "Memory Card Emulation", "Max Pads"})
         end
     elseif GamesView.getGamesType() == GamesView.gameType.WII_GAME then
         gameConfigSelectedEnum = enum({"Enable WiFi", "Enable Bluetooth", "Enable USB saves", "Enable GC2Wiimote", "Configure GC2Wiimote"})
@@ -376,6 +376,10 @@ function drawGameConfig()
         end
         menuSystem:printLineValue(val, false)
 
+        menuSystem:printLine("Max Pads", gameConfigSelected.id)
+        local val = GamesView.getGameConfigValue("Max Pads")
+        menuSystem:printLineValue(tostring(val), false)
+
         if Gcp.isV2() then
             menuSystem:printLine("Configure GC+2.0 map", gameConfigSelected.id)
         end
@@ -567,6 +571,12 @@ function handleGameConfig()
                 elseif confVal == GamesView.nintendont.LANG_DUTCH then
                     confVal = GamesView.nintendont.LANG_ITALIAN
                 end
+            end
+        elseif gameConfigSelected == gameConfigSelectedEnum["Max Pads"] then
+            if down.BUTTON_RIGHT then
+                confVal = confVal < 4 and confVal + 1 or 0
+            elseif down.BUTTON_LEFT then
+                confVal = confVal > 0 and confVal - 1 or 4
             end
         else --Yes/No configs
             if down.BUTTON_RIGHT or down.BUTTON_LEFT or down.BUTTON_A then

@@ -184,6 +184,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable Cheats", 0);
             if (!gameConfig.getValue("Memory Card Emulation", &tempVal))
                 gameConfig.setValue("Memory Card Emulation", 1);
+            if (!gameConfig.getValue("Max Pads", &tempVal))
+                gameConfig.setValue("Max Pads", 4);
 
             //GC+2.0 mapping
             if (!gameConfig.getValue("GCPMap_A", &tempVal))
@@ -618,6 +620,10 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             if (tempVal)
                 cfg.Config |= NIN_CFG_MEMCARDEMU;
 
+            tempVal = 4;
+            thisView->gameConfig.getValue("Max Pads", &tempVal);
+            cfg.MaxPads = tempVal;
+
             //GC+2.0 map
             thisView->gameConfig.getValue("GCPMap_A", &thisView->gcpMap[GCP_MAP_BUTTON_A_ID]);
             thisView->gameConfig.getValue("GCPMap_B", &thisView->gcpMap[GCP_MAP_BUTTON_B_ID]);
@@ -640,7 +646,6 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             }
 
             strcpy(cfg.GamePath, gc.path.c_str());
-            cfg.MaxPads = NIN_CFG_MAXPAD;
             cfg.GameID = gc.gameID;
             bootGCGame(cfg);
         } else if (thisView->titlesType == WII_VC) {
