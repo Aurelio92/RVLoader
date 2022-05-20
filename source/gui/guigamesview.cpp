@@ -184,6 +184,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable Cheats", 0);
             if (!gameConfig.getValue("Memory Card Emulation", &tempVal))
                 gameConfig.setValue("Memory Card Emulation", 1);
+            if (!gameConfig.getValue("Max Pads", &tempVal))
+                gameConfig.setValue("Max Pads", 4);
 
             //GC+2.0 mapping
             if (!gameConfig.getValue("GCPMap_A", &tempVal))
@@ -592,21 +594,13 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             if (tempVal)
                 cfg.Config |= NIN_CFG_NATIVE_SI;
 
-            tempVal = 0;
+            tempVal = NIN_VID_AUTO;
             thisView->gameConfig.getValue("Video mode", &tempVal);
-            if (tempVal) {
-                cfg.VideoMode = tempVal;
-            } else {
-                cfg.VideoMode = NIN_VID_AUTO;
-            }
+            cfg.VideoMode = tempVal;
 
-            tempVal = 0;
+            tempVal = NIN_LAN_AUTO;
             thisView->gameConfig.getValue("Language", &tempVal);
-            if (tempVal) {
-                cfg.Language = tempVal;
-            } else {
-                cfg.Language = NIN_LAN_AUTO;
-            }
+            cfg.Language = tempVal;
 
             tempVal = 0;
             thisView->gameConfig.getValue("Enable Cheats", &tempVal);
@@ -617,6 +611,10 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             thisView->gameConfig.getValue("Memory Card Emulation", &tempVal);
             if (tempVal)
                 cfg.Config |= NIN_CFG_MEMCARDEMU;
+
+            tempVal = 4;
+            thisView->gameConfig.getValue("Max Pads", &tempVal);
+            cfg.MaxPads = tempVal;
 
             //GC+2.0 map
             thisView->gameConfig.getValue("GCPMap_A", &thisView->gcpMap[GCP_MAP_BUTTON_A_ID]);
@@ -640,7 +638,6 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             }
 
             strcpy(cfg.GamePath, gc.path.c_str());
-            cfg.MaxPads = NIN_CFG_MAXPAD;
             cfg.GameID = gc.gameID;
             bootGCGame(cfg);
         } else if (thisView->titlesType == WII_VC) {
