@@ -529,7 +529,7 @@ function fanCalibrationMenu:draw(onFocus)
         self.menuSystem:printInfoLine("Otherwise press B")
     end
 
-    self.menuSystem.printInfoLine("Hold L+R to cancel calibration")
+    self.menuSystem:printInfoLine("Hold L+R to cancel calibration")
 
     self.menuSystem:finish()
 end
