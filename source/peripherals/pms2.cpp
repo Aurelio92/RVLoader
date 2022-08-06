@@ -30,6 +30,7 @@
 #define CMD_SHIPPINGMODE        0x0B
 #define CMD_FANRANGE            0x0C
 #define CMD_LEDINTENSITY        0x0D
+#define CMD_POT                 0x0E
 
 #define CMD_CHARGECURRENT       0x10
 #define CMD_TERMCURRENT         0x11
@@ -331,6 +332,28 @@ namespace PMS2 {
         }
         lastTime = gettime();
         ret = i2c_read8(curPMSAddress, CMD_CONF0, &error);
+        return ret;
+    }
+
+    u16 getPot() {
+        u8 error;
+        static u64 lastTime = 0;
+        static u16 ret = 0;
+
+        if (!updateMutex)
+            LWP_MutexInit(&updateMutex, false);
+        LWP_MutexLock(updateMutex);
+        if (updating) {
+            LWP_MutexUnlock(updateMutex);
+            return ret;
+        }
+        LWP_MutexUnlock(updateMutex);
+
+        if ((diff_msec(gettime(), lastTime) < PMS_POLLUPDATE_TIMEOUT) && lastTime) {
+            return ret;
+        }
+        lastTime = gettime();
+        ret = i2c_read16(curPMSAddress, CMD_POT, &error);
         return ret;
     }
 

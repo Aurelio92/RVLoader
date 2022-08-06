@@ -27,8 +27,8 @@ function controllerSettings:init(font, lineHeight, columnWidth, sideMargin)
     self.runningSticksWizard = false
     self.oldControllerConnectedStatus = false
     self.isGCP2 = false
-    self.selectionEmu = enum({"buttonsTester"})
-    self.selected = self.selectionEmu[1]
+    self.selectionEnum = enum({"buttonsTester"})
+    self.selected = self.selectionEnum[1]
     self.buttonsTester = buttonsTester(font, lineHeight, columnWidth, sideMargin, self)
     self.sticksWizard = sticksWizard(font, lineHeight, columnWidth, sideMargin, self)
 end
@@ -89,17 +89,17 @@ function controllerSettings:draw(onFocus)
                 self.oldDeadzoneMode = self.deadzoneMode
                 self.oldTriggerMode = self.triggerMode
                 self.oldRumbleIntensity = self.rumbleIntensity
-                self.selectionEmu = enum({"buttonsTester", "sticksWizard", "sticksDeadzone", "sticksDeadzoneMode", "triggersMode", "rumble", "saveConfig", "firmwareUpdate"})
-                self.selected = self.selectionEmu[1]
+                self.selectionEnum = enum({"buttonsTester", "sticksWizard", "sticksDeadzone", "sticksDeadzoneMode", "triggersMode", "rumble", "saveConfig", "firmwareUpdate"})
+                self.selected = self.selectionEnum[1]
             else
                 self.isGCP2 = false
-                self.selectionEmu = enum({"buttonsTester"})
-                self.selected = self.selectionEmu[1]
+                self.selectionEnum = enum({"buttonsTester"})
+                self.selected = self.selectionEnum[1]
             end
         else
             self.isGCP2 = false
-            self.selectionEmu = enum({"buttonsTester"})
-            self.selected = self.selectionEmu[1]
+            self.selectionEnum = enum({"buttonsTester"})
+            self.selected = self.selectionEnum[1]
         end
     end
 
@@ -156,7 +156,7 @@ function controllerSettings:handleInputs(onFocus)
         return
     end
 
-    if down.BUTTON_DOWN and curId < self.selectionEmu.size then
+    if down.BUTTON_DOWN and curId < self.selectionEnum.size then
         curId = curId + 1
     end
 
@@ -164,38 +164,38 @@ function controllerSettings:handleInputs(onFocus)
         curId = curId - 1
     end
 
-    if self.selected == self.selectionEmu.buttonsTester then
+    if self.selected == self.selectionEnum.buttonsTester then
         if down.BUTTON_A then
             self.runningButtonsTester = true
         end
-    elseif self.selected == self.selectionEmu.sticksWizard then
+    elseif self.selected == self.selectionEnum.sticksWizard then
         if down.BUTTON_A then
             self.sticksWizard:reset()
             self.runningSticksWizard = true
         end
-    elseif self.selected == self.selectionEmu.sticksDeadzone then
+    elseif self.selected == self.selectionEnum.sticksDeadzone then
         if down.BUTTON_LEFT and self.deadzone > 0 then
             self.deadzone = self.deadzone - 1
         end
         if down.BUTTON_RIGHT and self.deadzone < 60 then
             self.deadzone = self.deadzone + 1
         end
-    elseif self.selected == self.selectionEmu.sticksDeadzoneMode then
+    elseif self.selected == self.selectionEnum.sticksDeadzoneMode then
         if down.BUTTON_LEFT or down.BUTTON_RIGHT then
             self.deadzoneMode = 1 - self.deadzoneMode
         end
-    elseif self.selected == self.selectionEmu.triggersMode then
+    elseif self.selected == self.selectionEnum.triggersMode then
         if down.BUTTON_LEFT or down.BUTTON_RIGHT then
             self.triggerMode = 1 - self.triggerMode
         end
-    elseif self.selected == self.selectionEmu.rumble then
+    elseif self.selected == self.selectionEnum.rumble then
         if down.BUTTON_LEFT and self.rumbleIntensity > 0 then
             self.rumbleIntensity = self.rumbleIntensity - 1
         end
         if down.BUTTON_RIGHT and self.rumbleIntensity < 127 then
             self.rumbleIntensity = self.rumbleIntensity + 1
         end
-    elseif self.selected == self.selectionEmu.saveConfig then
+    elseif self.selected == self.selectionEnum.saveConfig then
         if down.BUTTON_A then
             Gcp.setSticksDeadzoneRadius(self.deadzone)
             Gcp.setSticksDeadzoneMode(self.deadzoneMode)
@@ -206,7 +206,7 @@ function controllerSettings:handleInputs(onFocus)
             self.oldRumbleIntensity = self.rumbleIntensity
             self.oldTriggerMode = self.triggerMode
         end
-    elseif self.selected == self.selectionEmu.firmwareUpdate then
+    elseif self.selected == self.selectionEnum.firmwareUpdate then
         if down.BUTTON_A then
             topBarDisableWheel()
             self.gcpOldVersion = Gcp.getFWVer()
@@ -214,7 +214,7 @@ function controllerSettings:handleInputs(onFocus)
         end
     end
 
-    self.selected = self.selectionEmu[curId]
+    self.selected = self.selectionEnum[curId]
 end
 
 function buttonsTester:init(font, lineHeight, columnWidth, sideMargin, parent)

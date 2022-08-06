@@ -6,6 +6,7 @@ require 'scripts/settingsMenu'
 require 'scripts/loaderSettings'
 require 'scripts/controllersSettings'
 require 'scripts/powerSettings'
+require 'scripts/audioSettings'
 require 'scripts/systemStatus'
 
 function settingsEnableSubMenu()
@@ -17,9 +18,6 @@ function settingsDisableSubMenu()
 end
 
 menuSystem = MenuSystem()
-
---dofile("scripts/powerSettings.lua")
---dofile("scripts/fanSettings.lua")
 
 aboutSettings = class(SettingsMenu)
 
@@ -92,10 +90,11 @@ function init()
     if PMS2.isConnected() then
         table.insert(settingMenus.names, "Power")
         table.insert(settingMenus.menuClasses, powerSettings)
-        if PMS2.getVer() >= 1.2 then
-            --table.insert(settingMenus.names, "Fan")
-            --table.insert(settingMenus.menuClasses, fanSettings)
-        end
+    end
+
+    if UAMP.isConnected() then
+        table.insert(settingMenus.names, "Audio")
+        table.insert(settingMenus.menuClasses, audioSettings)
     end
 
 

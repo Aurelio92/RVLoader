@@ -33,12 +33,11 @@
 #include "luasupport.h"
 #include "theme.h"
 #include "safemenu.h"
+#include "hud.h"
 
 #include "textures.h"
 #include "textures_tpl.h"
 #include "notosans_ttf.h"
-
-#define HUD_CONFIG_PATH "/rvloader/hud.conf"
 
 static Vector2 screenSize;
 static bool VGAEnabled;
@@ -229,35 +228,7 @@ int main(int argc, char **argv) {
     }
     Debug("Initialization complete\n");
 
-    //Set volume
-    u8 hudVolume[2] = {20, 10};
-    FILE* hudFp = fopen(HUD_CONFIG_PATH, "rb");
-    if (hudFp) {
-        fread(hudVolume, 1, 2, hudFp);
-        fclose(hudFp);
-    } else {
-        hudFp = fopen(HUD_CONFIG_PATH, "wb");
-        if (hudFp) {
-            fwrite(hudVolume, 1, 2, hudFp);
-            fclose(hudFp);
-        }
-    }
-
-    if (UAMP::isConnected()) {
-        write32(HW_GPIO_DIR_ADDR, read32(HW_GPIO_DIR_ADDR) & (~GPIO_DEBUG2));
-        int headphonesIn = read32(HW_GPIOB_IN_ADDR) & GPIO_DEBUG2;
-
-        UAMP::init();
-        UAMP::setMute((headphonesIn && !hudVolume[0]) || (!headphonesIn && !hudVolume[1]));
-        if (hudVolume[0] > 0)
-            UAMP::setHeadphonesVolume(hudVolume[0] - 1);
-        else
-            UAMP::setHeadphonesVolume(0);
-        if (hudVolume[1] > 0)
-            UAMP::setSpeakersVolume(hudVolume[1] - 1);
-        else
-            UAMP::setSpeakersVolume(0);
-    }
+    HUD::init();
 
     //Make default dir structure if missing
     mkdir("/rvloader", 777);

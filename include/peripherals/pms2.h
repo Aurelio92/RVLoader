@@ -20,6 +20,7 @@ namespace PMS2 {
     float getVer();
     void getPDProfiles(u32* profiles);
     u8 getConf0();
+    u16 getPot();
     u16 getChargeCurrent();
     u16 getTermCurrent();
     u16 getPreChargeCurrent();

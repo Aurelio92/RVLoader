@@ -94,6 +94,17 @@ static int lua_PMS2_getConf0(lua_State* L) {
     return 1;
 }
 
+static int lua_PMS2_getPot(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushinteger(L, PMS2::getPot());
+
+    return 1;
+}
+
 static int lua_PMS2_getChargeCurrent(lua_State* L) {
     int argc = lua_gettop(L);
     if (argc != 0) {
@@ -569,6 +580,7 @@ static const luaL_Reg PMS2_functions[] = {
     {"hasUpdateSucceeded", lua_PMS2_hasUpdateSucceeded},
     {"getVer", lua_PMS2_getVer},
     {"getConf0", lua_PMS2_getConf0},
+    {"getPot", lua_PMS2_getPot},
     {"getChargeCurrent", lua_PMS2_getChargeCurrent},
     {"getTermCurrent", lua_PMS2_getTermCurrent},
     {"getPreChargeCurrent", lua_PMS2_getPreChargeCurrent},
