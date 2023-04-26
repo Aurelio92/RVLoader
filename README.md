@@ -1,3 +1,5 @@
+![RVLoader logo](logo.png "logo")
+
 # RVLoader
 
 This repository contains the source code of RVLoader, a Game loader specifically designed for Wii portables.
@@ -13,7 +15,7 @@ But RVLoader is not just a simple GUI! It comes packed with features, quite a fe
  
  - Wii game loading from USB via Hiidra
  - Gamecube game loading from USB via Nintendont
- - Direct Homebrew loading [incl. ELF support]Nold360:f_gitignorefile
+ - Direct Homebrew loading [incl. ELF support]
  - Wii channels support
  - VirtualConsole/WiiWare titles are supported [experimental]
  - Built-in installer that automatically detects if RVL is not installed and prompts the user to install it
