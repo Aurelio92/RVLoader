@@ -1,226 +1,49 @@
-#---------------------------------------------------------------------------------
-# Clear the implicit built in rules
-#---------------------------------------------------------------------------------
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
 
-include $(DEVKITPPC)/wii_rules
+SUBPROJECTS := dolbooter bootloader installer libGUI main
+.PHONY: all forced clean $(SUBPROJECTS)
 
-SUBPROJECTS := installer
+all: main
+forced: clean all
 
-# Must be integers
-RVLOADERVERSION_MAJOR := 1
-RVLOADERVERSION_MINOR := 6
+dolbooter:
+	@echo " "
+	@echo "Building RVLoader dolbooter"
+	@echo " "
+	$(MAKE) -C dolbooter
 
-#---------------------------------------------------------------------------------
-# TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
-# SOURCES is a list of directories containing source code
-# INCLUDES is a list of directories containing extra header files
-#---------------------------------------------------------------------------------
-TARGET		:=	$(notdir $(CURDIR))
-BUILD		:=	build
-SOURCES		:=	source source/titles source/gui \
-				source/luasupport source/peripherals common/source
-DATA		:=	data
-TEXTURES	:=	textures
-INCLUDES	:=	include include/titles include/gui \
-				include/peripherals common/include
+bootloader: dolbooter
+	@echo " "
+	@echo "Building RVLoader bootloader"
+	@echo " "
+	$(MAKE) -C bootloader
 
-#---------------------------------------------------------------------------------
-# options for code generation
-#---------------------------------------------------------------------------------
-
-CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DLUA_32BITS \
-			-DVER_MAJOR=${RVLOADERVERSION_MAJOR} -DVER_MINOR=${RVLOADERVERSION_MINOR}
-CXXFLAGS	=	$(CFLAGS) -std=c++11
-
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
-
-#---------------------------------------------------------------------------------
-# any extra libraries we wish to link with the project
-#---------------------------------------------------------------------------------
-
-LIBS	:=	-llua -lwiiuse -lbte -lfat -lGUI -logc -lm -lfreetype -lpng -lz -lbz2 -lmxml
-
-#---------------------------------------------------------------------------------
-# list of directories containing libraries, this must be the top level containing
-# include and lib
-#---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) ../libs ../libs/libGUI
-FREETYPE := $(foreach dir,$(PORTLIBS), $(dir)/include/freetype2)
-
-#---------------------------------------------------------------------------------
-# no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
-#---------------------------------------------------------------------------------
-ifneq ($(BUILD),$(notdir $(CURDIR)))
-#---------------------------------------------------------------------------------
-
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
-
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(TEXTURES),$(CURDIR)/$(dir))
-
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
-
-#---------------------------------------------------------------------------------
-# automatically build a list of object files for our project
-#---------------------------------------------------------------------------------
-CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
-SCFFILES	:=	$(foreach dir,$(TEXTURES),$(notdir $(wildcard $(dir)/*.scf)))
-TPLFILES	:=	$(SCFFILES:.scf=.tpl)
-
-#---------------------------------------------------------------------------------
-# use CXX for linking C++ projects, CC for standard C
-#---------------------------------------------------------------------------------
-ifeq ($(strip $(CPPFILES)),)
-	export LD	:=	$(CC)
-else
-	export LD	:=	$(CXX)
-endif
-
-export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
-export OFILES_TPL	:=	$(addsuffix .o,$(TPLFILES))
-export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
-export OFILES := $(OFILES_BIN) $(OFILES_TPL) $(OFILES_SOURCES)
-
-export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES))) $(addsuffix .h,$(subst .,_,$(TPLFILES)))
-
-#---------------------------------------------------------------------------------
-# build a list of include paths
-#---------------------------------------------------------------------------------
-export INCLUDE	:=	$(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
-					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-					$(foreach dir,$(FREETYPE),-I$(dir)) \
-					-I$(CURDIR)/$(BUILD) \
-					-I$(LIBOGC_INC)
-
-#---------------------------------------------------------------------------------
-# build a list of library paths
-#---------------------------------------------------------------------------------
-export LIBPATHS	:= -L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
-
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
-.PHONY: $(BUILD) clean $(SUBPROJECTS)
-
-all: $(BUILD)
-
-#---------------------------------------------------------------------------------
-installer:
+installer: bootloader
 	@echo " "
 	@echo "Building RVLoader installer"
 	@echo " "
 	$(MAKE) -C installer
 
-#---------------------------------------------------------------------------------
-$(BUILD): $(SUBPROJECTS)
-	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(OUTPUT).dol boot.dol
+libGUI:
+	@echo " "
+	@echo "Building RVLoader libGUI"
+	@echo " "
+	$(MAKE) -C libGUI install
 
-#---------------------------------------------------------------------------------
+main: dolbooter bootloader libGUI installer
+	@echo " "
+	@echo "Building RVLoader main"
+	@echo " "
+	$(MAKE) -C main
+
 clean:
-	@echo clean ...
+	@echo " "
+	@echo "Cleaning all subprojects..."
+	@echo " "
+	$(MAKE) -C dolbooter clean
+	$(MAKE) -C bootloader clean
 	$(MAKE) -C installer clean
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
-
-#---------------------------------------------------------------------------------
-run:
-	wiiload $(TARGET).dol
-
-#---------------------------------------------------------------------------------
-emu: $(BUILD)
-	dolphin-emu $(TARGET).dol
-
-
-#---------------------------------------------------------------------------------
-else
-
-DEPENDS	:=	$(OFILES:.o=.d)
-
-#---------------------------------------------------------------------------------
-# main targets
-#---------------------------------------------------------------------------------
-$(OUTPUT).dol: $(OUTPUT).elf
-$(OUTPUT).elf: $(OFILES)
-
-$(OFILES_SOURCES) : $(HFILES)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .bin extension
-#---------------------------------------------------------------------------------
-%.bin.o	:	%.bin
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .jpg extension
-#---------------------------------------------------------------------------------
-%.jpg.o	:	%.jpg
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .png extension
-#---------------------------------------------------------------------------------
-%.png.o	:	%.png
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .ttf extension
-#---------------------------------------------------------------------------------
-%.ttf.o	:	%.ttf
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .otf extension
-#---------------------------------------------------------------------------------
-%.otf.o	:	%.otf
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-%.tpl.o	:	%.tpl
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
-
-#---------------------------------------------------------------------------------
-%.xml.o	:	%.xml
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
-
-#---------------------------------------------------------------------------------
-%.lua.o	:	%.lua
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
-
-#---------------------------------------------------------------------------------
-%.txt.o	:	%.txt
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
-
--include $(DEPENDS)
-
-#---------------------------------------------------------------------------------
-endif
-#---------------------------------------------------------------------------------

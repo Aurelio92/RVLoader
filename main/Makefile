@@ -9,6 +9,10 @@ endif
 
 include $(DEVKITPPC)/wii_rules
 
+# Must be integers
+RVLOADERVERSION_MAJOR := 1
+RVLOADERVERSION_MINOR := 6
+
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -17,29 +21,35 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source ../common/source
+SOURCES		:=	source source/titles source/gui \
+				source/luasupport source/peripherals ../common/source
 DATA		:=	data
-INCLUDES	:=	include ../common/include
+TEXTURES	:=	textures
+INCLUDES	:=	include include/titles include/gui \
+				include/peripherals ../common/include
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE)
-CXXFLAGS	=	$(CFLAGS)
+CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DLUA_32BITS \
+			-DVER_MAJOR=${RVLOADERVERSION_MAJOR} -DVER_MINOR=${RVLOADERVERSION_MINOR}
+CXXFLAGS	=	$(CFLAGS) -std=c++11
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lwiiuse -lbte -logc -lm -lfat
+
+LIBS	:=	-llua -lwiiuse -lbte -lfat -lGUI -logc -lm -lfreetype -lpng -lz -lbz2 -lmxml
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=
+LIBDIRS	:= $(PORTLIBS) ../../libs ../../libs/libGUI
+FREETYPE := $(foreach dir,$(PORTLIBS), $(dir)/include/freetype2)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -51,7 +61,8 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
+					$(foreach dir,$(TEXTURES),$(CURDIR)/$(dir))
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
@@ -63,6 +74,8 @@ CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+SCFFILES	:=	$(foreach dir,$(TEXTURES),$(notdir $(wildcard $(dir)/*.scf)))
+TPLFILES	:=	$(SCFFILES:.scf=.tpl)
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -74,16 +87,18 @@ else
 endif
 
 export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
+export OFILES_TPL	:=	$(addsuffix .o,$(TPLFILES))
 export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
-export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+export OFILES := $(OFILES_BIN) $(OFILES_TPL) $(OFILES_SOURCES)
 
-export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
+export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES))) $(addsuffix .h,$(subst .,_,$(TPLFILES)))
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
 #---------------------------------------------------------------------------------
 export INCLUDE	:=	$(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+					$(foreach dir,$(FREETYPE),-I$(dir)) \
 					-I$(CURDIR)/$(BUILD) \
 					-I$(LIBOGC_INC)
 
@@ -101,17 +116,21 @@ all: $(BUILD)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(TARGET).dol boot.dol
+	@cp $(OUTPUT).dol boot.dol
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	$(MAKE) -C ../bootloader clean
+	$(MAKE) -C installer clean
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------
 run:
 	wiiload $(TARGET).dol
+
+#---------------------------------------------------------------------------------
+emu: $(BUILD)
+	dolphin-emu $(TARGET).dol
 
 
 #---------------------------------------------------------------------------------
@@ -130,50 +149,66 @@ $(OFILES_SOURCES) : $(HFILES)
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .bin extension
 #---------------------------------------------------------------------------------
-%.bin.o	%_bin.h :	%.bin
+%.bin.o	:	%.bin
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with the .tmd extension
+# This rule links in binary data with the .jpg extension
 #---------------------------------------------------------------------------------
-%.tmd.o	%_tmd.h :	%.tmd
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .tik extension
-#---------------------------------------------------------------------------------
-%.tik.o	%_tik.h :	%.tik
+%.jpg.o	:	%.jpg
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with the .app extension
+# This rule links in binary data with the .png extension
 #---------------------------------------------------------------------------------
-%.app.o	%_app.h :	%.app
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .dol extension
-#---------------------------------------------------------------------------------
-%.dol.o	%_dol.h :	%.dol
+%.png.o	:	%.png
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with the .certs extension
+# This rule links in binary data with the .ttf extension
 #---------------------------------------------------------------------------------
-%.certs.o	%_certs.h :	%.certs
+%.ttf.o	:	%.ttf
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)
+
+#---------------------------------------------------------------------------------
+# This rule links in binary data with the .otf extension
+#---------------------------------------------------------------------------------
+%.otf.o	:	%.otf
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	$(bin2o)
+
+#---------------------------------------------------------------------------------
+%.tpl.o	:	%.tpl
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(bin2o)
+
+#---------------------------------------------------------------------------------
+%.xml.o	:	%.xml
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(bin2o)
+
+#---------------------------------------------------------------------------------
+%.lua.o	:	%.lua
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(bin2o)
+
+#---------------------------------------------------------------------------------
+%.txt.o	:	%.txt
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(bin2o)
 
 -include $(DEPENDS)
 

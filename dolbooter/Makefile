@@ -83,7 +83,7 @@ all: $(TARGET_BIN)
 $(TARGET_BIN): $(TARGET)
 	@echo  "  OBJCPY    $@"
 	@$(OBJCOPY) -O binary $< $@
-	@cp $@ ../data/
+	@cp $@ ../main/data/
 	@cp $@ ../bootloader/data/
 
 clean: myclean

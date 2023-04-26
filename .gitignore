@@ -1,4 +1,10 @@
-build/
-*.o
-*.elf
-*.dol
+main/build/
+main/*.o
+main/*.elf
+main/*.dol
+bootloader/build
+installer/build
+libGUI/build
+bootloader/*.o
+dolbooter/*.o
+*.DS_Store*
