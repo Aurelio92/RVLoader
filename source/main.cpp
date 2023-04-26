@@ -98,8 +98,9 @@ void WMPowerButtonCB(s32 chan) {
 }
 
 int main(int argc, char **argv) {
-    if (!MX::isConnected())
+    if (!MX::isConnected()) {
         settime(bootTime);
+    }
 
     TPLFile mainTDF;
     GuiWindow mainWindow;
