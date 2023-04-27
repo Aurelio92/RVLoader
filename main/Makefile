@@ -117,11 +117,12 @@ $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 	@cp $(OUTPUT).dol boot.dol
+	@cp $(OUTPUT).dol ../driveRoot/apps/RVLoader/boot.dol
+
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	$(MAKE) -C installer clean
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------

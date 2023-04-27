@@ -17,9 +17,9 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source ../common/source
+SOURCES		:=	source
 DATA		:=	data
-INCLUDES	:=	include ../common/include
+INCLUDES	:=
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -28,12 +28,12 @@ INCLUDES	:=	include ../common/include
 CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE)
 CXXFLAGS	=	$(CFLAGS)
 
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x81500000
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lwiiuse -lbte -logc -lm -lfat
+LIBS	:=	-lwiiuse -lbte -logc -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -95,13 +95,13 @@ export LIBPATHS	:= -L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) clean
 
-all: $(BUILD)
-
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(TARGET).dol boot.dol
+	@mkdir -p ../driveRoot/apps
+	@mkdir -p ../driveRoot/apps/RVLoader
+	@cp $(TARGET).dol ../driveRoot/apps/RVLoader/discloader.dol
 
 #---------------------------------------------------------------------------------
 clean:
@@ -127,49 +127,9 @@ $(OUTPUT).elf: $(OFILES)
 $(OFILES_SOURCES) : $(HFILES)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with the .bin extension
+# This rule links in binary data with the .jpg extension
 #---------------------------------------------------------------------------------
-%.bin.o	%_bin.h :	%.bin
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .tmd extension
-#---------------------------------------------------------------------------------
-%.tmd.o	%_tmd.h :	%.tmd
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .tik extension
-#---------------------------------------------------------------------------------
-%.tik.o	%_tik.h :	%.tik
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .app extension
-#---------------------------------------------------------------------------------
-%.app.o	%_app.h :	%.app
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .dol extension
-#---------------------------------------------------------------------------------
-%.dol.o	%_dol.h :	%.dol
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .certs extension
-#---------------------------------------------------------------------------------
-%.certs.o	%_certs.h :	%.certs
+%.jpg.o	%_jpg.h :	%.jpg
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)

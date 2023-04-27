@@ -4,6 +4,7 @@ main/*.elf
 main/*.dol
 bootloader/build
 installer/build
+discloader/build
 libGUI/build
 bootloader/*.o
 dolbooter/*.o
