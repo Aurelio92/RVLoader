@@ -40,7 +40,7 @@ libGUI:
 	@echo " "
 	$(MAKE) -C libGUI install
 
-main: dolbooter bootloader installer discloader libGUI
+main: dolbooter bootloader installer discloader
 	@echo " "
 	@echo "Building RVLoader main"
 	@echo " "
