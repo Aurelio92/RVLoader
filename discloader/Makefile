@@ -93,10 +93,19 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
 export LIBPATHS	:= -L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
-.PHONY: $(BUILD) clean
+.PHONY: $(BUILD) clean asmPatches
+
+all: $(BUILD)
 
 #---------------------------------------------------------------------------------
-$(BUILD):
+asmPatches:
+	@echo " "
+	@echo "Building asmPatches"
+	@echo " "
+	@$(MAKE) -C asmPatches
+
+#---------------------------------------------------------------------------------
+$(BUILD): asmPatches
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 	@mkdir -p ../driveRoot/apps
@@ -106,6 +115,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
+	@$(MAKE) -C asmPatches clean
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------

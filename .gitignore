@@ -9,3 +9,5 @@ libGUI/build
 bootloader/*.o
 dolbooter/*.o
 *.DS_Store*
+discloader/asmPatches/build
+discloader/asmPatches/out

@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <ogcsys.h>
 #include <string.h>
+#include <vector>
 
 #include "apploader.h"
 #include "wdvd.h"
 #include "disc.h"
+#include "gamepatches.h"
 
 /* Constants */
 #define APPLDR_OFFSET	0x2440
@@ -30,7 +32,7 @@ typedef struct _SPatchCfg
 typedef int   (*app_main)(void **dst, int *size, int *offset);
 typedef void  (*app_init)(void (*report)(const char *fmt, ...));
 typedef void *(*app_final)();
-typedef void  (*app_entry)(void (**init)(void (*report)(const char *fmt, ...)), int (**main)(), void *(**final)());
+typedef void  (*app_entry)(app_init* report, app_main* main, app_final* final);
 
 /* Variables */
 static u32 buffer[0x20] ATTRIBUTE_ALIGN(32);
@@ -43,7 +45,7 @@ static void __noprint(const char *fmt, ...)
 {
 }
 
-s32 Apploader_Run(entry_point *entry) {
+s32 Apploader_Run(entry_point* entry) {
 
     void *dst = NULL;
     int len = 0;
@@ -51,6 +53,8 @@ s32 Apploader_Run(entry_point *entry) {
     app_init  appldr_init;
     app_main  appldr_main;
     app_final appldr_final;
+
+    std::vector<GamePatch> patches;
 
     /* Read apploader header */
     s32 ret = WDVD_Read(buffer, 0x20, APPLDR_OFFSET);
@@ -87,11 +91,16 @@ s32 Apploader_Run(entry_point *entry) {
         printf("WDVD_Read #3 = %d\n", ret);
 
         maindolpatches(dst, len);
+        findPatches(dst, len, patches);
     }
     printf("appldr_main (done)\n");
 
     /* Set entry point from apploader */
-    *entry = appldr_final();
+    *entry = (entry_point)appldr_final();
+
+    for(auto el : patches) {
+        printf("Found %08X at %08X\n", el.checksum, el.address);
+    }
 
     // IOSReloadBlock(IOS_GetVersion());
     *(vu32 *)0x80003140 = *(vu32 *)0x80003188; // IOS Version Check
@@ -100,9 +109,8 @@ s32 Apploader_Run(entry_point *entry) {
 
     DCFlushRange((void*)0x80000000, 0x3f00);
 
-
     return 0;
-    }
+}
 
 static void PatchCountryStrings(void *Address, int Size)
 {
@@ -213,10 +221,10 @@ static bool Remove_001_Protection(void *Address, int Size)
 {
     static const u8 SearchPattern[] = {0x40, 0x82, 0x00, 0x0C, 0x38, 0x60, 0x00, 0x01, 0x48, 0x00, 0x02, 0x44, 0x38, 0x61, 0x00, 0x18};
     static const u8 PatchData[] = {0x40, 0x82, 0x00, 0x04, 0x38, 0x60, 0x00, 0x01, 0x48, 0x00, 0x02, 0x44, 0x38, 0x61, 0x00, 0x18};
-    u8 *Addr_end = Address + Size;
+    u8 *Addr_end = (u8*)(Address + Size);
     u8 *Addr;
 
-    for (Addr = Address; Addr <= Addr_end - sizeof SearchPattern; Addr += 4)
+    for (Addr = (u8*)Address; Addr <= Addr_end - sizeof SearchPattern; Addr += 4)
         if (memcmp(Addr, SearchPattern, sizeof SearchPattern) == 0)
         {
             memcpy(Addr, PatchData, sizeof PatchData);
