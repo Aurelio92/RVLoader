@@ -2,8 +2,7 @@
 
 #include <string>
 #include <gccore.h>
-
-#define ALIGNED(x) __attribute__((aligned(x)))
+#include "utils.h"
 
 enum ContentType
 {
