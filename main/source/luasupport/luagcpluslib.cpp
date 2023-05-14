@@ -81,7 +81,7 @@ static int lua_Gcp_setSticksRange(lua_State* L) {
     u8 config[8];
     //Read values from stack in reverse
     for (int i = 0; i < 8; i++) {
-    	config[7 - i] = luaL_checkinteger(L, -1 - i);
+        config[7 - i] = luaL_checkinteger(L, -1 - i);
     }
     lua_pop(L, 9); //Pop table and config data
 
@@ -127,7 +127,7 @@ static int lua_Gcp_setSticksInvert(lua_State* L) {
     u8 invert = 0;
     //Read values from stack in reverse
     for (int i = 0; i < 4; i++) {
-    	invert |= lua_toboolean(L, -1 - i) ? (1 << (3 - i)) : 0;
+        invert |= lua_toboolean(L, -1 - i) ? (1 << (3 - i)) : 0;
     }
     lua_pop(L, 5); //Pop table and config data
 
@@ -175,7 +175,7 @@ static int lua_Gcp_setSticksChannel(lua_State* L) {
     const u8 mapTable[4] = {0x02, 0x03, 0x00, 0x01};
     //Read values from stack in reverse
     for (int i = 0; i < 4; i++) {
-    	channels[3 - i] = mapTable[luaL_checkinteger(L, -1 - i) - 1];
+        channels[3 - i] = mapTable[luaL_checkinteger(L, -1 - i) - 1];
     }
     lua_pop(L, 5); //Pop table and config data
 

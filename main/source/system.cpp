@@ -261,8 +261,8 @@ void bootDOL(const char* path, const char* args) {
     }
 
     write32(HW_GPIO_ENABLE_ADDR, read32(HW_GPIO_ENABLE_ADDR) | GPIO_DEBUG);
-	write32(HW_GPIO_DIR_ADDR, read32(HW_GPIO_DIR_ADDR) & ~GPIO_DEBUG); //Set all the GPIOs as input
-	write32(HW_GPIO_OWNER_ADDR, read32(HW_GPIO_OWNER_ADDR) & ~GPIO_DEBUG);
+    write32(HW_GPIO_DIR_ADDR, read32(HW_GPIO_DIR_ADDR) & ~GPIO_DEBUG); //Set all the GPIOs as input
+    write32(HW_GPIO_OWNER_ADDR, read32(HW_GPIO_OWNER_ADDR) & ~GPIO_DEBUG);
 
     SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
     _CPU_ISR_Disable(level);

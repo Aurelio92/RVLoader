@@ -7,14 +7,14 @@ extern "C" {
 
 typedef struct _dirent
 {
-	char name[ISFS_MAXPATH + 1];
-	int type;
-	u32 ownerID;
-	u16 groupID;
-	u8 attributes;
-	u8 ownerperm;
-	u8 groupperm;
-	u8 otherperm;
+    char name[ISFS_MAXPATH + 1];
+    int type;
+    u32 ownerID;
+    u16 groupID;
+    u8 attributes;
+    u8 ownerperm;
+    u8 groupperm;
+    u8 otherperm;
 } dirent_t;
 
 /* Prototypes */

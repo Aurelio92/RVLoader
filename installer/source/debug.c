@@ -10,30 +10,30 @@
 static int geckolog = 0;
 
 s32 DebugStart () {
-	geckolog = usb_isgeckoalive (EXI_CHANNEL_1);
+    geckolog = usb_isgeckoalive (EXI_CHANNEL_1);
 
-	return geckolog;
+    return geckolog;
 }
 
 void Debug(const char *text, ...) {
     #ifdef LOG_TO_FILE
-	   if (text == NULL) return;
+       if (text == NULL) return;
     #else
         if (text == NULL || !geckolog) return;
     #endif
 
-	int i;
-	char mex[1024];
+    int i;
+    char mex[1024];
 
-	va_list argp;
-	va_start (argp, text);
-	vsprintf (mex, text, argp);
-	va_end (argp);
+    va_list argp;
+    va_start (argp, text);
+    vsprintf (mex, text, argp);
+    va_end (argp);
 
-	if (geckolog) {
-		usb_sendbuffer(EXI_CHANNEL_1, mex, strlen(mex));
-		usb_flush(EXI_CHANNEL_1);
-	}
+    if (geckolog) {
+        usb_sendbuffer(EXI_CHANNEL_1, mex, strlen(mex));
+        usb_flush(EXI_CHANNEL_1);
+    }
 
     #ifdef LOG_TO_FILE
         FILE* fp = fopen("/rvloader/log.txt", "a");
@@ -51,16 +51,16 @@ static char ascii(char s) {
 }
 
 void gprintf (const char *format, ...) {
-	char * tmp = NULL;
-	va_list va;
-	va_start(va, format);
+    char * tmp = NULL;
+    va_list va;
+    va_start(va, format);
 
-	if ((vasprintf(&tmp, format, va) >= 0) && tmp) {
+    if ((vasprintf(&tmp, format, va) >= 0) && tmp) {
         usb_sendbuffer(EXI_CHANNEL_1, tmp, strlen(tmp));
-	}
-	va_end(va);
+    }
+    va_end(va);
 
-	if(tmp)
+    if(tmp)
         free(tmp);
 }
 

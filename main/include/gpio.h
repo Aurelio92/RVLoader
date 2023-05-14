@@ -19,7 +19,7 @@
 #define HW_GPIO_INTFLAG     (*((vu32*)(HW_GPIO_BASE + 0x30)))
 #define HW_GPIO_INTMASK     (*((vu32*)(HW_GPIO_BASE + 0x34)))
 #define HW_GPIO_INMIR       (*((vu32*)(HW_GPIO_BASE + 0x38)))
-//#define HW_GPIO_OWNER		(HW_GPIO_BASE + 0x3C)
+//#define HW_GPIO_OWNER     (HW_GPIO_BASE + 0x3C)
 
 #define HW_GPIOB_OUT_ADDR        (HW_GPIO_BASE_ADDR + 0x00)
 #define HW_GPIOB_DIR_ADDR        (HW_GPIO_BASE_ADDR + 0x04)

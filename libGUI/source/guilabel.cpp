@@ -1,7 +1,7 @@
 #include "libgui.h"
 
 GuiLabel::GuiLabel() {
-	font = NULL;
+    font = NULL;
 }
 
 GuiLabel::GuiLabel(Font* _font, std::string _text) {

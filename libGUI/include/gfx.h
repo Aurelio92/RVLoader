@@ -8,12 +8,12 @@
 
 namespace Gfx
 {
-	void init();
+    void init();
     void setClearColor(u8 r, u8 g, u8 b);
     void fillScreen();
-	void startDrawing();
-	void endDrawing();
-	void concatViewMatrix(Mtx mi, Mtx mo);
+    void startDrawing();
+    void endDrawing();
+    void concatViewMatrix(Mtx mi, Mtx mo);
     void restoreViewMatrix();
     void identity();
     void translate(f32 x, f32 y);
