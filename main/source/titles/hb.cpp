@@ -18,6 +18,7 @@
 
 std::vector<HBContainer> wiiHomebrews;
 
+
 static std::string getElemCDATA(mxml_node_t* node, const char* element) {
     if (!node)
         return "";
@@ -26,8 +27,8 @@ static std::string getElemCDATA(mxml_node_t* node, const char* element) {
                                         NULL, NULL, MXML_DESCEND_FIRST));
 
     while (n) {
-        if ((n->type == MXML_OPAQUE) && n->value.opaque)
-            return std::string(n->value.opaque);
+        if ((mxmlGetType(n) == MXML_OPAQUE) && mxmlGetOpaque(n))
+            return std::string(mxmlGetOpaque(n));
 
         n = mxmlWalkNext(n, node, MXML_NO_DESCEND);
     }
@@ -51,6 +52,7 @@ static bool parseMetaXML(const char* filepath, hbMeta* meta, std::string* name) 
 
     if (!node) { //No app node
         mxmlDelete(xmlTree);
+        fclose(fp);
         return false;
     }
 
