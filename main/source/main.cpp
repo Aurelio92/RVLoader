@@ -59,14 +59,6 @@ extern "C" {
     extern void udelay(int us);
 };
 
-u64 bootTime;
-
-extern "C" {
-    void __SYS_PreInit() {
-        bootTime = gettime();
-    }
-}
-
 bool checkRVL();
 
 void lockSIMutex() {
@@ -98,10 +90,6 @@ void WMPowerButtonCB(s32 chan) {
 }
 
 int main(int argc, char **argv) {
-    if (!MX::isConnected()) {
-        settime(bootTime);
-    }
-
     TPLFile mainTDF;
     GuiWindow mainWindow;
     float mem1Max = (float)SYS_GetArena1Size() / 1048576.0f;
