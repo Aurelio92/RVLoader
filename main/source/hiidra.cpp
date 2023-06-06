@@ -280,15 +280,11 @@ void forgeKernel(char* kernel, u32 kernelSize, char** extraModules, u32 nExtraMo
     fclose(fp);
 }
 
-/**
- * Load and patch IOS.
- * @return 0 on success; negative on error.
- */
-int LoadKernel(char* kernel, u32* kernelSize, u32* FoundVersion) {
+int getKernelSize(u32* kernelSize) {
     unsigned int TMDSize;
     int i, u;
 
-    if (kernel == NULL || *kernelSize == NULL) {
+    if (kernelSize == NULL) {
         return -1;
     }
 
@@ -297,9 +293,9 @@ int LoadKernel(char* kernel, u32* kernelSize, u32* FoundVersion) {
         return r;
     }
 
-    //gprintf("TMDSize:%u\r\n", TMDSize );
+    //gprintf("TMDSize:%u\r\n", TMDSize);
 
-    TitleMetaData *TMD = (TitleMetaData*)memalign(32, TMDSize );
+    TitleMetaData *TMD = (TitleMetaData*)memalign(32, TMDSize);
     if (!TMD) {
         return -1;
     }
@@ -314,7 +310,7 @@ int LoadKernel(char* kernel, u32* kernelSize, u32* FoundVersion) {
 
     //Look for boot index
     for (i = 0; i < TMD->ContentCount; ++i) {
-        if (TMD->BootIndex == TMD->Contents[i].Index )
+        if (TMD->BootIndex == TMD->Contents[i].Index)
             break;
     }
 
@@ -328,6 +324,84 @@ int LoadKernel(char* kernel, u32* kernelSize, u32* FoundVersion) {
     for (u = 0; ; u += 0x1C) {
         if (IOS_Read(cfd, moduleSHA, 0x1C) != 0x1C) {
             //printf("Hash not found in content.map\r\n");
+            IOS_Close(cfd);
+            free(TMD);
+            return -2;
+        }
+
+        if (memcmp((char*)(moduleSHA+8), TMD->Contents[i].SHA1, 0x14) == 0)
+            break;
+    }
+
+    free(TMD);
+
+    IOS_Close(cfd);
+
+    memset(modulePath, 0, sizeof(modulePath));
+    snprintf(modulePath, sizeof(modulePath), "/shared1/%.8s.app", moduleSHA);
+    DCFlushRange(modulePath, sizeof(modulePath));
+
+    //Open the actual IOS58 kernel file.
+    int kfd = IOS_Open(modulePath, 1);
+    if (kfd < 0) {
+        return kfd;
+    }
+
+    *kernelSize = IOS_Seek(kfd, 0, SEEK_END);
+
+    IOS_Close(kfd);
+    return 0;
+}
+
+/**
+ * Load and patch IOS.
+ * @return 0 on success; negative on error.
+ */
+int loadKernel(char* kernel, u32* kernelSize, u32* FoundVersion) {
+    unsigned int TMDSize;
+    int i, u;
+
+    if (kernel == NULL || kernelSize == NULL) {
+        return -1;
+    }
+
+    int r = ES_GetStoredTMDSize(TitleID_IOS58, (u32*)&TMDSize);
+    if (r < 0) {
+        return r;
+    }
+
+    //gprintf("TMDSize:%u\r\n", TMDSize);
+
+    TitleMetaData *TMD = (TitleMetaData*)memalign(32, TMDSize);
+    if (!TMD) {
+        return -1;
+    }
+
+    r = ES_GetStoredTMD(TitleID_IOS58, (signed_blob*)TMD, TMDSize);
+    if (r < 0) {
+        // Unable to load IOS58.
+        //printf("ES_GetStoredTMD(0x%llX) failed: %d\r\n", TitleID_IOS58, r);
+        free(TMD);
+        return r;
+    }
+
+    //Look for boot index
+    for (i = 0; i < TMD->ContentCount; ++i) {
+        if (TMD->BootIndex == TMD->Contents[i].Index)
+            break;
+    }
+
+    int cfd = IOS_Open("/shared1/content.map", 1);
+    if (cfd < 0) {
+        //printf("IOS_Open(\"/shared1/content.map\") failed: %d\r\n", cfd);
+        free(TMD);
+        return cfd;
+    }
+
+    for (u = 0; ; u += 0x1C) {
+        if (IOS_Read(cfd, moduleSHA, 0x1C) != 0x1C) {
+            //printf("Hash not found in content.map\r\n");
+            IOS_Close(cfd);
             free(TMD);
             return -2;
         }
@@ -363,7 +437,7 @@ int LoadKernel(char* kernel, u32* kernelSize, u32* FoundVersion) {
     return 0;
 }
 
-int LoadIOSModules(void) {
+int loadIOSModules(void) {
     unsigned int TMDSize;
     unsigned int i,u;
 
@@ -374,9 +448,9 @@ int LoadIOSModules(void) {
         return r;
     }
 
-    //gprintf("TMDSize:%u\r\n", TMDSize );
+    //gprintf("TMDSize:%u\r\n", TMDSize);
 
-    TitleMetaData *TMD = (TitleMetaData*)memalign(32, TMDSize );
+    TitleMetaData *TMD = (TitleMetaData*)memalign(32, TMDSize);
     if (!TMD) {
         // Memory allocation failure.
         // NOTE: Not an IOS error, so we'll have to fake
