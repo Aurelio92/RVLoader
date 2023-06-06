@@ -1,100 +1,100 @@
 
 Discarded input sections
 
- .text          0x0000000000000000        0x0 start.o
- .data          0x0000000000000000        0x0 start.o
- .bss           0x0000000000000000        0x0 start.o
- .data          0x0000000000000000        0x0 utils.o
- .bss           0x0000000000000000        0x0 utils.o
- .text          0x0000000000000000       0x38 main.o
- .data          0x0000000000000000        0x0 main.o
- .bss           0x0000000000000000        0x0 main.o
- .eh_frame      0x0000000000000000       0xd4 main.o
+ .text          0x00000000        0x0 start.o
+ .data          0x00000000        0x0 start.o
+ .bss           0x00000000        0x0 start.o
+ .data          0x00000000        0x0 utils.o
+ .bss           0x00000000        0x0 utils.o
+ .text          0x00000000       0x38 main.o
+ .data          0x00000000        0x0 main.o
+ .bss           0x00000000        0x0 main.o
+ .eh_frame      0x00000000       0xd4 main.o
 
 Memory Configuration
 
 Name             Origin             Length             Attributes
-*default*        0x0000000000000000 0xffffffffffffffff
+*default*        0x00000000         0xffffffff
 
 Linker script and memory map
 
-                0x0000000093000000                __base_addr = 0x93000000
-                0x0000000093000000                . = __base_addr
+                0x93000000                        __base_addr = 0x93000000
+                0x93000000                        . = __base_addr
 
-.init           0x0000000093000000       0x40
+.init           0x93000000       0x40
  *(.init)
- .init          0x0000000093000000       0x40 start.o
-                0x0000000093000000                _start
-                0x0000000093000040                . = ALIGN (0x4)
+ .init          0x93000000       0x40 start.o
+                0x93000000                _start
+                0x93000040                        . = ALIGN (0x4)
 
-.text           0x0000000093000040      0x4a4
+.text           0x93000040      0x4a4
  *(.text.*)
- .text._memcpy  0x0000000093000040       0x28 main.o
-                0x0000000093000040                _memcpy
- .text._memset  0x0000000093000068       0x20 main.o
-                0x0000000093000068                _memset
+ .text._memcpy  0x93000040       0x28 main.o
+                0x93000040                _memcpy
+ .text._memset  0x93000068       0x20 main.o
+                0x93000068                _memset
  .text.relocateDol
-                0x0000000093000088      0x1f8 main.o
-                0x0000000093000088                relocateDol
+                0x93000088      0x1f8 main.o
+                0x93000088                relocateDol
  .text.relocateExecutable
-                0x0000000093000280      0x1c0 main.o
-                0x0000000093000280                relocateExecutable
- .text._main    0x0000000093000440       0x38 main.o
-                0x0000000093000440                _main
+                0x93000280      0x1c0 main.o
+                0x93000280                relocateExecutable
+ .text._main    0x93000440       0x38 main.o
+                0x93000440                _main
  *(.gnu.warning)
  *(.gnu.linkonce.t*)
  *(.glue_7)
  *(.glue_7t)
-                0x0000000093000478                . = ALIGN (0x4)
- .text          0x0000000093000478       0x6c utils.o
-                0x0000000093000478                DCFlushRange
-                0x00000000930004ac                ICInvalidateRange
-                0x00000000930004e4                __text_end = .
+                0x93000478                        . = ALIGN (0x4)
+ .text          0x93000478       0x6c utils.o
+                0x93000478                DCFlushRange
+                0x930004ac                ICInvalidateRange
+                0x930004e4                        __text_end = .
 
-.glink          0x00000000930004e4        0x0
- .glink         0x00000000930004e4        0x0 start.o
+.glink          0x930004e4        0x0
+ .glink         0x930004e4        0x0 start.o
 
-.rodata         0x00000000930004e4        0x0
+.rodata         0x930004e4        0x0
  *(.rodata)
  *all.rodata*(*)
  *(.roda)
  *(.rodata.*)
  *(.gnu.linkonce.r*)
-                0x00000000930004e4                . = ALIGN (0x4)
+                0x930004e4                        . = ALIGN (0x4)
 
-.eh_frame       0x00000000930004e4        0x0
- .eh_frame      0x00000000930004e4        0x0 start.o
+.eh_frame       0x930004e4        0x0
+ .eh_frame      0x930004e4        0x0 start.o
 
-.sdata2         0x00000000930004e4        0x0
- .sdata2        0x00000000930004e4        0x0 start.o
+.sdata2         0x930004e4        0x0
+ .sdata2        0x930004e4        0x0 start.o
 
-.eh_frame_hdr   0x00000000930004e4        0x0
- .eh_frame_hdr  0x00000000930004e4        0x0 main.o
+.eh_frame_hdr   0x930004e4        0x0
+ .eh_frame_hdr  0x930004e4        0x0 main.o
 
-.rela.dyn       0x00000000930004e4        0x0
- .rela.iplt     0x00000000930004e4        0x0 start.o
+.rela.dyn       0x930004e4        0x0
+ .rela.iplt     0x930004e4        0x0 start.o
 
-.data           0x00000000930004e4        0x0
+.data           0x930004e4        0x0
  *(.data)
  *(.data.*)
  *(.gnu.linkonce.d*)
-                0x00000000930004e4                . = ALIGN (0x4)
+                0x930004e4                        . = ALIGN (0x4)
 
-.branch_lt      0x00000000930004e4        0x0
- .branch_lt     0x00000000930004e4        0x0 start.o
+.branch_lt      0x930004e4        0x0
+ .branch_lt     0x930004e4        0x0 start.o
 
-.sdata          0x00000000930004e4        0x0
- .sdata         0x00000000930004e4        0x0 start.o
+.sdata          0x930004e4        0x0
+ .sdata         0x930004e4        0x0 start.o
 
-.bss            0x00000000930004e4        0x0
-                0x00000000930004e4                __bss_start = .
+.bss            0x930004e4        0x0
+                0x930004e4                        __bss_start = .
  *(.dynbss)
  *(.gnu.linkonce.b*)
  *(.bss*)
  *(.sbss*)
  *(COMMON)
-                0x00000000930004e4                . = ALIGN (0x4)
-                0x00000000930004e4                __bss_end = .
+                0x930004e4                        . = ALIGN (0x4)
+                0x930004e4                        __bss_end = .
                 [!provide]                        PROVIDE (__got_start = __got_start)
                 [!provide]                        PROVIDE (__got_end = __got_end)
                 [!provide]                        PROVIDE (__bss_start = __bss_start)
@@ -104,9 +104,9 @@ LOAD utils.o
 LOAD main.o
 OUTPUT(dolbooter.elf elf32-powerpc)
 
-.iplt           0x00000000930004f0        0x0
- .iplt          0x00000000930004f0        0x0 start.o
+.iplt           0x930004f0        0x0
+ .iplt          0x930004f0        0x0 start.o
 
-.comment        0x0000000000000000       0x23
- .comment       0x0000000000000000       0x23 main.o
-                                         0x24 (size before relaxing)
+.comment        0x00000000       0x23
+ .comment       0x00000000       0x23 main.o
+                                 0x24 (size before relaxing)

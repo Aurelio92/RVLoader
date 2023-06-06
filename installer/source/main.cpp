@@ -99,12 +99,7 @@ void PatchIOS(bool enable)
     write16((vu32)0xCD8B420A, 1);
 }
 
-u64 bootTime = 0;
-
 extern "C" {
-    void __SYS_PreInit() {
-        bootTime = gettime();
-    }
     extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 }
 
@@ -116,13 +111,7 @@ bool checkMX() {
     return false;
 }
 
-//---------------------------------------------------------------------------------
 int main(int argc, char **argv) {
-//---------------------------------------------------------------------------------
-    //This fixes GCC not working without the MX chip
-    if (!checkMX())
-        settime(bootTime);
-
     __exception_setreload(3);
     // Initialise the video system
     VIDEO_Init();

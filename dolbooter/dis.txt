@@ -215,7 +215,7 @@ Disassembly of section .text:
 93000314:	a1 3f 00 2c 	lhz     r9,44(r31)
 93000318:	7c 09 d8 00 	cmpw    r9,r27
 9300031c:	40 81 00 5c 	ble     93000378 <relocateExecutable+0xf8>
-93000320:	57 7d 28 34 	rlwinm  r29,r27,5,0,26
+93000320:	57 7d 28 34 	slwi    r29,r27,5
 93000324:	81 3f 00 1c 	lwz     r9,28(r31)
 93000328:	7f bd 4a 14 	add     r29,r29,r9
 9300032c:	7f 9f ea 14 	add     r28,r31,r29
@@ -311,7 +311,7 @@ Disassembly of section .text:
 93000484:	41 82 00 08 	beq     9300048c <DCFlushRange+0x14>
 93000488:	38 84 00 20 	addi    r4,r4,32
 9300048c:	38 84 00 1f 	addi    r4,r4,31
-93000490:	54 84 d9 7e 	rlwinm  r4,r4,27,5,31
+93000490:	54 84 d9 7e 	srwi    r4,r4,5
 93000494:	7c 89 03 a6 	mtctr   r4
 93000498:	7c 00 18 ac 	dcbf    0,r3
 9300049c:	38 63 00 20 	addi    r3,r3,32
@@ -326,7 +326,7 @@ Disassembly of section .text:
 930004b8:	41 82 00 08 	beq     930004c0 <ICInvalidateRange+0x14>
 930004bc:	38 84 00 20 	addi    r4,r4,32
 930004c0:	38 84 00 1f 	addi    r4,r4,31
-930004c4:	54 84 d9 7e 	rlwinm  r4,r4,27,5,31
+930004c4:	54 84 d9 7e 	srwi    r4,r4,5
 930004c8:	7c 89 03 a6 	mtctr   r4
 930004cc:	7c 00 1f ac 	icbi    0,r3
 930004d0:	38 63 00 20 	addi    r3,r3,32
@@ -344,7 +344,7 @@ Disassembly of section .comment:
    c:	50 50 43 20 	rlwimi  r16,r2,8,12,16
   10:	72 65 6c 65 	andi.   r5,r19,27749
   14:	61 73 65 20 	ori     r19,r11,25888
-  18:	34 31 29 20 	addic.  r1,r17,10528
-  1c:	31 32 2e 31 	addic   r9,r18,11825
-  20:	Address 0x0000000000000020 is out of bounds.
+  18:	34 33 29 20 	addic.  r1,r19,10528
+  1c:	31 33 2e 31 	addic   r9,r19,11825
+  20:	Address 0x20 is out of bounds.
 

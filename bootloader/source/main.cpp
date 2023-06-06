@@ -20,29 +20,7 @@ static GXRModeObj *rmode = NULL;
 
 void failedBoot();
 
-u64 bootTime = 0;
-
-extern "C" {
-    void __SYS_PreInit() {
-        bootTime = gettime();
-    }
-}
-
-bool checkMX() {
-    u32 retId = 0;
-    EXI_GetID(EXI_CHANNEL_0,EXI_DEVICE_1, &retId);
-    if (retId == 0xFFFFF308)
-        return true;
-    return false;
-}
-
-//---------------------------------------------------------------------------------
 int main(int argc, char **argv) {
-//---------------------------------------------------------------------------------
-    //This fixes GCC not working without the MX chip
-    if (!checkMX())
-        settime(bootTime);
-
     u8 i2c_error;
     u8 VGAEnabled;
 
