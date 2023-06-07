@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <gccore.h>
-#include "debug.h"
 
 namespace SYSCONF {
     static u8* __conf_buffer = NULL;

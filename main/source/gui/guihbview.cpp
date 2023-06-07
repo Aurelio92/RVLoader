@@ -8,7 +8,6 @@
 #include "luasupport.h"
 #include "system.h"
 #include "guihbview.h"
-#include "debug.h"
 
 GuiHBView::GuiHBView() {
     //Set default cover size
@@ -199,7 +198,7 @@ int GuiHBView::lua_bootHB(lua_State* L) {
 
     u32 idx = luaL_checkinteger(L, 1);
 
-    Debug("lua_bootHB\n");
+    printf("lua_bootHB\n");
 
     //Return result
     try {

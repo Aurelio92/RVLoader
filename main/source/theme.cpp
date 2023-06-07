@@ -11,7 +11,6 @@
 #include "system.h"
 #include "guielements.h"
 #include "utils.h"
-#include "debug.h"
 #include "main.h"
 
 std::map<std::string, GuiLuaElement*> themeElements;

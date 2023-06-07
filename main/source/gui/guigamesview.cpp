@@ -11,7 +11,6 @@
 #include "nintendont.h"
 #include "hiidra.h"
 #include "gc2wiimote.h"
-#include "debug.h"
 #include "rvldd.h"
 
 GuiGamesView::GuiGamesView(TitleType _titlesType) {
@@ -285,33 +284,33 @@ void GuiGamesView::openGameGC2WiimoteConfig(u32 idx) {
 
     FILE* fp = fopen(lastGC2WiimoteConfigPath.c_str(), "rb");
     if (fp == NULL) {
-        Debug("Couldn't load file\n");
+        printf("Couldn't load file\n");
         return;
     }
 
     if (fread(&magic, 1, sizeof(u32), fp) != sizeof(u32)) {
-        Debug("Couldn't read magic\n");
+        printf("Couldn't read magic\n");
         fclose(fp);
         return;
     }
     if (magic != 0x574D4549) {
-        Debug("Magic didn't match\n");
+        printf("Magic didn't match\n");
         fclose(fp);
         return;
     }
     if (fread(&version, 1, sizeof(u32), fp) != sizeof(u32)) {
-        Debug("Couldn't read version\n");
+        printf("Couldn't read version\n");
         fclose(fp);
         return;
     }
     if (version != GC2WIIMOTE_VER) {
-        Debug("Version didn't match\n");
+        printf("Version didn't match\n");
         fclose(fp);
         return;
     }
     rewind(fp);
     if (fread(&emuConfig, 1, sizeof(WMEmuConfig_t), fp) != sizeof(WMEmuConfig_t)) {
-        Debug("Couldn't read config\n");
+        printf("Couldn't read config\n");
         fclose(fp);
         loadDefaultGC2WiimoteConfig();
         return;
@@ -518,7 +517,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
     u32 idx = luaL_checkinteger(L, 1);
 
-    Debug("lua_bootGame\n");
+    printf("lua_bootGame\n");
 
     //Return result
     try {
@@ -1200,19 +1199,19 @@ int GuiGamesView::lua_setGCPMapGameConfigValue(lua_State* L) {
 
     auto it = thisView->gcpMapStringToPad.find(luaL_checkstring(L, 1));
 
-    Debug("setGCPMapGameConfigValue(%s, %u)\n", luaL_checkstring(L, 1), luaL_checkinteger(L, 2));
+    printf("setGCPMapGameConfigValue(%s, %u)\n", luaL_checkstring(L, 1), luaL_checkinteger(L, 2));
 
     if (it != thisView->gcpMapStringToPad.end()) {
         //Swap other mapped buttons
         for (int i = 0; i < GCP_MAP_N_BUTTONS; i++) {
             if (thisView->gcpMap[i] == it->second) {
-                Debug("gcpMap[%d] = 0;\n", i);
+                printf("gcpMap[%d] = 0;\n", i);
                 thisView->gcpMap[i] = thisView->gcpMap[luaL_checkinteger(L, 2)];
             }
         }
 
         //Map button
-        Debug("gcpMap[%d] = %04X;\n", luaL_checkinteger(L, 2), it->second);
+        printf("gcpMap[%d] = %04X;\n", luaL_checkinteger(L, 2), it->second);
         thisView->gcpMap[luaL_checkinteger(L, 2)] = it->second;
     } else {
         return luaL_error(L, "unknown key %s", luaL_checkstring(L, 1));

@@ -2,13 +2,12 @@
 #include <string.h>
 #include <lua.hpp>
 #include "config.h"
-#include "debug.h"
 
 void Config::open(const char* filepath) {
     if (!filepath)
         return;
 
-    Debug("Config: Opening %s\n", filepath);
+    printf("Config: Opening %s\n", filepath);
 
     lastPath = filepath;
 
@@ -31,15 +30,15 @@ void Config::open(const char* filepath) {
                 if (lua_isinteger(L, -1)) {
                     int value = lua_tointeger(L, -1);
                     intEntries.insert(std::pair<std::string, int>(key, value));
-                    Debug("%s: (integer): %d\n", key, value);
+                    printf("%s: (integer): %d\n", key, value);
                 } else if (lua_isnumber(L, -1)) {
                     double value = lua_tonumber(L, -1);
                     doubleEntries.insert(std::pair<std::string, double>(key, value));
-                    Debug("%s: (double): %lf\n", key, value);
+                    printf("%s: (double): %lf\n", key, value);
                 } else if (lua_isstring(L, -1)) {
                     const char* value = lua_tostring(L, -1);
                     stringEntries.insert(std::pair<std::string, std::string>(key, value));
-                    Debug("%s: (string): %s\n", key, value);
+                    printf("%s: (string): %s\n", key, value);
                 }
 
                 lua_pop(L, 1);

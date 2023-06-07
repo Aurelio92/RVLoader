@@ -5,7 +5,6 @@
 #include "guiluaelement.h"
 #include "luasupport.h"
 #include "system.h"
-#include "debug.h"
 #include "sha1.h"
 
 GuiLuaElement::GuiLuaElement() {
@@ -65,7 +64,7 @@ void GuiLuaElement::onActiveEvent() {
             //Compile source again
             FILE* compiledFP = fopen((scriptPath + "c").c_str(), "wb");
             if (compiledFP) {
-                Debug("Compiling %s\n", (scriptPath + "c").c_str());
+                printf("Compiling %s\n", (scriptPath + "c").c_str());
                 lua_dump(L, GuiLuaElement::compilerWriter, compiledFP, 1);
                 if (!ferror(compiledFP)) {
                     fclose(compiledFP);

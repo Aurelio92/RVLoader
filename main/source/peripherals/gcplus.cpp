@@ -10,7 +10,6 @@
 #include "gcplus.h"
 #include "main.h"
 #include "hex.h"
-#include "debug.h"
 
 #define EEPROM_PACKET_SIZE 4
 #define EEPROM_RETRIES  10
@@ -239,7 +238,7 @@ namespace GCPlus {
                     return false;
                 }
                 if (answer != GCP_ERR_NONE) {
-                    Debug("writeEEPROM error: %02X\n", answer);
+                    printf("writeEEPROM error: %02X\n", answer);
                 }
                 readEEPROM(addr, test, pLen);
                 if (!memcmp(test, data, pLen) && answer == GCP_ERR_NONE)
@@ -287,7 +286,7 @@ namespace GCPlus {
                 addr += pLen;
                 cmd[1] = addr;
             } else {
-                Debug("readEEPROM error: %02X\n", answer[0]);
+                printf("readEEPROM error: %02X\n", answer[0]);
                 LWP_MutexUnlock(GCPMutex);
                 return false;
             }

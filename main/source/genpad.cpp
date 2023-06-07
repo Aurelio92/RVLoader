@@ -2,7 +2,6 @@
 #include <wiiuse/wpad.h>
 #include <wiiuse/wiiuse.h>
 #include "genpad.h"
-#include "debug.h"
 
 namespace GenPad {
     static const int _stickThreshLoHi = 30;

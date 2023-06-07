@@ -4,6 +4,8 @@
 #include <fat.h>
 #include <wiiuse/wpad.h>
 #include <ogc/machine/processor.h>
+#include <ogc/usbgecko.h>
+#include <ogc/exi.h>
 #include <libgui.h>
 #include <mxml.h>
 #include <lua.hpp>
@@ -20,7 +22,6 @@
 #include "genpad.h"
 #include "main.h"
 #include "i2c.h"
-#include "debug.h"
 #include "ave.h"
 #include "system.h"
 #include "pms2.h"
@@ -110,7 +111,9 @@ int main(int argc, char **argv) {
     else
         i2c_setMode(I2C_MODE_PUSHPULL);
 
-    DebugStart();
+    if (usb_isgeckoalive(EXI_CHANNEL_1)) {
+        CON_EnableGecko(EXI_CHANNEL_1, 0);
+    }
 
     //Set environment for lua interpreter (used by 'require')
     setenv("LUA_PATH", "./?.luac;./?.lua", 1);
@@ -168,10 +171,10 @@ int main(int argc, char **argv) {
         RVLDD::setStretch(0);
     }
 
-    Debug("Mounting USB... ");
+    printf("Mounting USB... ");
     if (!initFAT())
         systemError("Generic error", "Could not initialize FAT. Make sure USB is plugged in");
-    Debug("Done\n");
+    printf("Done\n");
 
     //Check if the bootloader is installed
     if (!checkRVL()) {
@@ -215,7 +218,7 @@ int main(int argc, char **argv) {
         }
         Gfx::endDrawing();
     }
-    Debug("Initialization complete\n");
+    printf("Initialization complete\n");
 
     HUD::init();
 

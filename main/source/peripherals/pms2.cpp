@@ -7,7 +7,6 @@
 #include <ogc/machine/processor.h>
 #include <ogc/lwp_threads.h>
 #include "i2c.h"
-#include "debug.h"
 #include "pms2.h"
 
 #define PMS2_ADDR (0x20 << 1)
@@ -95,7 +94,7 @@ namespace PMS2 {
         u8 magic[8];
         u8 writeFlashError;
 
-        Debug("PMS2 update thread started\n");
+        printf("PMS2 update thread started\n");
         u8 verBuffer[3];
         u16 version;
         u16 minVer;
@@ -121,23 +120,23 @@ namespace PMS2 {
             return NULL;
         }
 
-        Debug("Reading version\n");
+        printf("Reading version\n");
         i2c_readBuffer(curPMSAddress, CMD_GETVER, &error, verBuffer, 3);
         version = verBuffer[1] | (verBuffer[2] << 8);
         minVer = (version & 0x0007);
         majVer = ((version >> 13) & 0x1FFF);
-        Debug("Currently running: %s (v%u.%u)\n", verBuffer[0] ? "bootloader" : "payload", majVer, minVer);
-        Debug("Attempting to boot bootloader\n");
-        Debug("PMS2 booting bootloader\n");
+        printf("Currently running: %s (v%u.%u)\n", verBuffer[0] ? "bootloader" : "payload", majVer, minVer);
+        printf("Attempting to boot bootloader\n");
+        printf("PMS2 booting bootloader\n");
         i2c_writeBuffer(curPMSAddress, CMD_BOOTBL, unlockBuffer, 4, &error);
-        Debug("Waiting...\n");
+        printf("Waiting...\n");
         udelay(100000);
-        Debug("Reading version\n");
+        printf("Reading version\n");
         i2c_readBuffer(curPMSAddress, CMD_GETVER, &error, verBuffer, 3);
         version = verBuffer[1] | (verBuffer[2] << 8);
         minVer = (version & 0x0007);
         majVer = ((version >> 13) & 0x1FFF);
-        Debug("Currently running: %s (v%u.%u)\n", verBuffer[0] ? "bootloader" : "payload", majVer, minVer);
+        printf("Currently running: %s (v%u.%u)\n", verBuffer[0] ? "bootloader" : "payload", majVer, minVer);
 
         //Read update file size
         fseek(fp, 0, SEEK_END);
@@ -163,12 +162,12 @@ namespace PMS2 {
                 if (writeFlashError == ERR_NONE)
                     flashed = true;
                 else
-                    Debug("%06X: writeFlashError: %d\n", address, writeFlashError);
+                    printf("%06X: writeFlashError: %d\n", address, writeFlashError);
             }
 
             if (!flashed) {
                 fclose(fp);
-                Debug("PMS2 booting payload\n");
+                printf("PMS2 booting payload\n");
                 i2c_writeBuffer(curPMSAddress, CMD_BOOTPAYLOAD, unlockBuffer, 4, &error);
                 udelay(100000);
                 LWP_MutexLock(updateMutex);
@@ -188,7 +187,7 @@ namespace PMS2 {
         }
         fclose(fp);
 
-        Debug("PMS2 booting payload\n");
+        printf("PMS2 booting payload\n");
         i2c_writeBuffer(curPMSAddress, CMD_BOOTPAYLOAD, unlockBuffer, 4, &error);
         udelay(100000);
 
@@ -243,7 +242,7 @@ namespace PMS2 {
         if (updateThreadStack == NULL)
             updateThreadStack = (u8 *)memalign(32, STACKSIZE);
 
-        Debug("Starting PMS2 update thread\n");
+        printf("Starting PMS2 update thread\n");
         LWP_CreateThread(&updateThreadHandle, updateThread, NULL, updateThreadStack, STACKSIZE, 30);
     }
 

@@ -15,7 +15,6 @@
 #include "nintendont.h"
 #include "hiidra.h"
 #include "sha1.h"
-#include "debug.h"
 #include "i2c.h"
 #include "gpio.h"
 #include "main.h"
@@ -105,6 +104,22 @@ static bool patchISFS(bool patch) {
     return false;
 }
 
+void patchFSAccess() {
+    static const unsigned char FSAccessPattern[] = {0x9B, 0x05, 0x40, 0x03, 0x99, 0x05, 0x42, 0x8B};
+    static const unsigned char FSAccessPatch[] = {0x9B, 0x05, 0x40, 0x03, 0x1C, 0x0B, 0x42, 0x8B};
+
+    //Disables MEMPROT for patches
+    write16(MEM2_PROT, 0);
+    //Patches FS access
+    for (u16* i = IOS_PATCH_START; i < IOS_PATCH_END; i++) {
+        if (memcmp((void*)i, FSAccessPattern, sizeof(FSAccessPattern)) == 0) {
+            memcpy((void*)i, FSAccessPatch, sizeof(FSAccessPatch));
+            DCFlushRange((void*)i, sizeof(FSAccessPatch));
+            break;
+        }
+    }
+}
+
 int reloadIOS(int ios, int* ahbprot) {
     if (ahbprot != NULL)
         *ahbprot = 0;
@@ -141,7 +156,7 @@ bool initFAT() {
     bool usbInserted = false;
 
     /*for (int i = 0; i < 50 && !usbInserted; i++) {
-        Debug("%u %u\n", __io_custom_usbstorage.startup(), __io_custom_usbstorage.isInserted());
+        printf("%u %u\n", __io_custom_usbstorage.startup(), __io_custom_usbstorage.isInserted());
         if (__io_custom_usbstorage.startup() && __io_custom_usbstorage.isInserted()) {
             usbInserted = true;
         }
@@ -158,15 +173,15 @@ bool initFAT() {
     }*/
 
     for (int i = 0; i < 50 && !_fatInitialized; i++) {
-        Debug("Trying to mount FAT\n");
+        printf("Trying to mount FAT\n");
         if (fatMountSimple("usb", &__io_custom_usbstorage)) {
-            Debug("Success\n");
+            printf("Success\n");
             chdir("usb:/");
             _fatInitialized = true;
             return true;
         }
         udelay(100000); //100ms
-        Debug("Failed\n");
+        printf("Failed\n");
     }
 
     //Wait up to 2 seconds
