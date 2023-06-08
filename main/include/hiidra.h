@@ -29,3 +29,9 @@ enum hiidraconfig {
     HIIDRA_CFG_CHEATS           =   (1 << HIIDRA_CFG_BIT_CHEATS),
     HIIDRA_CFG_USBSAVES         =   (1 << HIIDRA_CFG_BIT_USBSAVES),
 };
+
+void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32 nExtraModules, u32 keepES, u32 keepFS);
+int getKernelSize(u32* kernelSize);
+int loadKernel(char* kernel, u32* kernelSize, u32* FoundVersion);
+int loadIOSModules(void);
+int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32);

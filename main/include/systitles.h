@@ -91,13 +91,16 @@ extern "C" {
 #endif
     void aes_set_key(u8 *key);
     void aes_decrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len);
+    void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long len);
     void aes_encrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len);
 #ifdef __cplusplus
 }
 #endif
 
+void decrypt_file(u16 index, FILE* infp, FILE* outfp, u32 len);
 void get_title_key(signed_blob *s_tik, u8 *key);
 bool openWAD(std::string filepath, WAD* wad);
 void copyWAD(WAD* dst, WAD* src);
 void installWAD(WAD* wad);
 void freeWAD(WAD* wad);
+bool openAndInstallWAD(const char* filepath, u64* titleID);

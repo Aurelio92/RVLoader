@@ -20,6 +20,8 @@
 #include "main.h"
 #include "virtualsysconf.h"
 
+#include "discloader_dol.h"
+
 typedef void (*entrypoint) (void);
 
 extern "C" {
@@ -200,7 +202,7 @@ bool initFAT() {
     return false;
 }
 
-static void shutdown() {
+void shutdown() {
     // Clear potential homebrew channel stub
     memset((void*)0x80001800, 0, 0x1800);
 
@@ -343,13 +345,10 @@ void bootGCGame(NIN_CFG cfg) {
 
 void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32) {
     u32 level;
-    size_t size;
-    struct __argv arg;
     static const char __conf_file[] ATTRIBUTE_ALIGN(32) = "/shared2/sys/SYSCONF";
     static const char __conf_txt_file[] ATTRIBUTE_ALIGN(32) = "/title/00000001/00000002/data/setting.txt";
     static u8 __conf_buffer[0x4000] ATTRIBUTE_ALIGN(32);
     static u8 __conf_txt_buffer[0x101] ATTRIBUTE_ALIGN(32);
-    static char hiidraPath[256] = "/rvloader/Hiidra.dol";
 
     //Copy SYSCONF file
     int fd = IOS_Open(__conf_file, 1);
@@ -390,45 +389,18 @@ void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32) {
 
     i2c_deinit();
 
-    FILE* fp = fopen(hiidraPath, "rb");
-    if (!fp)
-        return;
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    rewind(fp);
-    fread(EXECUTE_ADDR, 1, size, fp);
-    fclose(fp);
-    DCFlushRange(EXECUTE_ADDR, size);
+    bootHiidra(cfg, gameIDU32);
 
-    memset(&arg, 0, sizeof(arg));
-    arg.argvMagic = ARGV_MAGIC;
-    arg.argc = 2;
-    arg.length = strlen(hiidraPath) + 1 + sizeof(HIIDRA_CFG);
-    arg.commandLine = (char*)CMDL_ADDR;
-    sprintf(arg.commandLine, "%s", hiidraPath);
-    memcpy(&arg.commandLine[strlen(hiidraPath) + 1], &cfg, sizeof(HIIDRA_CFG));
-    arg.argv = &arg.commandLine;
-    arg.endARGV = arg.argv + 1;
-    DCFlushRange(arg.commandLine, arg.length);
+    //If we got here, we must boot discloader
 
-    memmove(ARGS_ADDR, &arg, sizeof(arg));
-    DCFlushRange(ARGS_ADDR, sizeof(arg));
+    memcpy(EXECUTE_ADDR, discloader_dol, discloader_dol_size);
+    DCFlushRange(EXECUTE_ADDR, discloader_dol_size);
 
     memcpy(BOOTER_ADDR, dolbooter_bin, dolbooter_bin_size);
     DCFlushRange(BOOTER_ADDR, dolbooter_bin_size);
     ICInvalidateRange(BOOTER_ADDR, dolbooter_bin_size);
 
     entrypoint hbboot_ep = (entrypoint)BOOTER_ADDR;
-
-    shutdown();
-
-    reloadIOS(-1, NULL);
-    //Lock i2c to Starlet so homebrew's VIDEO_Init won't be able to disable VGA
-    if (isVGAEnabled()) {
-        u32 owners = read32(HW_GPIO_OWNER_ADDR);
-        owners = owners & ~GPIO_I2C;
-        write32(HW_GPIO_OWNER_ADDR, owners);
-    }
 
     SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
     _CPU_ISR_Disable(level);

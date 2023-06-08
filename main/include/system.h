@@ -3,8 +3,10 @@
 #include "nintendont.h"
 #include "hiidra.h"
 
+void patchFSAccess();
 int reloadIOS(int ios, int* ahbprot);
 bool initFAT();
+void shutdown();
 void bootDOL(const char* path, const char* args);
 void bootGCGame(NIN_CFG cfg);
 void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32);

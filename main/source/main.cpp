@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
         i2c_setMode(I2C_MODE_PUSHPULL);
 
     if (usb_isgeckoalive(EXI_CHANNEL_1)) {
-        CON_EnableGecko(EXI_CHANNEL_1, 0);
+        CON_EnableGecko(EXI_CHANNEL_1, 1);
     }
 
     //Set environment for lua interpreter (used by 'require')

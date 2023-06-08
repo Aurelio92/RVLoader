@@ -34,6 +34,14 @@ void decrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) {
     aes_decrypt(iv, source, dest, len);
 }
 
+void decrypt_file(u16 index, FILE* infp, FILE* outfp, u32 len) {
+    static u8 iv[16];
+
+    memset(iv, 0, 16);
+    memcpy(iv, &index, 2);
+    aes_decrypt_file(iv, infp, outfp, len);
+}
+
 bool openWAD(std::string filepath, WAD* wad) {
     FILE* fp = fopen(filepath.c_str(), "rb");
     if (fp == NULL)
@@ -256,3 +264,138 @@ void freeWAD(WAD* wad) {
 
     return true;
 }*/
+
+bool openAndInstallWAD(const char* filepath, u64* titleID) {
+    int i;
+    WAD wad;
+    char path[256];
+    FILE* fpOut;
+    FILE* fpTest;
+    FILE* fp = fopen(filepath, "rb");
+    if (fp == NULL)
+        return false;
+
+    fread(&wad.header, 1, sizeof(WAD_HEADER), fp);
+    DCFlushRange(&wad.header, sizeof(WAD_HEADER));
+
+    if  (wad.header.headerSize != 0x20 ||
+        (wad.header.type != 0x49730000 && wad.header.type != 0x69620000 && wad.header.type != 0x426b0000)) {
+        fclose(fp);
+        return false;
+    }
+    fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
+
+    fseek(fp, wad.header.certSize, SEEK_CUR); //Skip certs read
+    fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
+
+    fseek(fp, wad.header.crlSize, SEEK_CUR); //Skip crl read
+    fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
+
+    wad.tik = (Ticket*)memalign(0x20, wad.header.tikSize);
+    fread(wad.tik, 1, wad.header.tikSize, fp);
+    DCFlushRange(wad.tik, wad.header.tikSize);
+    if (wad.tik == NULL) {
+        fclose(fp);
+        return false;
+    }
+    fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
+
+    wad.tmd = (TitleMetaData*)memalign(0x20, wad.header.tmdSize);
+    fread(wad.tmd, 1, wad.header.tmdSize, fp);
+    DCFlushRange(wad.tmd, wad.header.tmdSize);
+    if (wad.tmd == NULL) {
+        free(wad.tik);
+        fclose(fp);
+        return false;
+    }
+    fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
+
+    *titleID = wad.tmd->TitleID;
+
+    //Check if wad is already installed by reading the tmd
+    sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/title.tmd", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
+    fpTest = fopen(path, "rb");
+    if (fpTest) {
+        free(wad.tik);
+        free(wad.tmd);
+        fclose(fp);
+        return true;
+        fclose(fpTest);
+    }
+
+    mkdir("/rvloader/Hiidra/emunand", 777);
+    mkdir("/rvloader/Hiidra/emunand/ticket", 777);
+    sprintf(path, "/rvloader/Hiidra/emunand/ticket/%08x", (u32)(wad.tmd->TitleID >> 32));
+    mkdir(path, 777);
+    sprintf(path, "/rvloader/Hiidra/emunand/ticket/%08x/%08x.tik", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
+    printf("Saving ticket\n");
+    fpOut = fopen(path, "wb");
+    if (!fpOut) {
+        free(wad.tik);
+        free(wad.tmd);
+        fclose(fp);
+        return false;
+    }
+
+    fwrite(wad.tik, 1, wad.header.tikSize, fpOut);
+    fclose(fpOut);
+
+    mkdir("/rvloader/Hiidra/emunand/title", 777);
+    sprintf(path, "/rvloader/Hiidra/emunand/title/%08x", (u32)(wad.tmd->TitleID >> 32));
+    mkdir(path, 777);
+    sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
+    mkdir(path, 777);
+    sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
+    mkdir(path, 777);
+    sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/data", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
+    mkdir(path, 777);
+
+    sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/title.tmd", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
+    printf("Saving tmd\n");
+    fpOut = fopen(path, "wb");
+    if (!fpOut) {
+        free(wad.tik);
+        free(wad.tmd);
+        fclose(fp);
+        return false;
+    }
+
+    fwrite(wad.tmd, 1, wad.header.tmdSize, fpOut);
+    fclose(fpOut);
+
+    u8 key[16];
+    get_title_key((signed_blob*)wad.tik, key);
+    aes_set_key(key);
+
+    //Read and decrypt all contents
+    for (i = 0; i < wad.tmd->ContentCount; i++) {
+        printf("Saving title %u/%u\n", i, wad.tmd->ContentCount);
+        u32 bufSize = (wad.tmd->Contents[i].Size + 0x3F) & ~0x3F;
+        printf("Content size %u\n", (u32)wad.tmd->Contents[i].Size);
+        printf("bufSize %u\n", bufSize);
+        printf("Cur file position: %u\n", ftell(fp));
+
+        sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/%08x.app", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF), wad.tmd->Contents[i].ID);
+        fpOut = fopen(path, "wb");
+        if (!fpOut) {
+            free(wad.tik);
+            free(wad.tmd);
+            free(wad.data);
+            fclose(fp);
+            return false;
+        }
+        decrypt_file(i, fp, fpOut, wad.tmd->Contents[i].Size);
+        fclose(fpOut);
+        printf("Saved\nCur file position: %u\n", ftell(fp));
+        //fseek(fp, bufSize - wad.tmd->Contents[i].Size, SEEK_CUR);
+        fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
+        printf("Seeked\nCur file position: %u\n", ftell(fp));
+    }
+
+    fclose(fp);
+    free(wad.tmd);
+    free(wad.tik);
+    printf("Wad install complete\n");
+
+    return true;
+}

@@ -5,15 +5,34 @@
 #include <ogc/video_types.h>
 #include <ogc/es.h>
 #include <ogc/ipc.h>
+#include <ogcsys.h>
 #include <malloc.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <errno.h>
 #include <string.h>
 #include <ogc/usbgecko.h>
 #include <ogc/exi.h>
 
 #include "utils.h"
 #include "systitles.h"
+#include "system.h"
 #include "hiidra.h"
 #include "ELF.h"
+
+#include "kernel_es_elf.h"
+#include "usbfs_elf.h"
+#include "fsplugin_elf.h"
+
+#define MEM_PROT       0x0D8B420A
+
+#define ES_IOCTL_ENABLEUSBSAVES 0x61
+#define ES_IOCTL_LAUNCHTITLEID 0x62
+#define ES_IOCTL_ENABLEVGA 0x63
+#define ES_IOCTL_ENABLEGC2WIIMOTE 0x64
 
 static char moduleSHA[0x1C] ALIGNED(32);
 static char modulePath[1024] ALIGNED(32);
@@ -23,9 +42,15 @@ static char moduleBuffer[MODULE_BUFFER_SIZE] ALIGNED(32);
 // Title ID for IOS58.
 static const u64 TitleID_IOS58 = 0x000000010000003AULL;
 
+static ioctlv IOCTL_Buf ALIGNED(32);
+
+extern "C" {
+    extern void* SYS_AllocArena2MemLo(u32 size,u32 align);
+    extern void udelay(u32 us);
+}
+
 /* Full HW 0x0D8000000 Access */
-static const unsigned char HWAccess_ES[] =
-{
+static const unsigned char HWAccess_ES[] = {
     0x0D, 0x80, 0x00, 0x00, //virt address (0x0D800000)
     0x0D, 0x80, 0x00, 0x00, //phys address (0x0D800000)
     0x00, 0x0D, 0x00, 0x00, //length (up to 0x0D8D0000)
@@ -33,8 +58,7 @@ static const unsigned char HWAccess_ES[] =
     0x00, 0x00, 0x00, 0x02, //permission (2=ro, patchme)
     0x00, 0x00, 0x00, 0x00,
 };
-static const unsigned char HWAccess_ESPatch[] =
-{
+static const unsigned char HWAccess_ESPatch[] = {
     0x0D, 0x80, 0x00, 0x00, //virt address (0x0D800000)
     0x0D, 0x80, 0x00, 0x00, //phys address (0x0D800000)
     0x00, 0x0D, 0x00, 0x00, //length (up to 0x0D8D0000)
@@ -43,8 +67,7 @@ static const unsigned char HWAccess_ESPatch[] =
     0x00, 0x00, 0x00, 0x00,
 };
 
-static const unsigned char KernelAccess[] =
-{
+static const unsigned char KernelAccess[] = {
     0xFF, 0xF0, 0x00, 0x00,
     0xFF, 0xF0, 0x00, 0x00,
     0x00, 0x10, 0x00, 0x00,
@@ -52,8 +75,8 @@ static const unsigned char KernelAccess[] =
     0x00, 0x00, 0x00, 0x01,
     0x00, 0x00, 0x00, 0x01,
 };
-static const unsigned char KernelAccessPatch[] =
-{
+
+static const unsigned char KernelAccessPatch[] = {
     0xFF, 0xF0, 0x00, 0x00,
     0xFF, 0xF0, 0x00, 0x00,
     0x00, 0x10, 0x00, 0x00,
@@ -62,7 +85,35 @@ static const unsigned char KernelAccessPatch[] =
     0x00, 0x00, 0x00, 0x01,
 };
 
-void forgeKernel(char* kernel, u32 kernelSize, char** extraModules, u32 nExtraModules, u32 keepES, u32 keepFS) {
+raw_irq_handler_t BeforeIOSReload() {
+    __STM_Close();
+
+    write32(0x80003140, 0);
+    __MaskIrq(IRQ_PI_ACR);
+    return IRQ_Free(IRQ_PI_ACR);
+}
+
+void AfterIOSReload(raw_irq_handler_t handle, u32 rev) {
+    while (read32(0x80003140) != rev) {
+        DCInvalidateRange((void*)0x80003140, 0x20);
+        printf("%08X\n", read32(0x80003140));
+        udelay(1000);
+    }
+
+    u32 counter;
+    for (counter = 0; !(read32(0x8d000004) & 2); counter++)
+    {
+        udelay(1000);
+        if (counter >= 40000)
+            break;
+    }
+    IRQ_Request(IRQ_PI_ACR, handle, NULL);
+    __UnmaskIrq(IRQ_PI_ACR);
+    __IPC_Reinitialize();
+    __STM_Init();
+}
+
+void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32 nExtraModules, u32 keepES, u32 keepFS) {
     u32 i, j;
     u32 noteSize;
     unsigned int loadersize = *(vu32*)(kernel) + *(vu32*)(kernel+4);
@@ -275,9 +326,16 @@ void forgeKernel(char* kernel, u32 kernelSize, char** extraModules, u32 nExtraMo
 
     DCFlushRange(kernel, loadersize + elfSize);
 
+    printf("Saving hiidra.bin\n");
     FILE* fp = fopen("/hiidra.bin", "wb");
-    fwrite(kernel, loadersize + elfSize, 1, fp);
-    fclose(fp);
+    if (fp == NULL) {
+        printf("Couldn't\n");
+    } else {
+        printf("Saving %u\n", loadersize + elfSize);
+        fwrite(kernel, loadersize + elfSize, 1, fp);
+        fclose(fp);
+        printf("Success\n");
+    } 
 }
 
 int getKernelSize(u32* kernelSize) {
@@ -359,9 +417,10 @@ int getKernelSize(u32* kernelSize) {
  */
 int loadKernel(char* kernel, u32* kernelSize, u32* FoundVersion) {
     unsigned int TMDSize;
+    u32 size;
     int i, u;
 
-    if (kernel == NULL || kernelSize == NULL) {
+    if (kernel == NULL) {
         return -1;
     }
 
@@ -425,12 +484,16 @@ int loadKernel(char* kernel, u32* kernelSize, u32* FoundVersion) {
         return kfd;
     }
 
-    *kernelSize = IOS_Seek(kfd, 0, SEEK_END);
+    size = IOS_Seek(kfd, 0, SEEK_END);
     IOS_Seek(kfd, 0, 0);
 
-    if (IOS_Read(kfd, kernel, *kernelSize) != *kernelSize) {
+    if (IOS_Read(kfd, kernel, size) != size) {
         IOS_Close(kfd);
         return -1;
+    }
+
+    if (kernelSize != NULL) {
+        *kernelSize = size;
     }
 
     IOS_Close(kfd);
@@ -439,7 +502,6 @@ int loadKernel(char* kernel, u32* kernelSize, u32* FoundVersion) {
 
 int loadIOSModules(void) {
     unsigned int TMDSize;
-    unsigned int i,u;
 
     int r = ES_GetStoredTMDSize(TitleID_IOS58, (u32*)&TMDSize);
     if (r < 0) {
@@ -660,5 +722,305 @@ int loadIOSModules(void) {
     IOS_Close(cfd);
 
     free(TMD);
+    return 0;
+}
+
+void setESBootpoint(u32 IOSVersion, u32 bootPoint) {
+    unsigned char ESBootPatch[] = {
+        0x48, 0x03, 0x49, 0x04, 0x47, 0x78, 0x46, 0xC0, 0xE6, 0x00, 0x08, 0x70, 0xE1, 0x2F, 0xFF, 0x1E,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    };
+    *((vu32*)&ESBootPatch[0x10]) = MEM_VIRTUAL_TO_PHYSICAL(bootPoint);
+    *((vu32*)&ESBootPatch[0x14]) = IOSVersion;
+
+    DCInvalidateRange((void*)0x939F02F0, sizeof(ESBootPatch));
+    memcpy((void*)0x939F02F0, ESBootPatch, sizeof(ESBootPatch));
+    DCFlushRange((void*)0x939F02F0, sizeof(ESBootPatch));
+}
+
+#define COPY_LIMIT (32*1024)
+
+void copyNANDDirToUSB(const char* src, const char* dst) {
+    printf("copyNANDDirToUSB(%s, %s)\n", src, dst);
+    char srcPath[256];
+    char dstPath[256];
+    fstats fileStats ALIGNED(32);
+    u32 num, i;
+    u32 usage1, usage2;
+    mkdir(dst, 777);
+    s32 ret = ISFS_ReadDir(src, NULL, &num);
+    void* buffer = (void*)memalign(32, COPY_LIMIT);
+    if (ret >= 0) {
+        char* filelist = (char*)memalign(32, ISFS_MAXPATH * num);
+        char* tempfile = filelist;
+        ret = ISFS_ReadDir(src, filelist, &num);
+        if (ret >= 0) {
+            for (i = 0; i < num; i++) {
+                sprintf(srcPath, "%s/%s", src, tempfile);
+                sprintf(dstPath, "%s/%s", dst, tempfile);
+
+                printf("%s is ", tempfile);
+
+                //Check if file
+                s32 fd = IOS_Open(srcPath, 1);
+                if (fd >= 0) {
+                    printf("file\n");
+                    FILE* fp = fopen(dstPath, "w");
+                    ISFS_GetFileStats(fd, &fileStats);
+                    if (fileStats.file_length <= COPY_LIMIT) {
+                        ISFS_Read(fd, buffer, fileStats.file_length);
+                        fwrite(buffer, 1, fileStats.file_length, fp);
+                    } else {
+                        while (fileStats.file_length) {
+                            u32 tempLen = (fileStats.file_length > COPY_LIMIT) ? COPY_LIMIT : fileStats.file_length;
+                            ISFS_Read(fd, buffer, tempLen);
+                            fwrite(buffer, 1, tempLen, fp);
+                            fileStats.file_length -= tempLen;
+                        }
+                    }
+                    fclose(fp);
+                    IOS_Close(fd);
+                    tempfile += strlen(tempfile) + 1; //Go to next file
+                    continue;
+                }
+
+                //Check if dir
+                if (ISFS_GetUsage(srcPath, &usage1, &usage2) >= 0) {
+                    printf("dir\n");
+                    copyNANDDirToUSB(srcPath, dstPath);
+                    tempfile += strlen(tempfile) + 1; //Go to next file
+                    continue;
+                }
+
+                printf("unk\n");
+                tempfile += strlen(tempfile) + 1; //Go to next file
+
+            }
+        }
+        free(filelist);
+    }
+    free(buffer);
+}
+
+void copyWBFSData(const char* wbfsPath) {
+    u32 gameID;
+    u64 majorTitleID;
+    char path[256];
+    char path2[256];
+    s32 ret;
+
+    ret = ISFS_Initialize();
+    if (ret != ISFS_OK)
+        return;
+
+    FILE* fp = fopen(wbfsPath, "r");
+    if (!fp) {
+        ISFS_Deinitialize();
+        return;
+    }
+
+    //Read ID
+    fseek(fp, 0x200, SEEK_SET);
+    fread(&gameID, 1, sizeof(u32), fp);
+    fclose(fp);
+
+    //Check complete titleID.
+    //Must be 00010000-gameID or 00010004-gameID for disc games
+    sprintf(path, "/title/00010000/%08x/content/title.tmd", gameID);
+    ret = ISFS_Open(path, 1);
+    if (ret >= 0) {
+        ISFS_Close(ret);
+        //Check if save already exists
+        sprintf(path, "/rvloader/Hiidra/emunand/title/00010000/%08x/content/title.tmd", gameID);
+        FILE* fp = fopen(path, "r");
+        if (fp) {
+            fclose(fp);
+            ISFS_Deinitialize();
+            return;
+        }
+        mkdir("/rvloader/Hiidra/emunand/title", 777);
+        mkdir("/rvloader/Hiidra/emunand/title/00010000", 777);
+        sprintf(path, "/title/00010000/%08x", gameID);
+        sprintf(path2, "/rvloader/Hiidra/emunand/title/00010000/%08x", gameID);
+        copyNANDDirToUSB(path, path2);
+        ISFS_Deinitialize();
+        return;
+    }
+
+    sprintf(path, "/title/00010004/%08x/content/title.tmd", gameID);
+    ret = ISFS_Open(path, 1);
+    if (ret >= 0) {
+        //Check if save already exists
+        sprintf(path, "/rvloader/Hiidra/emunand/title/00010004/%08x/content/title.tmd", gameID);
+        FILE* fp = fopen(path, "r");
+        if (fp) {
+            fclose(fp);
+            ISFS_Deinitialize();
+            return;
+        }
+        mkdir("/rvloader/Hiidra/emunand/title", 777);
+        mkdir("/rvloader/Hiidra/emunand/title/00010004", 777);
+        sprintf(path, "/title/00010004/%08x", gameID);
+        sprintf(path2, "/rvloader/Hiidra/emunand/title/00010004/%08x", gameID);
+        copyNANDDirToUSB(path, path2);
+        ISFS_Deinitialize();
+        return;
+    }
+}
+
+int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
+    static char __usbfs[] ATTRIBUTE_ALIGN(32) = "/dev/usbfs";
+    static char __di[] ATTRIBUTE_ALIGN(32) = "/dev/di";
+    static char __bt[] ATTRIBUTE_ALIGN(32) = "/dev/usb/oh1/57e/305";
+
+    u32 IOSVersion;
+    u32 kernelSize;
+    uint8_t* modulesUSB[6];
+    u32 modulesUSBSize[6];
+    char* kernelAddress;
+    u32 totalUSBSize = 0;
+
+    s32 fd;
+    u64 wadTitleID = 0;
+
+    remove("/rvloader/Hiidra/modules.txt");
+    if (hcfg.Config & HIIDRA_CFG_BT) {
+        FILE* fp = fopen("/rvloader/Hiidra/modules.txt", "a");
+        fprintf(fp, "/dev/usbfs/rvloader/Hiidra/IOS58/OH1.app\n");
+        fclose(fp);
+    } else {
+        FILE* fp = fopen("/rvloader/Hiidra/modules.txt", "a");
+        fprintf(fp, "/dev/usbfs/rvloader/Hiidra/modules/bt.bin\n");
+        fclose(fp);
+    }
+    if (hcfg.Config & HIIDRA_CFG_WIFI) {
+        FILE* fp = fopen("/rvloader/Hiidra/modules.txt", "a");
+        fprintf(fp, "/dev/usbfs/rvloader/Hiidra/IOS58/WD.app\n");
+        fprintf(fp, "/dev/usbfs/rvloader/Hiidra/IOS58/WL.app\n");
+        fclose(fp);
+    } else {
+        FILE* fp = fopen("/rvloader/Hiidra/modules.txt", "a");
+        fprintf(fp, "/dev/usbfs/rvloader/Hiidra/modules/wd.bin\n");
+        fclose(fp);
+    }
+
+    if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 4], ".wad", 4)) {
+        printf("Installing WAD\n");
+        openAndInstallWAD(hcfg.GamePath, &wadTitleID);
+    }
+
+    if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 5], ".wbfs", 5)) {
+        copyWBFSData(hcfg.GamePath);
+    }
+
+    patchFSAccess();
+
+    if (getKernelSize(&kernelSize)  < 0) {
+        return -1;
+    }
+
+    printf("IOS58 kernel size: %u\n", kernelSize);
+
+    readFile("/rvloader/Hiidra/IOS58/EHCI.app", &modulesUSB[0], &modulesUSBSize[0]);
+    readFile("/rvloader/Hiidra/IOS58/OHCI0.app", &modulesUSB[1], &modulesUSBSize[1]);
+    readFile("/rvloader/Hiidra/IOS58/USB.app", &modulesUSB[2], &modulesUSBSize[2]);
+    readFile("/rvloader/Hiidra/IOS58/USB_HID.app", &modulesUSB[3], &modulesUSBSize[3]);
+    readFile("/rvloader/Hiidra/IOS58/USB_HUB.app", &modulesUSB[4], &modulesUSBSize[4]);
+    readFile("/rvloader/Hiidra/IOS58/USB_VEN.app", &modulesUSB[5], &modulesUSBSize[5]);
+
+    for (int i = 0; i < 6; i++) {
+        totalUSBSize += modulesUSBSize[i];
+    }
+
+    printf("Total USB modules size: %u\n", totalUSBSize);
+
+    //kernelAddress = (char*)SYS_AllocArena2MemLo(kernelSize + totalUSBSize, 0x20);
+    kernelAddress = (char*)SYS_AllocArena2MemLo(512*1024, 0x20);
+    printf("Kernel address: %08X\n", MEM_VIRTUAL_TO_PHYSICAL((u32)kernelAddress));
+
+    loadIOSModules();
+    if (loadKernel(kernelAddress, NULL, &IOSVersion) < 0) {
+        printf("Couldn't load kernel\n");
+        exit(0);
+    }
+    printf("Kernel loaded. Kernel version: %08X\n", IOSVersion);
+
+    printf("Forging kernel\n");
+    const uint8_t* customModules[] = {kernel_es_elf, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], modulesUSB[4], modulesUSB[5], usbfs_elf, fsplugin_elf};
+    forgeKernel(kernelAddress, kernelSize, customModules, 9, 0, 1);
+    
+    shutdown();
+    printf("Injecting Hiidra bootpoint\n");
+    setESBootpoint(IOSVersion, (u32)kernelAddress);
+
+    __ES_Close();
+    fd = IOS_Open("/dev/es", 0);
+
+    *(vu32*)0xD3003420 = 0; //make sure kernel doesnt reload
+
+    printf("Triggering Hiidra boot\n");
+    raw_irq_handler_t irq_handler = BeforeIOSReload();
+    IOS_IoctlvAsync(fd, 0x1F, 0, 0, &IOCTL_Buf, NULL, NULL);
+    AfterIOSReload(irq_handler, IOSVersion);
+
+    printf("Hiidra running\n");
+
+    udelay(100000);
+
+    write16(MEM_PROT, 0);
+
+    s32 hId = iosCreateHeap(1024);
+    printf("Waiting for ES\n");
+    do {
+        udelay(1000);
+        fd = IOS_Open("/dev/es", 0);
+    } while (fd < 0);
+
+    if (!(hcfg.Config & HIIDRA_CFG_BT) && (hcfg.Config & HIIDRA_CFG_GC2WIIMOTE)) {
+        printf("Enabling GC2Wiimote\n");
+        IOS_Ioctl(fd, ES_IOCTL_ENABLEGC2WIIMOTE, NULL, 0, NULL, 0);
+    }
+
+    if (hcfg.Config & HIIDRA_CFG_USBSAVES) {
+        printf("Enabling USB saves\n");
+        IOS_Ioctl(fd, ES_IOCTL_ENABLEUSBSAVES, NULL, 0, NULL, 0);
+    }
+    //Enable VGA if requested to
+    if (hcfg.Config & HIIDRA_CFG_VGA) {
+        printf("Enabling VGA\n");
+        IOS_Ioctl(fd, ES_IOCTL_ENABLEVGA, NULL, 0, NULL, 0);
+    }
+    char* gamePath = (char*)iosAlloc(hId, 0x80);
+    sprintf(gamePath, "/dev/usbfs%s", hcfg.GamePath);
+
+    printf("Launching %s\n", gamePath);
+    if (wadTitleID) {
+        u64* titleID = (u64*)iosAlloc(hId, sizeof(u64));
+        *titleID = wadTitleID;
+        IOS_Ioctl(fd, ES_IOCTL_LAUNCHTITLEID, titleID, sizeof(u64), NULL, 0);
+        IOS_Close(fd);
+        while(1);
+    }
+
+    IOS_Close(fd);
+
+    fd = IOS_Open(__di, 0);
+    if (fd >= 0) {
+        s32 ret;
+        printf("Loading disc game\n");
+        ret = IOS_Ioctl(fd, 0xF0, gamePath, 0x80, NULL, 0);
+        if (ret == 0) {
+            printf("Success\n");
+        } else {
+            printf("Error: %d\n", ret);
+        }
+        IOS_Close(fd);
+    } else {
+        printf("Couldn't open DI\n");
+        while(1);
+    }
+
+    printf("Booting discloader\n");
+
     return 0;
 }

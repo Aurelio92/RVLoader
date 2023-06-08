@@ -108,9 +108,7 @@ asmPatches:
 $(BUILD): asmPatches
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@mkdir -p ../driveRoot/apps
-	@mkdir -p ../driveRoot/apps/RVLoader
-	@cp $(TARGET).dol ../driveRoot/apps/RVLoader/discloader.dol
+	@cp $(TARGET).dol ../main/data/discloader.dol
 
 #---------------------------------------------------------------------------------
 clean:
