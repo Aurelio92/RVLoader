@@ -18,20 +18,20 @@ DFILES		:=	$(SFILES:.s=.d)
 ELFFILES	:=	$(SFILES:.s=.elf)
 BINFILES	:=	$(ELFFILES:.elf=.bin)
 
-all: $(BINFILES)
+TARGET		:=	$(foreach file,$(BINFILES),$(OUTPUTDIR)/$(file))
+
+all: $(TARGET)
 
 -include $(DFILES)
 .PRECIOUS: %.elf %.bin
 
-%.elf: $(SOURCEDIR)/%.s
+$(OUTPUTDIR)/%.bin: $(SOURCEDIR)/%.s
+	@mkdir -p $(OUTPUTDIR)
 	@mkdir -p $(BUIILDDIR)
 	@echo " ASSEMBLE    $<"
-	@$(AS) $< -mregnames -MD $(BUIILDDIR)/$(@:.elf=.d) -o $(BUIILDDIR)/$@
-
-%.bin: %.elf
-	@mkdir -p $(OUTPUTDIR)
-	@echo " STRIP       $<"
-	@$(STRIP) $(BUIILDDIR)/$< -O binary -S -s -o $(OUTPUTDIR)/$@
+	@$(AS) $< -mregnames -MD $(BUIILDDIR)/$(notdir $(@:.bin=.d)) -o $(BUIILDDIR)/$(notdir $(@:.bin=.elf))
+	@echo " STRIP       $(notdir $(@:.bin=.elf))"
+	@$(STRIP) $(BUIILDDIR)/$(notdir $(@:.bin=.elf)) -O binary -S -s -o $(OUTPUTDIR)/$(notdir $@)
 
 clean:
 	@echo clean ...
