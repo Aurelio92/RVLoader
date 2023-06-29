@@ -108,7 +108,6 @@ asmPatches:
 $(BUILD): asmPatches
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(TARGET).dol ../main/data/discloader.dol
 
 #---------------------------------------------------------------------------------
 clean:
@@ -130,6 +129,8 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
+	@cp $(OUTPUT).dol ../main/data/discloader.dol
+
 $(OUTPUT).elf: $(OFILES)
 
 $(OFILES_SOURCES) : $(HFILES)

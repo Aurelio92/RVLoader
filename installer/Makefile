@@ -101,7 +101,6 @@ all: $(BUILD)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(TARGET).dol boot.dol
 
 #---------------------------------------------------------------------------------
 clean:
@@ -122,6 +121,9 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
+	@cp $(OUTPUT).dol boot.dol
+	@cp $(OUTPUT).dol ../driveRoot/apps/RVLoader/installer.dol
+
 $(OUTPUT).elf: $(OFILES)
 
 $(OFILES_SOURCES) : $(HFILES)

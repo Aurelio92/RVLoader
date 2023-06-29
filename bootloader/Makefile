@@ -99,8 +99,6 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@cp $(TARGET).dol boot.dol
-	@cp $(TARGET).dol ../installer/data/$(TARGET).dol
 
 #---------------------------------------------------------------------------------
 clean:
@@ -121,6 +119,9 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
+	@cp $(OUTPUT).dol boot.dol
+	@cp $(OUTPUT).dol ../installer/data/$(OUTPUT).dol
+
 $(OUTPUT).elf: $(OFILES)
 
 $(OFILES_SOURCES) : $(HFILES)
