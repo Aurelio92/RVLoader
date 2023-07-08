@@ -129,7 +129,7 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
-	@cp $(OUTPUT).dol ../main/data/discloader.dol
+	@cp $(OUTPUT).elf ../../main/data/discloader.dol
 
 $(OUTPUT).elf: $(OFILES)
 
