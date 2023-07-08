@@ -121,8 +121,9 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
-	@cp $(OUTPUT).elf boot.dol
-	@cp $(OUTPUT).elf ../../driveRoot/apps/RVLoader/installer.dol
+	@elf2dol $(OUTPUT).elf $(OUTPUT).dol
+	@cp $(OUTPUT).dol boot.dol
+	@cp $(OUTPUT).dol ../../driveRoot/apps/RVLoader/installer.dol
 
 $(OUTPUT).elf: $(OFILES)
 
