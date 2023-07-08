@@ -120,7 +120,7 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
 	@cp $(OUTPUT).dol boot.dol
-	@cp $(OUTPUT).dol ../installer/data/$(OUTPUT).dol
+	@cp $(OUTPUT).dol ../installer/data/$(TARGET).dol
 
 $(OUTPUT).elf: $(OFILES)
 
