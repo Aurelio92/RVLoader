@@ -119,8 +119,8 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets, these are in the build subfolder
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
-	@cp $(OUTPUT).elf boot.dol
-	@cp $(OUTPUT).elf $(CURDIR)/../../installer/data/$(TARGET).dol
+	@cp $(OUTPUT).dol boot.dol
+	@cp $(OUTPUT).dol $(CURDIR)/../../installer/data/$(TARGET).dol
 
 $(OUTPUT).elf: $(OFILES)
 
