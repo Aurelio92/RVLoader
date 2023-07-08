@@ -119,8 +119,8 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
-	@cp $(OUTPUT).dol boot.dol
-	@cp $(OUTPUT).dol ../installer/data/$(TARGET).dol
+	@cp $(OUTPUT).elf boot.dol
+	@cp $(OUTPUT).elf ../installer/data/$(TARGET).dol
 
 $(OUTPUT).elf: $(OFILES)
 
