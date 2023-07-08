@@ -17,6 +17,12 @@ jobs:
       run: |
         make clean
         make
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: SD Card Files
+        path: ./driveRoot/
 
     - name: Setup tmate session
       if: ${{ failure() }}
