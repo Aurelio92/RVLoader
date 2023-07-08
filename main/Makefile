@@ -140,8 +140,8 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
-	@cp $(OUTPUT).dol boot.dol
-	@cp $(OUTPUT).dol ../driveRoot/apps/RVLoader/boot.dol
+	@cp $(OUTPUT).elf boot.dol
+	@cp $(OUTPUT).elf ../../driveRoot/apps/RVLoader/boot.dol
 
 $(OUTPUT).elf: $(OFILES)
 
