@@ -116,7 +116,7 @@ else
 DEPENDS	:=	$(OFILES:.o=.d)
 
 #---------------------------------------------------------------------------------
-# main targets, these are in the build subfolder
+# main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
 	@$(MAKE) -f $(DEVKITPPC)/wii_rules $@
