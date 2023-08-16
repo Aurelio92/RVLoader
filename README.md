@@ -1,3 +1,5 @@
+[![DOL](https://github.com/Aurelio92/RVLoader/actions/workflows/build.yml/badge.svg)](https://github.com/Aurelio92/RVLoader/actions/workflows/build.yml)
+
 ![RVLoader logo](logo.png "logo")
 
 # RVLoader
