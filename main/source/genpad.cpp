@@ -81,36 +81,27 @@ namespace GenPad {
                     tempHeld |= PAD_BUTTON_B;
             }
 
-            _curDown[i] = (tempHeld ^ _curHeld[i]) & tempHeld;
-            _curUp[i] = ~tempHeld ^ _curHeld[i];
-            _curHeld[i] = tempHeld;
-
-            _sx[i] = sx;
-            _sy[i] = sy;
-            _cx[i] = cx;
-            _cy[i] = cy;
-
             if (wiimoteExp.type != EXP_NUNCHUK || (wiimoteExp.type == EXP_NUNCHUK && !(tempHeldWii & WPAD_NUNCHUK_BUTTON_C))) {
                 if (wsx != 0)
-                    _sx[i] = wsx;
+                    sx = wsx;
                 if (wsy != 0)
-                    _sy[i] = wsy;
+                    sy = wsy;
             }
 
             //Map the nunchuk stick to C-stick if holding the C button on a nunchuk
             if (wiimoteExp.type == EXP_NUNCHUK && (tempHeldWii & WPAD_NUNCHUK_BUTTON_C)) {
                 if (wsx != 0)
-                    _cx[i] = wsx;
+                    cx = wsx;
                 if (wsy != 0)
-                    _cy[i] = wsy;
+                    cy = wsy;
             } else if (wiimoteExp.type == EXP_CLASSIC) {
                 int tempX = (wiimoteExp.classic.rjs.pos.x - wiimoteExp.classic.rjs.center.x) * 127 / wiimoteExp.classic.rjs.max.x;
                 int tempY = (wiimoteExp.classic.rjs.pos.y - wiimoteExp.classic.rjs.center.y) * 127 / wiimoteExp.classic.rjs.max.y;
 
                 if (tempX != 0)
-                    _cx[i] = tempX;
+                    cx = tempX;
                 if (tempY != 0)
-                    _cy[i] = tempY;
+                    cy = tempY;
             } else if (tempHeldWii & WPAD_BUTTON_B) { //Map the wiimote DPAD to the C-stick if holding B
                 int tempX = 0, tempY = 0;
                 if (tempHeldWii & WPAD_BUTTON_RIGHT)
@@ -130,10 +121,46 @@ namespace GenPad {
                 }
 
                 if (tempX != 0)
-                    _cx[i] = tempX;
+                    cx = tempX;
                 if (tempY != 0)
-                    _cy[i] = tempY;
+                    cy = tempY;
             }
+
+            //Map the GC DPAD to the C-stick if holding Z
+            if (tempHeld & PAD_TRIGGER_Z) {
+                int tempX = 0, tempY = 0;
+                if (tempHeld & PAD_BUTTON_RIGHT)
+                    tempX = 127;
+                else if (tempHeld & PAD_BUTTON_LEFT)
+                    tempX = -127;
+
+                if (tempHeld & PAD_BUTTON_UP)
+                    tempY = 127;
+                else if (tempHeld & PAD_BUTTON_DOWN)
+                    tempY = -127;
+
+                //Quick normalization if needed
+                if (tempX && tempY) {
+                    tempX = 89 * tempX / 127;
+                    tempY = 89 * tempY / 127;
+                }
+
+                if (tempX != 0)
+                    cx = tempX;
+                if (tempY != 0)
+                    cy = tempY;
+                
+                tempHeld &= ~PAD_BUTTON_DPAD;
+            }
+
+            _curDown[i] = (tempHeld ^ _curHeld[i]) & tempHeld;
+            _curUp[i] = ~tempHeld ^ _curHeld[i];
+            _curHeld[i] = tempHeld;
+
+            _sx[i] = sx;
+            _sy[i] = sy;
+            _cx[i] = cx;
+            _cy[i] = cy;
         }
     }
 
