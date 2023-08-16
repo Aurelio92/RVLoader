@@ -95,8 +95,6 @@ export LIBPATHS	:= -L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) clean
 
-all: $(BUILD)
-
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
@@ -121,8 +119,9 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
-	@cp $(OUTPUT).dol boot.dol
-	@cp $(OUTPUT).dol ../driveRoot/apps/RVLoader/installer.dol
+	@$(MAKE) -f $(DEVKITPPC)/wii_rules $@
+	@cp $(OUTPUT).dol $(CURDIR)/../boot.dol
+	@cp $(OUTPUT).dol $(CURDIR)/../../driveRoot/apps/RVLoader/installer.dol
 
 $(OUTPUT).elf: $(OFILES)
 

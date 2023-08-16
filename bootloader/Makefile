@@ -119,8 +119,9 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
-	@cp $(OUTPUT).dol boot.dol
-	@cp $(OUTPUT).dol ../installer/data/$(OUTPUT).dol
+	@$(MAKE) -f $(DEVKITPPC)/wii_rules $@
+	@cp $(OUTPUT).dol $(CURDIR)/../boot.dol
+	@cp $(OUTPUT).dol $(CURDIR)/../../installer/data/bootloader.dol
 
 $(OUTPUT).elf: $(OFILES)
 

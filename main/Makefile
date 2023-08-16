@@ -140,8 +140,9 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
-	@cp $(OUTPUT).dol boot.dol
-	@cp $(OUTPUT).dol ../driveRoot/apps/RVLoader/boot.dol
+	@$(MAKE) -f $(DEVKITPPC)/wii_rules $@
+	@cp $(OUTPUT).dol $(CURDIR)/../boot.dol
+	@cp $(OUTPUT).dol $(CURDIR)/../../driveRoot/apps/RVLoader/boot.dol
 
 $(OUTPUT).elf: $(OFILES)
 
