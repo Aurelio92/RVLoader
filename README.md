@@ -87,7 +87,7 @@ The UI is pretty simple, though still in development. Basic controls are:
  - `DPad` or `left analog stick` to move through the different games
  - `A` to boot a game
  - `B` (or `1` on a Wiimote) to open the per-game configuration menu
- - `C-Stick` to switch between the different game menus (GC, Wii, homebrew, ...). Simply move the C-Stick and a selector wheel will show up. Holding the C-Stick in a position for a couple of seconds will confirm the selection. In case you are using a Wiimote, hold the B button and move the DPad to simulate the C-Stick movements. You can also use the right stick on a Classic Controller or the Nunchuk stick while holding the C button.
+ - `C-Stick` (or `Z+DPad`, or `B+DPad` on Wiimote) to switch between the different game menus (GC, Wii, homebrew, ...). Simply move the C-Stick and a selector wheel will show up. Holding the C-Stick in a position for a couple of seconds will confirm the selection. In case you are using a Wiimote, hold the B button and move the DPad to simulate the C-Stick movements. You can also use the right stick on a Classic Controller or the Nunchuk stick while holding the C button.
 
 ### Key Combinations
 
