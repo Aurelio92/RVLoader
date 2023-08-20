@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     printf("RVLoader bootloader %02X\n\n", VGAEnabled);
 
     if (!initFAT()) {
-        printf("Failed to initialize FAT FS! Is an USB drive plugged in?\n");
+        printf("Failed to initialize FAT FS! Is a USB drive plugged in?\n");
         failedBoot();
     }
 
