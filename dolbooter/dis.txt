@@ -344,7 +344,7 @@ Disassembly of section .comment:
    c:	50 50 43 20 	rlwimi  r16,r2,8,12,16
   10:	72 65 6c 65 	andi.   r5,r19,27749
   14:	61 73 65 20 	ori     r19,r11,25888
-  18:	34 33 29 20 	addic.  r1,r19,10528
-  1c:	31 33 2e 31 	addic   r9,r19,11825
-  20:	Address 0x20 is out of bounds.
-
+  18:	34 34 2e 32 	addic.  r1,r20,11826
+  1c:	29 20 31 33 	cmpldi  cr2,r0,12595
+  20:	2e 32 2e 30 	cmpdi   cr4,r18,11824
+	...

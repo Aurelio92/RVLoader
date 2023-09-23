@@ -107,6 +107,6 @@ OUTPUT(dolbooter.elf elf32-powerpc)
 .iplt           0x930004f0        0x0
  .iplt          0x930004f0        0x0 start.o
 
-.comment        0x00000000       0x23
- .comment       0x00000000       0x23 main.o
-                                 0x24 (size before relaxing)
+.comment        0x00000000       0x25
+ .comment       0x00000000       0x25 main.o
+                                 0x26 (size before relaxing)

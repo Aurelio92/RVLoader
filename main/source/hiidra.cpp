@@ -110,7 +110,8 @@ void AfterIOSReload(raw_irq_handler_t handle, u32 rev) {
     IRQ_Request(IRQ_PI_ACR, handle, NULL);
     __UnmaskIrq(IRQ_PI_ACR);
     __IPC_Reinitialize();
-    __STM_Init();
+    //__ES_Init();
+    //__STM_Init();
 }
 
 void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32 nExtraModules, u32 keepES, u32 keepFS) {
@@ -711,6 +712,8 @@ int loadIOSModules(void) {
 
             while (moduleSize) {
                 u32 packetSize = (moduleSize > MODULE_BUFFER_SIZE) ? MODULE_BUFFER_SIZE : moduleSize;
+                printf("Packet size: %08X\n", packetSize);
+                printf("IOS_Read ret: %d\n", IOS_Read(fd, moduleBuffer, packetSize));
                 fwrite(moduleBuffer, 1, packetSize, fp);
                 moduleSize -= packetSize;
             }
@@ -883,6 +886,14 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
     s32 fd;
     u64 wadTitleID = 0;
 
+    mkdir("/rvloader", 777);
+    mkdir("/rvloader/Hiidra", 777);
+    mkdir("/rvloader/Hiidra/IOS58", 777);
+    mkdir("/rvloader/Hiidra/emunand", 777);
+
+    //Delete lastdisc.sys before booting
+    remove("/lastdisc.sys");
+    
     remove("/rvloader/Hiidra/modules.txt");
     if (hcfg.Config & HIIDRA_CFG_BT) {
         FILE* fp = fopen("/rvloader/Hiidra/modules.txt", "a");
@@ -921,6 +932,16 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
 
     printf("IOS58 kernel size: %u\n", kernelSize);
 
+    kernelAddress = (char*)SYS_AllocArena2MemLo(512*1024, 0x20);
+    printf("Kernel address: %08X\n", MEM_VIRTUAL_TO_PHYSICAL((u32)kernelAddress));
+
+    loadIOSModules();
+    if (loadKernel(kernelAddress, NULL, &IOSVersion) < 0) {
+        printf("Couldn't load kernel\n");
+        exit(0);
+    }
+    printf("Kernel loaded. Kernel version: %08X\n", IOSVersion);
+
     readFile("/rvloader/Hiidra/IOS58/EHCI.app", &modulesUSB[0], &modulesUSBSize[0]);
     readFile("/rvloader/Hiidra/IOS58/OHCI0.app", &modulesUSB[1], &modulesUSBSize[1]);
     readFile("/rvloader/Hiidra/IOS58/USB.app", &modulesUSB[2], &modulesUSBSize[2]);
@@ -935,21 +956,12 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
     printf("Total USB modules size: %u\n", totalUSBSize);
 
     //kernelAddress = (char*)SYS_AllocArena2MemLo(kernelSize + totalUSBSize, 0x20);
-    kernelAddress = (char*)SYS_AllocArena2MemLo(512*1024, 0x20);
-    printf("Kernel address: %08X\n", MEM_VIRTUAL_TO_PHYSICAL((u32)kernelAddress));
-
-    loadIOSModules();
-    if (loadKernel(kernelAddress, NULL, &IOSVersion) < 0) {
-        printf("Couldn't load kernel\n");
-        exit(0);
-    }
-    printf("Kernel loaded. Kernel version: %08X\n", IOSVersion);
 
     printf("Forging kernel\n");
     const uint8_t* customModules[] = {kernel_es_elf, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], modulesUSB[4], modulesUSB[5], usbfs_elf, fsplugin_elf};
     forgeKernel(kernelAddress, kernelSize, customModules, 9, 0, 1);
     
-    shutdown();
+    unmountFAT();
     printf("Injecting Hiidra bootpoint\n");
     setESBootpoint(IOSVersion, (u32)kernelAddress);
 

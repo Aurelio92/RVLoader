@@ -6,6 +6,7 @@
 void patchFSAccess();
 int reloadIOS(int ios, int* ahbprot);
 bool initFAT();
+void unmountFAT();
 void shutdown();
 void bootDOL(const char* path, const char* args);
 void bootGCGame(NIN_CFG cfg);

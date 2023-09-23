@@ -113,7 +113,7 @@ void patchFSAccess() {
     //Disables MEMPROT for patches
     write16(MEM2_PROT, 0);
     //Patches FS access
-    for (u16* i = IOS_PATCH_START; i < IOS_PATCH_END; i++) {
+    for (u16* i = (u16*)0x93A00000; i < IOS_PATCH_END; i++) {
         if (memcmp((void*)i, FSAccessPattern, sizeof(FSAccessPattern)) == 0) {
             memcpy((void*)i, FSAccessPatch, sizeof(FSAccessPatch));
             DCFlushRange((void*)i, sizeof(FSAccessPatch));
@@ -202,6 +202,16 @@ bool initFAT() {
     return false;
 }
 
+void unmountFAT() {
+    if (_fatInitialized) {
+        _fatInitialized = false;
+        fatUnmount("usb:/");
+        __io_custom_usbstorage.shutdown();
+    }
+
+    USB_Deinitialize();
+}
+
 void shutdown() {
     // Clear potential homebrew channel stub
     memset((void*)0x80001800, 0, 0x1800);
@@ -211,13 +221,8 @@ void shutdown() {
 
     DCFlushRange((void*)0x80001800, 0x1800);
 
-    if (_fatInitialized) {
-        _fatInitialized = false;
-        fatUnmount("usb:/");
-        __io_custom_usbstorage.shutdown();
-    }
+    unmountFAT();
 
-    USB_Deinitialize();
     VIDEO_Flush();
     VIDEO_WaitVSync();
     WPAD_Shutdown();
