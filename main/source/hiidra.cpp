@@ -110,8 +110,7 @@ void AfterIOSReload(raw_irq_handler_t handle, u32 rev) {
     IRQ_Request(IRQ_PI_ACR, handle, NULL);
     __UnmaskIrq(IRQ_PI_ACR);
     __IPC_Reinitialize();
-    //__ES_Init();
-    //__STM_Init();
+    __STM_Init();
 }
 
 void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32 nExtraModules, u32 keepES, u32 keepFS) {
