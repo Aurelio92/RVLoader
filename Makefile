@@ -51,8 +51,8 @@ copy: main
 	@echo "Copying build to external drive"
 	@echo " "
 	@cp main/boot.dol /media/aurelio/SANDISK/apps/rvloader
-	@udisksctl unmount -b /dev/sda
-	@udisksctl power-off -b /dev/sda
+	@udisksctl unmount -b /dev/sdb
+	@udisksctl power-off -b /dev/sdb
 
 clean:
 	@echo " "

@@ -27,6 +27,8 @@
 #include "usbfs_elf.h"
 #include "fsplugin_elf.h"
 
+#define STACKSIZE 8192
+
 #define MEM_PROT       0x0D8B420A
 
 #define ES_IOCTL_ENABLEUSBSAVES 0x61
@@ -870,13 +872,18 @@ void copyWBFSData(const char* wbfsPath) {
     }
 }
 
-int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
+static void* bootHiidraThread(void* arg) {
+    HIIDRA_CFG hcfg = *(HIIDRA_CFG*)arg;
+    u32 gameIDU32 = *(u32*)(arg + sizeof(HIIDRA_CFG));
+
     static char __usbfs[] ATTRIBUTE_ALIGN(32) = "/dev/usbfs";
     static char __di[] ATTRIBUTE_ALIGN(32) = "/dev/di";
     static char __bt[] ATTRIBUTE_ALIGN(32) = "/dev/usb/oh1/57e/305";
 
     u32 IOSVersion;
     u32 kernelSize;
+    uint8_t* usbfsModule;
+    uint8_t* fspluginModule;
     uint8_t* modulesUSB[6];
     u32 modulesUSBSize[6];
     char* kernelAddress;
@@ -926,7 +933,7 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
     patchFSAccess();
 
     if (getKernelSize(&kernelSize)  < 0) {
-        return -1;
+        return NULL;
     }
 
     printf("IOS58 kernel size: %u\n", kernelSize);
@@ -948,6 +955,9 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
     readFile("/rvloader/Hiidra/IOS58/USB_HUB.app", &modulesUSB[4], &modulesUSBSize[4]);
     readFile("/rvloader/Hiidra/IOS58/USB_VEN.app", &modulesUSB[5], &modulesUSBSize[5]);
 
+    readFile("/rvloader/Hiidra/modules/usbfs.elf", &usbfsModule, NULL);
+    readFile("/rvloader/Hiidra/modules/fsplugin.elf", &fspluginModule, NULL);
+
     for (int i = 0; i < 6; i++) {
         totalUSBSize += modulesUSBSize[i];
     }
@@ -957,7 +967,7 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
     //kernelAddress = (char*)SYS_AllocArena2MemLo(kernelSize + totalUSBSize, 0x20);
 
     printf("Forging kernel\n");
-    const uint8_t* customModules[] = {kernel_es_elf, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], modulesUSB[4], modulesUSB[5], usbfs_elf, fsplugin_elf};
+    const uint8_t* customModules[] = {kernel_es_elf, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], modulesUSB[4], modulesUSB[5], usbfsModule, fspluginModule};
     forgeKernel(kernelAddress, kernelSize, customModules, 9, 0, 1);
     
     unmountFAT();
@@ -1032,6 +1042,26 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
     }
 
     printf("Booting discloader\n");
+    bootDiscLoader();
+    
+    return NULL;
+}
+
+int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
+    static lwp_t bootHiidraThreadHandle;
+    static void* bootHiidraThreadArg = NULL;
+    static u8* bootHiidraThreadStack = NULL;
+
+    if (bootHiidraThreadArg != NULL) {
+        return -1;
+    }
+
+    bootHiidraThreadArg = (void*)malloc(sizeof(HIIDRA_CFG) + sizeof(u32));
+    memcpy(bootHiidraThreadArg, &hcfg, sizeof(HIIDRA_CFG));
+    memcpy(bootHiidraThreadArg + sizeof(HIIDRA_CFG), &gameIDU32, sizeof(u32));
+    bootHiidraThreadStack = (u8*)memalign(32, STACKSIZE);
+
+    LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
 
     return 0;
 }

@@ -11,6 +11,7 @@ void shutdown();
 void bootDOL(const char* path, const char* args);
 void bootGCGame(NIN_CFG cfg);
 void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32);
+void bootDiscLoader();
 void bootPriiloader();
 void bootSysMenu();
 void powerOff();

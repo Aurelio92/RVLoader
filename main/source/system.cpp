@@ -349,7 +349,6 @@ void bootGCGame(NIN_CFG cfg) {
 }
 
 void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32) {
-    u32 level;
     static const char __conf_file[] ATTRIBUTE_ALIGN(32) = "/shared2/sys/SYSCONF";
     static const char __conf_txt_file[] ATTRIBUTE_ALIGN(32) = "/title/00000001/00000002/data/setting.txt";
     static u8 __conf_buffer[0x4000] ATTRIBUTE_ALIGN(32);
@@ -395,9 +394,11 @@ void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32) {
     i2c_deinit();
 
     bootHiidra(cfg, gameIDU32);
+}
 
-    //If we got here, we must boot discloader
-
+void bootDiscLoader() {
+    u32 level;
+    
     memcpy(EXECUTE_ADDR, discloader_dol, discloader_dol_size);
     DCFlushRange(EXECUTE_ADDR, discloader_dol_size);
 
