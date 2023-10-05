@@ -373,7 +373,7 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
         u32 bufSize = (wad.tmd->Contents[i].Size + 0x3F) & ~0x3F;
         printf("Content size %u\n", (u32)wad.tmd->Contents[i].Size);
         printf("bufSize %u\n", bufSize);
-        printf("Cur file position: %u\n", ftell(fp));
+        printf("Cur file position: %ld\n", ftell(fp));
 
         sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/%08x.app", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF), wad.tmd->Contents[i].ID);
         fpOut = fopen(path, "wb");
@@ -384,12 +384,13 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
             fclose(fp);
             return false;
         }
-        decrypt_file(i, fp, fpOut, wad.tmd->Contents[i].Size);
+        //decrypt_file(i, fp, fpOut, wad.tmd->Contents[i].Size);
+        decrypt_file(i, fp, fpOut, bufSize);
         fclose(fpOut);
-        printf("Saved\nCur file position: %u\n", ftell(fp));
+        printf("Saved\nCur file position: %ld\n", ftell(fp));
         //fseek(fp, bufSize - wad.tmd->Contents[i].Size, SEEK_CUR);
-        fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
-        printf("Seeked\nCur file position: %u\n", ftell(fp));
+        //fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
+        printf("Seeked\nCur file position: %ld\n", ftell(fp));
     }
 
     fclose(fp);
