@@ -882,6 +882,7 @@ static void* bootHiidraThread(void* arg) {
 
     u32 IOSVersion;
     u32 kernelSize;
+    uint8_t* kernelModule;
     uint8_t* usbfsModule;
     uint8_t* fspluginModule;
     uint8_t* modulesUSB[6];
@@ -955,6 +956,7 @@ static void* bootHiidraThread(void* arg) {
     readFile("/rvloader/Hiidra/IOS58/USB_HUB.app", &modulesUSB[4], &modulesUSBSize[4]);
     readFile("/rvloader/Hiidra/IOS58/USB_VEN.app", &modulesUSB[5], &modulesUSBSize[5]);
 
+    readFile("/rvloader/Hiidra/modules/kernel_es.elf", &kernelModule, NULL);
     readFile("/rvloader/Hiidra/modules/usbfs.elf", &usbfsModule, NULL);
     readFile("/rvloader/Hiidra/modules/fsplugin.elf", &fspluginModule, NULL);
 
@@ -967,7 +969,7 @@ static void* bootHiidraThread(void* arg) {
     //kernelAddress = (char*)SYS_AllocArena2MemLo(kernelSize + totalUSBSize, 0x20);
 
     printf("Forging kernel\n");
-    const uint8_t* customModules[] = {kernel_es_elf, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], modulesUSB[4], modulesUSB[5], usbfsModule, fspluginModule};
+    const uint8_t* customModules[] = {kernelModule, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], modulesUSB[4], modulesUSB[5], usbfsModule, fspluginModule};
     forgeKernel(kernelAddress, kernelSize, customModules, 9, 0, 1);
     
     unmountFAT();
