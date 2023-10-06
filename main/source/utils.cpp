@@ -45,3 +45,19 @@ int readFile(const char* path, uint8_t** buffer, uint32_t* fileSize) {
 
     return 0;
 }
+
+int writeFile(const char* path, void* buffer, uint32_t fileSize) {
+    if (path == NULL || buffer == NULL) {
+        return -1;
+    }
+    FILE* fp = fopen(path, "wb");
+    if (fp == NULL) {
+        printf("Error while writing file %s\n", path);
+        return -1;
+    }
+
+    fwrite(buffer, 1, fileSize, fp);
+    fclose(fp);
+
+    return 0;
+}

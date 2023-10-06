@@ -1,15 +1,18 @@
 #pragma once
 
+#include <gccore.h>
+
 #define HIIDRA_MAGIC        0x48445241
 
-#define HIIDRA_CFG_VERSION  0x00000001
+#define HIIDRA_CFG_VERSION  0x00000002
 
 typedef struct HIIDRA_CFG {
-    unsigned int        Magicbytes;
-    unsigned int        Version;
-    unsigned int        Config;
-    char                GamePath[256];
-    char                CheatPath[256];
+    u32     Magicbytes;
+    u32     Version;
+    u32     Config;
+    u64     TitleID;
+    char    GamePath[256];
+    char    CheatPath[256];
 } HIIDRA_CFG;
 
 enum hiidraconfigbitpos {

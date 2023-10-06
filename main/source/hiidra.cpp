@@ -925,11 +925,16 @@ static void* bootHiidraThread(void* arg) {
     if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 4], ".wad", 4)) {
         printf("Installing WAD\n");
         openAndInstallWAD(hcfg.GamePath, &wadTitleID);
+        hcfg.TitleID = wadTitleID;
+    } else {
+        hcfg.TitleID = 0;
     }
 
     if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 5], ".wbfs", 5)) {
         copyWBFSData(hcfg.GamePath);
     }
+
+    writeFile("/rvloader/Hiidra/boot.cfg", &hcfg, sizeof(HIIDRA_CFG));
 
     patchFSAccess();
 

@@ -4,3 +4,4 @@
 
 bool matchStr(const char* str1, const char* str2);
 int readFile(const char* path, uint8_t** buffer, uint32_t* fileSize);
+int writeFile(const char* path, void* buffer, uint32_t fileSize);
