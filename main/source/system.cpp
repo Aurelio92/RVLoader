@@ -398,7 +398,7 @@ void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32) {
 
 void bootDiscLoader() {
     u32 level;
-    
+
     memcpy(EXECUTE_ADDR, discloader_dol, discloader_dol_size);
     DCFlushRange(EXECUTE_ADDR, discloader_dol_size);
 
@@ -408,7 +408,8 @@ void bootDiscLoader() {
 
     entrypoint hbboot_ep = (entrypoint)BOOTER_ADDR;
 
-    SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
+    //Removed due to Hiidra having control of the whole system already
+    //SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
     _CPU_ISR_Disable(level);
     __exception_closeall();
     hbboot_ep();
