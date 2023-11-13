@@ -34,12 +34,12 @@ void decrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) {
     aes_decrypt(iv, source, dest, len);
 }
 
-void decrypt_file(u16 index, FILE* infp, FILE* outfp, u32 len) {
+void decrypt_file(u16 index, FILE* infp, FILE* outfp, u32 inLen, u32 outLen) {
     static u8 iv[16];
 
     memset(iv, 0, 16);
     memcpy(iv, &index, 2);
-    aes_decrypt_file(iv, infp, outfp, len);
+    aes_decrypt_file(iv, infp, outfp, inLen, outLen);
 }
 
 bool openWAD(std::string filepath, WAD* wad) {
@@ -350,19 +350,6 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
     sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/data", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
     mkdir(path, 777);
 
-    sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/title.tmd", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
-    printf("Saving tmd\n");
-    fpOut = fopen(path, "wb");
-    if (!fpOut) {
-        free(wad.tik);
-        free(wad.tmd);
-        fclose(fp);
-        return false;
-    }
-
-    fwrite(wad.tmd, 1, wad.header.tmdSize, fpOut);
-    fclose(fpOut);
-
     u8 key[16];
     get_title_key((signed_blob*)wad.tik, key);
     aes_set_key(key);
@@ -380,18 +367,31 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
         if (!fpOut) {
             free(wad.tik);
             free(wad.tmd);
-            free(wad.data);
             fclose(fp);
             return false;
         }
         //decrypt_file(i, fp, fpOut, wad.tmd->Contents[i].Size);
-        decrypt_file(i, fp, fpOut, bufSize);
+        size_t prevPos = ftell(fp);
+        decrypt_file(i, fp, fpOut, bufSize, wad.tmd->Contents[i].Size);
         fclose(fpOut);
         printf("Saved\nCur file position: %ld\n", ftell(fp));
-        //fseek(fp, bufSize - wad.tmd->Contents[i].Size, SEEK_CUR);
+        fseek(fp, prevPos + bufSize, SEEK_SET);
         //fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
         printf("Seeked\nCur file position: %ld\n", ftell(fp));
     }
+
+    sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/title.tmd", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
+    printf("Saving tmd\n");
+    fpOut = fopen(path, "wb");
+    if (!fpOut) {
+        free(wad.tik);
+        free(wad.tmd);
+        fclose(fp);
+        return false;
+    }
+
+    fwrite(wad.tmd, 1, wad.header.tmdSize, fpOut);
+    fclose(fpOut);
 
     fclose(fp);
     free(wad.tmd);
