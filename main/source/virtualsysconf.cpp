@@ -221,60 +221,46 @@ namespace SYSCONF {
         }
     }
 
-    void __configshifttxt(char *str) {
-        const char *ptr = str;
-        char *ctr = str;
-        int i;
-
-        for(i=0; i < strlen(str); ++i) {
-            if(strncmp(str+(i-3), "PALC", 4) == 0)
-                *ctr = 0x0d;
-            else if(strncmp(str+(i-2), "LUH", 3) == 0)
-                *ctr = 0x0d;
-            else if(strncmp(str+(i-2), "LUM", 3) == 0)
-                *ctr = 0x0d;
-            else
-                *ctr = str[i];
-
-            ctr++;
-        }
-        *ctr = *ptr;
-        *ctr = '\0';
+    void clearSettings() {
+        memset(__conf_txt_buffer, 0, 0x100);
     }
 
-    bool setSetting(const char item[128], const char val[128]) {
-        char *curitem = strstr((char*)__conf_txt_buffer, item);
+    bool getSetting(const char item[128], char val[128]) {
         char *curstrt, *curend;
-
-        if(curitem == NULL)
-            return false;
+        char *curitem = strstr((char*)__conf_txt_buffer, item);
+        val[0] = '\0';
 
         curstrt = strchr(curitem, '=');
         curend = strchr(curitem, 0x0d);
 
         if (curstrt && curend) {
-            curstrt += 1;
+            curstrt++;
             u32 len = curend - curstrt;
-            if (strlen(val) > len) {
-                static char buffer[0x100];
-                u32 nlen;
-                nlen = (char*)__conf_txt_buffer-(curstrt+strlen(val));
-                strcpy(buffer, (char*)__conf_txt_buffer+nlen);
-                strncpy(curstrt, val, strlen(val));
-                curstrt += strlen(val);
-                strncpy(curstrt, buffer, strlen(buffer));
-            } else {
-                strncpy(curstrt, val, strlen(val));
-            }
-
-            __configshifttxt((char*)__conf_txt_buffer);
+            strncpy(val, curstrt, len);
+            val[len] = '\0';
 
             return true;
         }
+
         return false;
+    }
+    
+    void setSetting(const char item[128], const char val[128]) {
+        char* settingEnd = strchr((char*)__conf_txt_buffer, '\0');
+        sprintf(settingEnd, "%s=%s\r\n", item, val);
     }
 
     void setRegionSetting(u32 gameID) {
+        char dvd[128];
+        char mpch[128];
+        char serno[128];
+        getSetting("DVD", dvd);
+        getSetting("MPCH", mpch);
+        getSetting("SERNO", serno);
+        clearSettings();
+        setSetting("DVD", dvd);
+        setSetting("MPCH", mpch);
+        setSetting("SERNO", serno);
         switch (gameID & 0xFF) {
             case 'J':
                 setSetting("AREA", "JPN");
