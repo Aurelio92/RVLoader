@@ -43,7 +43,7 @@ static int lua_Sys_bootInstaller(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    bootDOL("/apps/RVLoader/installer.dol", "");
+    bootDOL("/apps/RVLoader/installer.dol", "", false);
 
     return 0;
 }

@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
                 int wDown = WPAD_ButtonsDown(0);
 
                 if (down & PAD_BUTTON_A || wDown & WPAD_BUTTON_A) {
-                    bootDOL("/apps/RVLoader/installer.dol", "");
+                    bootDOL("/apps/RVLoader/installer.dol", "", false);
                 }
 
                 if (down & PAD_BUTTON_B || wDown & WPAD_BUTTON_B) {

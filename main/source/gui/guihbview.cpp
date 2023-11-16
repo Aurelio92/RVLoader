@@ -8,6 +8,7 @@
 #include "luasupport.h"
 #include "system.h"
 #include "guihbview.h"
+#include "mx.h"
 
 GuiHBView::GuiHBView() {
     //Set default cover size
@@ -45,16 +46,45 @@ void GuiHBView::initLUA() {
 
     //Register GuiHBView library
     static const luaL_Reg GuiHBView_functions[] = {
-        {"setCoverSize", GuiHBView::lua_setCoverSize},
-        {"drawHBCover", GuiHBView::lua_drawHBCover},
-        {"getHBCount", GuiHBView::lua_getHBCount},
-        {"getHBName", GuiHBView::lua_getHBName},
-        {"bootHB", GuiHBView::lua_bootHB},
+        {"setCoverSize", lua_setCoverSize},
+        {"drawHBCover", lua_drawHBCover},
+        {"getHBCount", lua_getHBCount},
+        {"getHBName", lua_getHBName},
+        {"bootHB", lua_bootHB},
+        {"openHBConfig", lua_openHBConfig},
+        {"saveHBConfig", lua_saveHBConfig},
+        {"setHBConfigValue", lua_setHBConfigValue},
+        {"getHBConfigValue", lua_getHBConfigValue},
         {NULL, NULL}
     };
-    lua_newtable(L); //GamesView
+    lua_newtable(L); //HBView
     luaL_setfuncs(L, GuiHBView_functions, 0);
+
+    //Create HBView.config table
+    lua_pushstring(L, "config");
+    lua_newtable(L);
+    luaSetTableIntField(L, "DISABLE", 0);
+    luaSetTableIntField(L, "ENABLE", 1);
+    luaSetTableIntField(L, "NO", 0);
+    luaSetTableIntField(L, "YES", 1);
+    lua_settable(L, -3);
+
     lua_setglobal(L, "HBView");
+}
+
+void GuiHBView::openHBConfig(u32 idx) {
+    int tempVal;
+    lua_getglobal(L, "_hbList");
+    std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+    HBContainer& hbc = hbList->at(idx);
+    //Load settings
+    hbConfig.close(); //Make sure config lists are empty
+    hbConfig.open(hbc.confPath.c_str());
+
+    //Set default values for missing configs
+    if (!hbConfig.getValue("Patch MX chip", &tempVal))
+        hbConfig.setValue("Patch MX chip", MX::isConnected() ? 0 : 1);
 }
 
 int GuiHBView::lua_setCoverSize(lua_State* L) {
@@ -67,9 +97,9 @@ int GuiHBView::lua_setCoverSize(lua_State* L) {
     int w = luaL_checkinteger(L, 1);
     int h = luaL_checkinteger(L, 2);
 
-    //Get games list and cover dimensions
+    //Get homebrews list and cover dimensions
     lua_getglobal(L, "_hbList");
-    std::vector<HBContainer>* gamesList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
+    std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
     lua_getglobal(L, "_coverWidth");
     int* coverWidth = (int*)lua_touserdata(L, -1);
@@ -81,10 +111,10 @@ int GuiHBView::lua_setCoverSize(lua_State* L) {
     *coverWidth = w;
     *coverHeight = h;
 
-    //Set size for all games already in the list
-    for (auto& game : *gamesList) {
-        if (game.image != NULL)
-           game.image->setSize(*coverWidth, *coverHeight);
+    //Set size for all homebrews already in the list
+    for (auto& hb : *hbList) {
+        if (hb.image != NULL)
+           hb.image->setSize(*coverWidth, *coverHeight);
     }
 
     return 0;
@@ -108,15 +138,15 @@ int GuiHBView::lua_drawHBCover(lua_State* L) {
     int* coverHeight = (int*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
-    //Get games list
+    //Get homebrews list
     lua_getglobal(L, "_hbList");
-    std::vector<HBContainer>* gamesList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
+    std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
     //Draw the cover
     try {
         Mtx tempMtx;
-        HBContainer& hbc = gamesList->at(idx);
+        HBContainer& hbc = hbList->at(idx);
         Gfx::pushMatrix();
         Gfx::translate(x, y);
         Gfx::getCurMatrix(tempMtx);
@@ -153,11 +183,11 @@ int GuiHBView::lua_getHBCount(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    //Get games list
+    //Get homebrews list
     lua_getglobal(L, "_hbList");
-    std::vector<HBContainer>* gamesList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
+    std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
-    lua_pushinteger(L, gamesList->size());
+    lua_pushinteger(L, hbList->size());
 
     return 1;
 }
@@ -168,16 +198,16 @@ int GuiHBView::lua_getHBName(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    //Get games list
+    //Get homebrews list
     lua_getglobal(L, "_hbList");
-    std::vector<HBContainer>* gamesList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
+    std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
     u32 idx = luaL_checkinteger(L, 1);
 
     //Return result
     try {
-        HBContainer& hbc = gamesList->at(idx);
+        HBContainer& hbc = hbList->at(idx);
         lua_pushstring(L, hbc.name.c_str());
     } catch (std::out_of_range& e) {
         lua_pushstring(L, "");
@@ -191,9 +221,12 @@ int GuiHBView::lua_bootHB(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    //Get games list
+    //Get homebrews list
     lua_getglobal(L, "_hbList");
-    std::vector<HBContainer>* gamesList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
+    std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+    lua_getglobal(L, "_this");
+    GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
     u32 idx = luaL_checkinteger(L, 1);
@@ -202,10 +235,87 @@ int GuiHBView::lua_bootHB(lua_State* L) {
 
     //Return result
     try {
-        HBContainer& hbc = gamesList->at(idx);
-        bootDOL(hbc.path.c_str(), "");
+        int tempVal;
+        HBContainer& hbc = hbList->at(idx);
+        //Read the configuration file or set the default values if they are missing
+        thisView->openHBConfig(idx);
+
+        thisView->hbConfig.getValue("Patch MX chip", &tempVal);
+        bootDOL(hbc.path.c_str(), "", tempVal);
     } catch (std::out_of_range& e) {
 
     }
     return 0;
+}
+
+int GuiHBView::lua_openHBConfig(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 1) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_getglobal(L, "_this");
+    GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    u32 idx = luaL_checkinteger(L, 1);
+
+    //Open config
+    try {
+        thisView->openHBConfig(idx);
+    } catch (std::out_of_range& e) {
+        return luaL_error(L, "Can't find homebrew at index %u", idx);
+    }
+
+    return 0;
+}
+
+int GuiHBView::lua_saveHBConfig(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_getglobal(L, "_this");
+    GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+
+    //Save config
+    thisView->hbConfig.save();
+
+    return 0;
+}
+
+int GuiHBView::lua_setHBConfigValue(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 2) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_getglobal(L, "_this");
+    GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    thisView->hbConfig.setValue(luaL_checkstring(L, 1), luaL_checkinteger(L, 2));
+
+    return 0;
+}
+
+int GuiHBView::lua_getHBConfigValue(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 1) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    int val = 0;
+
+    lua_getglobal(L, "_this");
+    GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    thisView->hbConfig.getValue(luaL_checkstring(L, 1), &val);
+    lua_pushinteger(L, val);
+
+    return 1;
 }

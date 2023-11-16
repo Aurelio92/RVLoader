@@ -19,8 +19,13 @@
 #include "gpio.h"
 #include "main.h"
 #include "virtualsysconf.h"
+#include "patches.h"
+#include "DOL.h"
 
 #include "discloader_dol.h"
+
+#define __SYS_ReadROM_checksum  0x6e9de751
+#define __SYS_ReadROM_len       0x00000158
 
 typedef void (*entrypoint) (void);
 
@@ -229,10 +234,11 @@ void shutdown() {
     PAD_Reset(0xf0000000);
 }
 
-void bootDOL(const char* path, const char* args) {
+void bootDOL(const char* path, const char* args, bool patchMX) {
     u32 level;
     size_t size;
     struct __argv arg;
+    std::vector<DOLFunction> DOLFunctions;
 
     i2c_deinit();
 
@@ -244,6 +250,16 @@ void bootDOL(const char* path, const char* args) {
     rewind(fp);
     fread(EXECUTE_ADDR, 1, size, fp);
     fclose(fp);
+    listFunctionsInDOL((dolhdr*)EXECUTE_ADDR, DOLFunctions);
+    for (auto fun : DOLFunctions) {
+        if (patchMX) {
+            if (fun.checksum == __SYS_ReadROM_checksum &&
+                fun.len == __SYS_ReadROM_len) {
+                printf("Patching __SYS_ReadROM at %08X\n", fun.offset);
+                injectMXPatch(&EXECUTE_ADDR[fun.offset]);
+            }
+        }
+    }
     DCFlushRange(EXECUTE_ADDR, size);
 
     memset(&arg, 0, sizeof(arg));
