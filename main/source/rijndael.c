@@ -10,6 +10,9 @@
 */
 
 #include <stdio.h>
+#include <string.h>
+
+#define OUT_FILE_BUFFER_SIZE 4096
 
 #define u8 unsigned char       /* 8 bits  */
 #define u32 unsigned long       /* 32 bits */
@@ -371,9 +374,9 @@ void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen,
   u8 tempBlock[16];
   u8 prevBlock[16];
   u8 outblock[16];
+  u8 outBuffer[OUT_FILE_BUFFER_SIZE];
+  u32 outBufferIdx = 0;
   unsigned int blockno = 0, i;
-
-  //  debug_printf("aes_decrypt(%p, %p, %p, %lld)\n", iv, inbuf, outbuf, inLen);
 
   for (blockno = 0; blockno <= (inLen / sizeof(block)); blockno++) {
     unsigned int inFraction = 16;
@@ -386,10 +389,7 @@ void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen,
       memset(block, 0, sizeof(block));
     }
 
-    //    debug_printf("block %d: inFraction = %d\n", blockno, inFraction);
     fread(block, 1, inFraction, infp);
-    //memcpy(block, inbuf + blockno * sizeof(block), inFraction);
-    DCFlushRange(block, inFraction);
     memcpy(tempBlock, block, 16);
     decrypt(block);
     u8 *ctext_ptr;
@@ -401,12 +401,19 @@ void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen,
         for(i=0; i < outFraction; i++)
             outblock[i] = prevBlock[i] ^ block[i];
     }
-    DCFlushRange(outblock, outFraction);
-    fwrite(outblock, 1, outFraction, outfp);
+    memcpy(&outBuffer[outBufferIdx], outblock, outFraction);
+    outBufferIdx += outFraction;
+    if (outBufferIdx == OUT_FILE_BUFFER_SIZE) {
+      outBufferIdx = 0;
+      fwrite(outBuffer, 1, OUT_FILE_BUFFER_SIZE, outfp);
+    }
     memcpy(prevBlock, tempBlock, 16);
-    //    debug_printf("Block %d output: ", blockno);
-    //    hexdump(outbuf + blockno*sizeof(block), 16);
     outLen -= outFraction;
+  }
+
+  //Flush any remaining data
+  if (outBufferIdx > 0) {
+    fwrite(outBuffer, 1, outBufferIdx, outfp);
   }
 }
 

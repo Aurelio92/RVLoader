@@ -363,15 +363,19 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
         printf("Cur file position: %ld\n", ftell(fp));
 
         sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/%08x.app", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF), wad.tmd->Contents[i].ID);
+        printf("Opening for write: %s\n", path);
         fpOut = fopen(path, "wb");
         if (!fpOut) {
+            printf("Failed to open\n");
             free(wad.tik);
             free(wad.tmd);
             fclose(fp);
             return false;
         }
+        printf("Opened\n");
         //decrypt_file(i, fp, fpOut, wad.tmd->Contents[i].Size);
         size_t prevPos = ftell(fp);
+        printf("About to decrypt %u bytes\n", wad.tmd->Contents[i].Size);
         decrypt_file(i, fp, fpOut, bufSize, wad.tmd->Contents[i].Size);
         fclose(fpOut);
         printf("Saved\nCur file position: %ld\n", ftell(fp));
