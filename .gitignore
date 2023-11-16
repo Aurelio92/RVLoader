@@ -8,6 +8,11 @@ discloader/build
 libGUI/build
 bootloader/*.o
 dolbooter/*.o
+readROMPatch/*.o
+readROMPatch/*.elf.map
+readROMPatch/*.elf
+readROMPatch/dis.txt
+readROMPatch/font_western_bin.h
 *.DS_Store*
 discloader/asmPatches/build
 discloader/asmPatches/out
