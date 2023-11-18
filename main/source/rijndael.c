@@ -10,6 +10,9 @@
 */
 
 #include <stdio.h>
+#include <string.h>
+
+#define OUT_FILE_BUFFER_SIZE 4096
 
 #define u8 unsigned char       /* 8 bits  */
 #define u32 unsigned long       /* 32 bits */
@@ -366,43 +369,51 @@ void aes_decrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len) {
   }
 }
 
-void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long len) {
+void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen, unsigned long long outLen) {
   u8 block[16];
   u8 tempBlock[16];
   u8 prevBlock[16];
   u8 outblock[16];
+  u8 outBuffer[OUT_FILE_BUFFER_SIZE];
+  u32 outBufferIdx = 0;
   unsigned int blockno = 0, i;
 
-  //  debug_printf("aes_decrypt(%p, %p, %p, %lld)\n", iv, inbuf, outbuf, len);
-
-  for (blockno = 0; blockno <= (len / sizeof(block)); blockno++) {
-    unsigned int fraction;
-    if (blockno == (len / sizeof(block))) { // last block
-      fraction = len % sizeof(block);
-      if (fraction == 0) break;
+  for (blockno = 0; blockno <= (inLen / sizeof(block)); blockno++) {
+    unsigned int inFraction = 16;
+    unsigned int outFraction = (outLen > 16) ? 16 : outLen;
+    if (outFraction == 0) break;
+    
+    if (blockno == (inLen / sizeof(block))) { // last block
+      inFraction = inLen % sizeof(block);
+      if (inFraction == 0) break;
       memset(block, 0, sizeof(block));
-    } else fraction = 16;
+    }
 
-    //    debug_printf("block %d: fraction = %d\n", blockno, fraction);
-    fread(block, 1, fraction, infp);
-    //memcpy(block, inbuf + blockno * sizeof(block), fraction);
-    DCFlushRange(block, fraction);
+    fread(block, 1, inFraction, infp);
     memcpy(tempBlock, block, 16);
     decrypt(block);
     u8 *ctext_ptr;
 
     if (blockno == 0) {
-        for(i=0; i < fraction; i++)
+        for(i=0; i < outFraction; i++)
             outblock[i] = iv[i] ^ block[i];
     } else {
-        for(i=0; i < fraction; i++)
+        for(i=0; i < outFraction; i++)
             outblock[i] = prevBlock[i] ^ block[i];
     }
-    DCFlushRange(outblock, fraction);
-    fwrite(outblock, 1, fraction, outfp);
+    memcpy(&outBuffer[outBufferIdx], outblock, outFraction);
+    outBufferIdx += outFraction;
+    if (outBufferIdx == OUT_FILE_BUFFER_SIZE) {
+      outBufferIdx = 0;
+      fwrite(outBuffer, 1, OUT_FILE_BUFFER_SIZE, outfp);
+    }
     memcpy(prevBlock, tempBlock, 16);
-    //    debug_printf("Block %d output: ", blockno);
-    //    hexdump(outbuf + blockno*sizeof(block), 16);
+    outLen -= outFraction;
+  }
+
+  //Flush any remaining data
+  if (outBufferIdx > 0) {
+    fwrite(outBuffer, 1, outBufferIdx, outfp);
   }
 }
 

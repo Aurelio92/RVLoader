@@ -52,9 +52,10 @@ class HBContainer {
         std::string path;
         std::string coverPath;
         hbMeta meta;
+        std::string confPath;
         GuiImage* image;
 
-        HBContainer(std::string _name, std::string _path, std::string _coverPath, hbMeta _meta) : name(_name), path(_path), coverPath(_coverPath), meta(_meta), image(NULL) {}
+        HBContainer(std::string _name, std::string _path, std::string _coverPath, hbMeta _meta, std::string _confPath) : name(_name), path(_path), coverPath(_coverPath), meta(_meta), confPath(_confPath), image(NULL) {}
 
         static bool compare(HBContainer hbc1, HBContainer hbc2) {
             const char* buffer1 = hbc1.name.c_str();

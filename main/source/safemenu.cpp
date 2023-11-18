@@ -130,7 +130,7 @@ void safeMenu() {
                 case INSTALLER:
                     if (!initFAT())
                         systemError("Generic error", "Could not initialize FAT. Make sure USB is plugged in");
-                    bootDOL("/apps/RVLoader/installer.dol", "");
+                    bootDOL("/apps/RVLoader/installer.dol", "", false);
                 break;
 
                 case REBOOT:

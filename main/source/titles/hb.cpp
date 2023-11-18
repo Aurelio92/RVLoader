@@ -84,6 +84,7 @@ void addWiiHomebrews() {
     while ((dirp = readdir(dp)) != NULL) {
         FILE* fp;
         char coverPath[PATH_MAX];
+        char configPath[PATH_MAX];
 
         if (dirp->d_name == NULL)
             continue;
@@ -131,7 +132,9 @@ void addWiiHomebrews() {
             }
         }
 
-        wiiHomebrews.push_back(HBContainer(hbName, dolPath, coverPath, meta));
+        sprintf(configPath, "/apps/%s/config.cfg", dirp->d_name);
+
+        wiiHomebrews.push_back(HBContainer(hbName, dolPath, coverPath, meta, configPath));
     }
     closedir(dp);
 }

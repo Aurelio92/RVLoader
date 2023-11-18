@@ -34,12 +34,12 @@ void decrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) {
     aes_decrypt(iv, source, dest, len);
 }
 
-void decrypt_file(u16 index, FILE* infp, FILE* outfp, u32 len) {
+void decrypt_file(u16 index, FILE* infp, FILE* outfp, u32 inLen, u32 outLen) {
     static u8 iv[16];
 
     memset(iv, 0, 16);
     memcpy(iv, &index, 2);
-    aes_decrypt_file(iv, infp, outfp, len);
+    aes_decrypt_file(iv, infp, outfp, inLen, outLen);
 }
 
 bool openWAD(std::string filepath, WAD* wad) {
@@ -350,6 +350,40 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
     sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/data", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
     mkdir(path, 777);
 
+    u8 key[16];
+    get_title_key((signed_blob*)wad.tik, key);
+    aes_set_key(key);
+
+    //Read and decrypt all contents
+    for (i = 0; i < wad.tmd->ContentCount; i++) {
+        printf("Saving title %u/%u\n", i, wad.tmd->ContentCount);
+        u32 bufSize = (wad.tmd->Contents[i].Size + 0x3F) & ~0x3F;
+        printf("Content size %u\n", (u32)wad.tmd->Contents[i].Size);
+        printf("bufSize %u\n", bufSize);
+        printf("Cur file position: %ld\n", ftell(fp));
+
+        sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/%08x.app", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF), wad.tmd->Contents[i].ID);
+        printf("Opening for write: %s\n", path);
+        fpOut = fopen(path, "wb");
+        if (!fpOut) {
+            printf("Failed to open\n");
+            free(wad.tik);
+            free(wad.tmd);
+            fclose(fp);
+            return false;
+        }
+        printf("Opened\n");
+        //decrypt_file(i, fp, fpOut, wad.tmd->Contents[i].Size);
+        size_t prevPos = ftell(fp);
+        printf("About to decrypt %u bytes\n", wad.tmd->Contents[i].Size);
+        decrypt_file(i, fp, fpOut, bufSize, wad.tmd->Contents[i].Size);
+        fclose(fpOut);
+        printf("Saved\nCur file position: %ld\n", ftell(fp));
+        fseek(fp, prevPos + bufSize, SEEK_SET);
+        //fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
+        printf("Seeked\nCur file position: %ld\n", ftell(fp));
+    }
+
     sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/title.tmd", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
     printf("Saving tmd\n");
     fpOut = fopen(path, "wb");
@@ -362,35 +396,6 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
 
     fwrite(wad.tmd, 1, wad.header.tmdSize, fpOut);
     fclose(fpOut);
-
-    u8 key[16];
-    get_title_key((signed_blob*)wad.tik, key);
-    aes_set_key(key);
-
-    //Read and decrypt all contents
-    for (i = 0; i < wad.tmd->ContentCount; i++) {
-        printf("Saving title %u/%u\n", i, wad.tmd->ContentCount);
-        u32 bufSize = (wad.tmd->Contents[i].Size + 0x3F) & ~0x3F;
-        printf("Content size %u\n", (u32)wad.tmd->Contents[i].Size);
-        printf("bufSize %u\n", bufSize);
-        printf("Cur file position: %u\n", ftell(fp));
-
-        sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/%08x.app", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF), wad.tmd->Contents[i].ID);
-        fpOut = fopen(path, "wb");
-        if (!fpOut) {
-            free(wad.tik);
-            free(wad.tmd);
-            free(wad.data);
-            fclose(fp);
-            return false;
-        }
-        decrypt_file(i, fp, fpOut, wad.tmd->Contents[i].Size);
-        fclose(fpOut);
-        printf("Saved\nCur file position: %u\n", ftell(fp));
-        //fseek(fp, bufSize - wad.tmd->Contents[i].Size, SEEK_CUR);
-        fseek(fp, (ftell(fp) + 0x3F) & ~0x3F, SEEK_SET); //Handle 0x40 bytes alignment
-        printf("Seeked\nCur file position: %u\n", ftell(fp));
-    }
 
     fclose(fp);
     free(wad.tmd);
