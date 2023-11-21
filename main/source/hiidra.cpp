@@ -16,16 +16,20 @@
 #include <string.h>
 #include <ogc/usbgecko.h>
 #include <ogc/exi.h>
+#include <lua.hpp>
 
+#include "main.h"
 #include "utils.h"
 #include "systitles.h"
 #include "system.h"
 #include "hiidra.h"
 #include "ELF.h"
+#include "luasupport.h"
 
-#include "kernel_es_elf.h"
-#include "usbfs_elf.h"
-#include "fsplugin_elf.h"
+#define COPY_LIMIT (32*1024)
+
+#define HIIDRA_LOG_LINES 32
+#define HIIDRA_LOG_LINE_LENGTH 256
 
 #define STACKSIZE 8192
 
@@ -45,6 +49,12 @@ static char moduleBuffer[MODULE_BUFFER_SIZE] ALIGNED(32);
 static const u64 TitleID_IOS58 = 0x000000010000003AULL;
 
 static ioctlv IOCTL_Buf ALIGNED(32);
+
+//Logger stuff
+static mutex_t logMutex = 0;
+static char logBuffer[HIIDRA_LOG_LINES][HIIDRA_LOG_LINE_LENGTH];
+static u32 logLineIndex;
+static u32 logNLines;
 
 extern "C" {
     extern void* SYS_AllocArena2MemLo(u32 size,u32 align);
@@ -98,7 +108,6 @@ raw_irq_handler_t BeforeIOSReload() {
 void AfterIOSReload(raw_irq_handler_t handle, u32 rev) {
     while (read32(0x80003140) != rev) {
         DCInvalidateRange((void*)0x80003140, 0x20);
-        printf("%08X\n", read32(0x80003140));
         udelay(1000);
     }
 
@@ -742,8 +751,6 @@ void setESBootpoint(u32 IOSVersion, u32 bootPoint) {
     DCFlushRange((void*)0x939F02F0, sizeof(ESBootPatch));
 }
 
-#define COPY_LIMIT (32*1024)
-
 void copyNANDDirToUSB(const char* src, const char* dst) {
     printf("copyNANDDirToUSB(%s, %s)\n", src, dst);
     char srcPath[256];
@@ -924,13 +931,18 @@ static void* bootHiidraThread(void* arg) {
 
     if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 4], ".wad", 4)) {
         printf("Installing WAD\n");
-        openAndInstallWAD(hcfg.GamePath, &wadTitleID);
+        hiidraAddLogLine("Starting WAD installation");
+        if (!openAndInstallWAD(hcfg.GamePath, &wadTitleID)) {
+            hiidraAddLogLine("Error while installing WAD");
+            while(1);
+        }
         hcfg.TitleID = wadTitleID;
     } else {
         hcfg.TitleID = 0;
     }
 
     if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 5], ".wbfs", 5)) {
+        hiidraAddLogLine("Copying game data");
         copyWBFSData(hcfg.GamePath);
     }
 
@@ -948,6 +960,7 @@ static void* bootHiidraThread(void* arg) {
     printf("Kernel address: %08X\n", MEM_VIRTUAL_TO_PHYSICAL((u32)kernelAddress));
 
     loadIOSModules();
+    hiidraAddLogLine("Loading kernel from NAND");
     if (loadKernel(kernelAddress, NULL, &IOSVersion) < 0) {
         printf("Couldn't load kernel\n");
         exit(0);
@@ -973,7 +986,8 @@ static void* bootHiidraThread(void* arg) {
 
     //kernelAddress = (char*)SYS_AllocArena2MemLo(kernelSize + totalUSBSize, 0x20);
 
-    printf("Forging kernel\n");
+    printf("Forging custom kernel\n");
+    hiidraAddLogLine("Forging custom kernel");
     const uint8_t* customModules[] = {kernelModule, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], modulesUSB[4], modulesUSB[5], usbfsModule, fspluginModule};
     forgeKernel(kernelAddress, kernelSize, customModules, 9, 0, 1);
     
@@ -987,18 +1001,22 @@ static void* bootHiidraThread(void* arg) {
     *(vu32*)0xD3003420 = 0; //make sure kernel doesnt reload
 
     printf("Triggering Hiidra boot\n");
+    hiidraAddLogLine("Triggering Hiidra boot");
     raw_irq_handler_t irq_handler = BeforeIOSReload();
     IOS_IoctlvAsync(fd, 0x1F, 0, 0, &IOCTL_Buf, NULL, NULL);
     AfterIOSReload(irq_handler, IOSVersion);
 
-    printf("Hiidra running\n");
+    printf("Hiidra is running\n");
+    hiidraAddLogLine("Hiidra is running");
 
     udelay(100000);
 
     write16(MEM_PROT, 0);
 
     s32 hId = iosCreateHeap(1024);
+    u32* tempU32ES = (u32*)iosAlloc(hId, sizeof(u32));
     printf("Waiting for ES\n");
+    hiidraAddLogLine("Waiting for ES");
     do {
         udelay(1000);
         fd = IOS_Open("/dev/es", 0);
@@ -1022,6 +1040,7 @@ static void* bootHiidraThread(void* arg) {
     sprintf(gamePath, "/dev/usbfs%s", hcfg.GamePath);
 
     printf("Launching %s\n", gamePath);
+    hiidraAddLogLine("Launching %s\n", gamePath);
     if (wadTitleID) {
         u64* titleID = (u64*)iosAlloc(hId, sizeof(u64));
         *titleID = wadTitleID;
@@ -1036,6 +1055,7 @@ static void* bootHiidraThread(void* arg) {
     if (fd >= 0) {
         s32 ret;
         printf("Loading disc game\n");
+        hiidraAddLogLine("Loading disc game");
         ret = IOS_Ioctl(fd, 0xF0, gamePath, 0x80, NULL, 0);
         if (ret == 0) {
             printf("Success\n");
@@ -1045,13 +1065,100 @@ static void* bootHiidraThread(void* arg) {
         IOS_Close(fd);
     } else {
         printf("Couldn't open DI\n");
+        hiidraAddLogLine("Couldn't open DI");
         while(1);
     }
 
     printf("Booting discloader\n");
+    hiidraAddLogLine("Booting discloader");
     bootDiscLoader();
     
     return NULL;
+}
+
+void initHiidra() {
+    LWP_MutexInit(&logMutex, false);
+    logLineIndex = 0;
+    logNLines = 0;
+}
+
+void lockHiidraLogMutex() {
+    if (logMutex) {
+        LWP_MutexLock(logMutex);
+    }
+}
+
+void unlockHiidraLogMutex() {
+     if (logMutex) {
+        LWP_MutexUnlock(logMutex);
+    }
+}
+
+u32 hiidraAddLogLine(const char* line, ...) {
+    va_list args;
+    u32 prevIndex;
+
+    lockHiidraLogMutex();
+
+    prevIndex = logLineIndex;
+
+    va_start(args, line);
+    vsnprintf(logBuffer[logLineIndex], HIIDRA_LOG_LINE_LENGTH, line, args);
+    va_end(args);
+
+    logLineIndex++;
+    if (logLineIndex == HIIDRA_LOG_LINES) {
+        logLineIndex = 0;
+    }
+    if (logNLines < HIIDRA_LOG_LINES) {
+        logNLines++;
+    }
+
+    unlockHiidraLogMutex();
+
+    return prevIndex;
+}
+
+void hiidraUpdateLogLine(u32 index, const char* line, ...) {
+    va_list args;
+    lockHiidraLogMutex();
+    va_start(args, line);
+    vsnprintf(logBuffer[index], HIIDRA_LOG_LINE_LENGTH, line, args);
+    va_end(args);
+    unlockHiidraLogMutex();
+}
+
+static int lua_getLogLines(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_newtable(L);
+
+    int index = 1;
+
+    lockHiidraLogMutex();
+
+    for (u32 i = 0; i < logNLines; i++) {
+        //This will copy the data as if logBuffer was handled as a circular buffer
+        luaSetArrayStringField(L, index++, logBuffer[(i + HIIDRA_LOG_LINES - logNLines + logLineIndex) % HIIDRA_LOG_LINES]);
+    }
+
+    unlockHiidraLogMutex();
+
+    return 1;
+}
+
+static const luaL_Reg Hiidra_functions[] = {
+    {"getLogLines", lua_getLogLines},
+    {NULL, NULL}
+};
+
+void luaRegisterHiidraLib(lua_State* L) {
+    lua_newtable(L);
+    luaL_setfuncs(L, Hiidra_functions, 0);
+    lua_setglobal(L, "Hiidra");
 }
 
 int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
@@ -1069,6 +1176,12 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
     bootHiidraThreadStack = (u8*)memalign(32, STACKSIZE);
 
     LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
+
+    //Disable any controller input
+    disableControllers();
+
+    //Switch to Hiidra's loading screen
+    mainWindowSwitchElement("HiidraBootScreen");
 
     return 0;
 }

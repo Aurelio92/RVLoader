@@ -1,6 +1,7 @@
 #include <lua.hpp>
 #include "luasupport.h"
 #include "theme.h"
+#include "hiidra.h"
 
 void luaSetTableIntField(lua_State* L, const char* index, int value) {
     lua_pushstring(L, index);
@@ -31,4 +32,5 @@ void luaRegisterCustomLibs(lua_State* L) {
     luaRegisterPMS2Lib(L);
     luaRegisterUAMPLib(L);
     luaRegisterThemeLib(L);
+    luaRegisterHiidraLib(L);
 }

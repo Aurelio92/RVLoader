@@ -35,6 +35,7 @@
 #include "theme.h"
 #include "safemenu.h"
 #include "hud.h"
+#include "hiidra.h"
 
 #include "textures.h"
 #include "textures_tpl.h"
@@ -43,6 +44,7 @@
 static Vector2 screenSize;
 static bool VGAEnabled;
 
+static GuiWindow mainWindow;
 GuiImage* AIcon;
 GuiImage* BIcon;
 GuiImage* XIcon;
@@ -55,6 +57,7 @@ Config mainConfig;
 
 volatile u32 connectedPads;
 static mutex_t SIMutex;
+static bool controllersEnabled;
 
 extern "C" {
     extern void udelay(int us);
@@ -68,6 +71,18 @@ void lockSIMutex() {
 
 void unlockSIMutex() {
     LWP_MutexUnlock(SIMutex);
+}
+
+void enableControllers() {
+    controllersEnabled = true;
+}
+
+void disableControllers() {
+    controllersEnabled = false;
+}
+
+void mainWindowSwitchElement(const char* el) {
+    mainWindow.switchToElement(el);
 }
 
 Vector2 getScreenSize() {
@@ -92,11 +107,12 @@ void WMPowerButtonCB(s32 chan) {
 
 int main(int argc, char **argv) {
     TPLFile mainTDF;
-    GuiWindow mainWindow;
     float mem1Max = (float)SYS_GetArena1Size() / 1048576.0f;
     float mem2Max = (float)SYS_GetArena2Size() / 1048576.0f;
 
     LWP_MutexInit(&SIMutex, true);
+    enableControllers();
+    initHiidra();
 
     i2c_init();
     ISFS_Initialize();
@@ -277,9 +293,11 @@ int main(int argc, char **argv) {
     }
 
     while(1) {
-        lockSIMutex();
-        connectedPads = PAD_ScanPads();
-        unlockSIMutex();
+        if (controllersEnabled) {
+            lockSIMutex();
+            connectedPads = PAD_ScanPads();
+            unlockSIMutex();
+        }
 
         WPAD_ScanPads();
         GenPad::update(); //Must be called after *PAD_ScanPads

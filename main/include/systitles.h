@@ -91,7 +91,7 @@ extern "C" {
 #endif
     void aes_set_key(u8 *key);
     void aes_decrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len);
-    void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen, unsigned long long outLen);
+    void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen, unsigned long long outLen, void (*progressCb)(u32, u32), u32 arg0);
     void aes_encrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len);
 #ifdef __cplusplus
 }

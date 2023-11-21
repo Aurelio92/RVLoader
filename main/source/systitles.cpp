@@ -5,6 +5,7 @@
 #include <string>
 #include <dirent.h>
 #include "systitles.h"
+#include "hiidra.h"
 
 static u8 commonkey[16] = {0xeb, 0xe4, 0x2a, 0x22, 0x5e, 0x85, 0x93, 0xe4, 0x48, 0xd9, 0xc5, 0x45, 0x73, 0x81, 0xaa, 0xf7};
 
@@ -27,6 +28,10 @@ void get_title_key(signed_blob *s_tik, u8 *key) {
     memcpy(key, keyout, sizeof keyout);
 }
 
+void showWADTitleInstallProgress(u32 line, u32 percentage) {
+    hiidraUpdateLogLine(line, "Progress: %u%%", percentage);
+}
+
 void decrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) {
     static u8 iv[16];
     memset(iv, 0, 16);
@@ -39,7 +44,8 @@ void decrypt_file(u16 index, FILE* infp, FILE* outfp, u32 inLen, u32 outLen) {
 
     memset(iv, 0, 16);
     memcpy(iv, &index, 2);
-    aes_decrypt_file(iv, infp, outfp, inLen, outLen);
+    u32 logLine = hiidraAddLogLine(""); //Create empty line for logger
+    aes_decrypt_file(iv, infp, outfp, inLen, outLen, showWADTitleInstallProgress, logLine);
 }
 
 bool openWAD(std::string filepath, WAD* wad) {
@@ -316,11 +322,12 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
     sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/title.tmd", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
     fpTest = fopen(path, "rb");
     if (fpTest) {
+        hiidraAddLogLine("WAD already installed");
         free(wad.tik);
         free(wad.tmd);
         fclose(fp);
-        return true;
         fclose(fpTest);
+        return true;
     }
 
     mkdir("/rvloader/Hiidra/emunand", 777);
@@ -329,15 +336,19 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
     mkdir(path, 777);
     sprintf(path, "/rvloader/Hiidra/emunand/ticket/%08x/%08x.tik", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
     printf("Saving ticket\n");
+    hiidraAddLogLine("Saving ticket");
     fpOut = fopen(path, "wb");
     if (!fpOut) {
+        hiidraAddLogLine("Could not save ticket");
         free(wad.tik);
         free(wad.tmd);
         fclose(fp);
         return false;
     }
 
-    fwrite(wad.tik, 1, wad.header.tikSize, fpOut);
+    if (fwrite(wad.tik, 1, wad.header.tikSize, fpOut) != wad.header.tikSize) {
+        hiidraAddLogLine("Could not save ticket");
+    }
     fclose(fpOut);
 
     mkdir("/rvloader/Hiidra/emunand/title", 777);
@@ -356,7 +367,8 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
 
     //Read and decrypt all contents
     for (i = 0; i < wad.tmd->ContentCount; i++) {
-        printf("Saving title %u/%u\n", i, wad.tmd->ContentCount);
+        hiidraAddLogLine("Saving title %u/%u", i + 1, wad.tmd->ContentCount);
+        printf("Saving title %u/%u\n", i + 1, wad.tmd->ContentCount);
         u32 bufSize = (wad.tmd->Contents[i].Size + 0x3F) & ~0x3F;
         printf("Content size %u\n", (u32)wad.tmd->Contents[i].Size);
         printf("bufSize %u\n", bufSize);
@@ -367,6 +379,7 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
         fpOut = fopen(path, "wb");
         if (!fpOut) {
             printf("Failed to open\n");
+            hiidraAddLogLine("Failed to save title");
             free(wad.tik);
             free(wad.tmd);
             fclose(fp);
@@ -375,7 +388,7 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
         printf("Opened\n");
         //decrypt_file(i, fp, fpOut, wad.tmd->Contents[i].Size);
         size_t prevPos = ftell(fp);
-        printf("About to decrypt %u bytes\n", wad.tmd->Contents[i].Size);
+        printf("About to decrypt %llu bytes\n", wad.tmd->Contents[i].Size);
         decrypt_file(i, fp, fpOut, bufSize, wad.tmd->Contents[i].Size);
         fclose(fpOut);
         printf("Saved\nCur file position: %ld\n", ftell(fp));
