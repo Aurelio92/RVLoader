@@ -7,5 +7,6 @@
     <chanview position="0 40" active="false" switchable="true" id="WiiChannelsView" script="scripts/gamesview.lua" />
     <hbview position="0 40" active="false" switchable="true" id="WiiHBView" script="scripts/homebrewsview.lua" />
     <luaelement position="0 40" active="false" switchable="true" id="SettingsView" script="scripts/settings.lua" />
+    <luaelement position="0 40" active="false" switchable="true" id="HiidraBootScreen" script="scripts/hiidraBootScreen.lua" />
     <luaelement position="0 0" active="true" id="TopBar" script="scripts/topbar.lua" />
 </theme>

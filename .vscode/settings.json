@@ -66,6 +66,9 @@
         "algorithm": "cpp",
         "functional": "cpp",
         "iterator": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "__verbose_abort": "cpp",
+        "charconv": "cpp",
+        "set": "cpp"
     }
 }

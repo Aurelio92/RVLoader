@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gccore.h>
+#include <lua.hpp>
 
 #define HIIDRA_MAGIC        0x48445241
 
@@ -37,4 +38,10 @@ void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32
 int getKernelSize(u32* kernelSize);
 int loadKernel(char* kernel, u32* kernelSize, u32* FoundVersion);
 int loadIOSModules(void);
+void initHiidra();
+void lockHiidraLogMutex();
+void unlockHiidraLogMutex();
+u32 hiidraAddLogLine(const char* line, ...);
+void hiidraUpdateLogLine(u32 index, const char* line, ...);
+void luaRegisterHiidraLib(lua_State* L);
 int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32);

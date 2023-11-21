@@ -369,7 +369,7 @@ void aes_decrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len) {
   }
 }
 
-void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen, unsigned long long outLen) {
+void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen, unsigned long long outLen, void (*progressCb)(u32, u32), u32 arg0) {
   u8 block[16];
   u8 tempBlock[16];
   u8 prevBlock[16];
@@ -377,6 +377,12 @@ void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen,
   u8 outBuffer[OUT_FILE_BUFFER_SIZE];
   u32 outBufferIdx = 0;
   unsigned int blockno = 0, i;
+
+  unsigned long long outLenFinal = outLen;
+
+  if (progressCb != NULL) {
+    progressCb(arg0, 0); //Print 0% progress
+  }
 
   for (blockno = 0; blockno <= (inLen / sizeof(block)); blockno++) {
     unsigned int inFraction = 16;
@@ -403,17 +409,24 @@ void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen,
     }
     memcpy(&outBuffer[outBufferIdx], outblock, outFraction);
     outBufferIdx += outFraction;
+    outLen -= outFraction;
     if (outBufferIdx == OUT_FILE_BUFFER_SIZE) {
       outBufferIdx = 0;
       fwrite(outBuffer, 1, OUT_FILE_BUFFER_SIZE, outfp);
+      if (progressCb != NULL) {
+        progressCb(arg0, 100 * (outLenFinal - outLen) / outLenFinal); //Print progress
+      }
     }
     memcpy(prevBlock, tempBlock, 16);
-    outLen -= outFraction;
   }
 
   //Flush any remaining data
   if (outBufferIdx > 0) {
     fwrite(outBuffer, 1, outBufferIdx, outfp);
+  }
+
+  if (progressCb != NULL) {
+    progressCb(arg0, 100); //Print 100% progress
   }
 }
 

@@ -225,7 +225,7 @@ static int lua_Gfx_print(lua_State* L) {
 
     Font* font = (Font*)luaL_checkinteger(L, 1);
     if (font) {
-        width = font->printf(luaL_checknumber(L, 2), luaL_checknumber(L, 3), luaL_checkstring(L, 4));
+        width = font->print(luaL_checknumber(L, 2), luaL_checknumber(L, 3), luaL_checkstring(L, 4));
     }
 
     lua_pushinteger(L, width);

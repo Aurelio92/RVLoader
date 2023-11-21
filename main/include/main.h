@@ -16,6 +16,9 @@ extern volatile u32 connectedPads;
 
 void lockSIMutex();
 void unlockSIMutex();
+void enableControllers();
+void disableControllers();
+void mainWindowSwitchElement(const char* el);
 Vector2 getScreenSize();
 bool isVGAEnabled();
 void setVGAEnabled(bool en);
