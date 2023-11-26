@@ -257,12 +257,12 @@ namespace SYSCONF {
         getSetting("DVD", dvd);
         getSetting("MPCH", mpch);
         getSetting("SERNO", serno);
-        clearSettings();
-        setSetting("DVD", dvd);
-        setSetting("MPCH", mpch);
-        setSetting("SERNO", serno);
         switch (gameID & 0xFF) {
             case 'J':
+                clearSettings();
+                setSetting("DVD", dvd);
+                setSetting("MPCH", mpch);
+                setSetting("SERNO", serno);
                 setSetting("AREA", "JPN");
                 setSetting("MODEL", "RVL-001(JPN)");
                 setSetting("CODE", "LJM");
@@ -270,6 +270,10 @@ namespace SYSCONF {
                 setSetting("GAME", "JP");
             break;
             case 'E':
+                clearSettings();
+                setSetting("DVD", dvd);
+                setSetting("MPCH", mpch);
+                setSetting("SERNO", serno);
                 setSetting("AREA", "USA");
                 setSetting("MODEL", "RVL-001(USA)");
                 setSetting("CODE", "LU");
@@ -283,6 +287,10 @@ namespace SYSCONF {
             case 'P':
             case 'S':
             case 'U':
+                clearSettings();
+                setSetting("DVD", dvd);
+                setSetting("MPCH", mpch);
+                setSetting("SERNO", serno);
                 setSetting("AREA", "EUR");
                 setSetting("MODEL", "RVL-001(EUR)");
                 setSetting("CODE", "LEH");
@@ -290,6 +298,10 @@ namespace SYSCONF {
                 setSetting("GAME", "EU");
             break;
             case 'k':
+                clearSettings();
+                setSetting("DVD", dvd);
+                setSetting("MPCH", mpch);
+                setSetting("SERNO", serno);
                 setSetting("AREA", "KOR");
                 setSetting("MODEL", "RVL-001(KOR)");
                 setSetting("CODE", "LKM");
