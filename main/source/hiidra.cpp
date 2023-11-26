@@ -941,14 +941,14 @@ static void* bootHiidraThread(void* arg) {
         hcfg.TitleID = 0;
     }
 
-    if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 5], ".wbfs", 5)) {
+    patchFSAccess();
+
+    if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 5], ".wbfs", 5) && (hcfg.Config & HIIDRA_CFG_USBSAVES)) {
         hiidraAddLogLine("Copying game data");
         copyWBFSData(hcfg.GamePath);
     }
 
     writeFile("/rvloader/Hiidra/boot.cfg", &hcfg, sizeof(HIIDRA_CFG));
-
-    patchFSAccess();
 
     if (getKernelSize(&kernelSize)  < 0) {
         return NULL;
