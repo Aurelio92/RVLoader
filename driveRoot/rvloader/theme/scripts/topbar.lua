@@ -49,7 +49,7 @@ function draw(onFocus)
     if PMS2.isConnected() then
         local batteryIcon_w, batteryIcon_h = Gfx.getImageSize(batteryIcon)
         local SOC = PMS2.getSOC()
-        local SOCStr = string.format("%.0f", SOC) .. "%%"
+        local SOCStr = string.format("%.0f", SOC) .. "%"
         local WiiTemperature = PMS2.getNTC()
         local WiiTemperatureStr = string.format("%.1f", WiiTemperature) .. " °C"
         local temperature_SOC_Str = ""
