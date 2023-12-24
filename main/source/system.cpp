@@ -187,6 +187,7 @@ bool initFAT() {
             _fatInitialized = true;
             return true;
         }
+        printf("Wait\n");
         udelay(100000); //100ms
         printf("Failed\n");
     }

@@ -556,6 +556,11 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             thisView->gameConfig.getValue("Enable GC2Wiimote", &tempVal);
             if (tempVal)
                 cfg.Config |= HIIDRA_CFG_GC2WIIMOTE;
+            
+            tempVal = 0;
+            thisView->gameConfig.getValue("Patch MX chip", &tempVal);
+            if (tempVal)
+                cfg.Config |= HIIDRA_CFG_PATCHMX;
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
@@ -667,6 +672,11 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             if (tempVal)
                 cfg.Config |= HIIDRA_CFG_GC2WIIMOTE;
 
+            tempVal = 0;
+            thisView->gameConfig.getValue("Patch MX chip", &tempVal);
+            if (tempVal)
+                cfg.Config |= HIIDRA_CFG_PATCHMX;
+
             strcpy(cfg.GamePath, gc.path.c_str());
 
             bootWiiGame(cfg, gc.gameID);
@@ -697,6 +707,11 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             thisView->gameConfig.getValue("Enable GC2Wiimote", &tempVal);
             if (tempVal)
                 cfg.Config |= HIIDRA_CFG_GC2WIIMOTE;
+
+            tempVal = 0;
+            thisView->gameConfig.getValue("Patch MX chip", &tempVal);
+            if (tempVal)
+                cfg.Config |= HIIDRA_CFG_PATCHMX;
 
             strcpy(cfg.GamePath, gc.path.c_str());
 

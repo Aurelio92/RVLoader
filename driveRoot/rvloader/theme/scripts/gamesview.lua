@@ -58,11 +58,11 @@ function init()
             gameConfigSelectedEnum = enum({"Force progressive", "Force widescreen", "Force RVL-DD stretching", "Native SI", "Video mode", "Language", "Enable Cheats", "Memory Card Emulation", "Max Pads"})
         end
     elseif GamesView.getGamesType() == GamesView.gameType.WII_GAME then
-        gameConfigSelectedEnum = enum({"Enable WiFi", "Enable Bluetooth", "Enable USB saves", "Enable GC2Wiimote", "Configure GC2Wiimote"})
+        gameConfigSelectedEnum = enum({"Enable WiFi", "Enable Bluetooth", "Enable USB saves", "Enable GC2Wiimote", "Configure GC2Wiimote", "Patch MX chip"})
     elseif GamesView.getGamesType() == GamesView.gameType.WII_CHANNEL then
-        gameConfigSelectedEnum = enum({"Enable WiFi", "Enable Bluetooth", "Enable GC2Wiimote", "Configure GC2Wiimote"})
+        gameConfigSelectedEnum = enum({"Enable WiFi", "Enable Bluetooth", "Enable GC2Wiimote", "Configure GC2Wiimote", "Patch MX chip"})
     elseif GamesView.getGamesType() == GamesView.gameType.WII_VC then
-        gameConfigSelectedEnum = enum({"Enable WiFi", "Enable Bluetooth", "Enable GC2Wiimote", "Configure GC2Wiimote"})
+        gameConfigSelectedEnum = enum({"Enable WiFi", "Enable Bluetooth", "Enable GC2Wiimote", "Configure GC2Wiimote", "Patch MX chip"})
     end
 
     gameConfigSelected = gameConfigSelectedEnum[1]
@@ -422,6 +422,15 @@ function drawGameConfig()
         menuSystem:printLineValue(val, false)
 
         menuSystem:printLine("Configure GC2Wiimote", gameConfigSelected.id)
+
+        menuSystem:printLine("Patch MX chip", gameConfigSelected.id)
+        local val = GamesView.getGameConfigValue("Patch MX chip")
+        if val == GamesView.config.YES then
+            val = "Yes"
+        else
+            val = "No"
+        end
+        menuSystem:printLineValue(val, false)
     elseif GamesView.getGamesType() == GamesView.gameType.WII_CHANNEL then
         menuSystem:printLine("Enable WiFi", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable WiFi")
@@ -451,6 +460,15 @@ function drawGameConfig()
         menuSystem:printLineValue(val, false)
 
         menuSystem:printLine("Configure GC2Wiimote", gameConfigSelected.id)
+
+        menuSystem:printLine("Patch MX chip", gameConfigSelected.id)
+        local val = GamesView.getGameConfigValue("Patch MX chip")
+        if val == GamesView.config.YES then
+            val = "Yes"
+        else
+            val = "No"
+        end
+        menuSystem:printLineValue(val, false)
     elseif GamesView.getGamesType() == GamesView.gameType.WII_VC then
         menuSystem:printLine("Enable WiFi", gameConfigSelected.id)
         local val = GamesView.getGameConfigValue("Enable WiFi")
@@ -480,6 +498,15 @@ function drawGameConfig()
         menuSystem:printLineValue(val, false)
 
         menuSystem:printLine("Configure GC2Wiimote", gameConfigSelected.id)
+
+        menuSystem:printLine("Patch MX chip", gameConfigSelected.id)
+        local val = GamesView.getGameConfigValue("Patch MX chip")
+        if val == GamesView.config.YES then
+            val = "Yes"
+        else
+            val = "No"
+        end
+        menuSystem:printLineValue(val, false)
     end
 
     Gfx.popScissorBox()

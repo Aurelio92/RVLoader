@@ -5,7 +5,7 @@
 
 #define HIIDRA_MAGIC        0x48445241
 
-#define HIIDRA_CFG_VERSION  0x00000002
+#define HIIDRA_CFG_VERSION  0x00000003
 
 typedef struct HIIDRA_CFG {
     u32     Magicbytes;
@@ -23,6 +23,7 @@ enum hiidraconfigbitpos {
     HIIDRA_CFG_BIT_WIFI         =   (3),
     HIIDRA_CFG_BIT_CHEATS       =   (4),
     HIIDRA_CFG_BIT_USBSAVES     =   (5),
+    HIIDRA_CFG_BIT_PATCHMX      =   (6),
 };
 
 enum hiidraconfig {
@@ -32,6 +33,7 @@ enum hiidraconfig {
     HIIDRA_CFG_WIFI             =   (1 << HIIDRA_CFG_BIT_WIFI),
     HIIDRA_CFG_CHEATS           =   (1 << HIIDRA_CFG_BIT_CHEATS),
     HIIDRA_CFG_USBSAVES         =   (1 << HIIDRA_CFG_BIT_USBSAVES),
+    HIIDRA_CFG_PATCHMX          =   (1 << HIIDRA_CFG_BIT_PATCHMX),
 };
 
 void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32 nExtraModules, u32 keepES, u32 keepFS);
