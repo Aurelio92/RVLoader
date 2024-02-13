@@ -20,7 +20,7 @@ function init()
     end
 
     background = Gfx.loadImage("/rvloader/backgrounds/" .. loaderBackgrounds[loaderCurBackgroundId])
-    Gfx.setImageSize(background, getDimensions()[1], getDimensions()[2])
+    Gfx.resizeImage(background, getDimensions()[1], getDimensions()[2])
 end
 
 function draw(onFocus)
