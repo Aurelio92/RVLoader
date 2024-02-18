@@ -223,6 +223,24 @@ static int lua_Pad_triggers(lua_State* L) {
     return 1;
 }
 
+static int lua_Pad_setRumble(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 2) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    u32 channel = luaL_checkinteger(L, 1);
+    if (channel > 3) {
+        return luaL_error(L, "pad channel must be 0-3");
+    }
+
+    bool rumbleState = lua_toboolean(L, 2);
+
+    PAD_ControlMotor(channel, rumbleState ? 1 : 0);
+
+    return 0;
+}
+
 static const luaL_Reg Pad_functions[] = {
     {"isConnected", lua_Pad_isConnected},
     {"held", lua_Pad_held},
@@ -236,6 +254,7 @@ static const luaL_Reg Pad_functions[] = {
     {"genstick", lua_Pad_genstick},
     {"gensubStick", lua_Pad_gensubStick},
     {"triggers", lua_Pad_triggers},
+    {"setRumble", lua_Pad_setRumble},
     {NULL, NULL}
 };
 

@@ -359,8 +359,15 @@ end
 function buttonsTester:handleInputs(onFocus)
     local held = Pad.genheld(0)
 
+    if held.BUTTON_A and held.BUTTON_B then
+        Pad.setRumble(0, true)
+    end else
+        Pad.setRumble(0, false)
+    end
+
     if held.TRIGGER_R and held.TRIGGER_L then
         self.controllerSettings.runningButtonsTester = false
+        Pad.setRumble(0, false)
     end
 end
 
