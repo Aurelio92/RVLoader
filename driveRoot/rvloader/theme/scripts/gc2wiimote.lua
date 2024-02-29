@@ -25,6 +25,11 @@ function initGC2WiimoteConf()
     wmEmuConfigMenuTime = 0
 end
 
+function resetGC2WiimoteConf()
+    wmEmuScroll = 0
+    wmEmuSelectedEntry = 1
+end
+
 function drawGC2WiimoteConf()
     local divColor = Gfx.RGBA8(0x51, 0x51, 0x51, 0xFF)
 

@@ -1,4 +1,5 @@
 require 'scripts/class'
+require 'scripts/utils'
 
 MenuSystem = class()
 
@@ -15,13 +16,15 @@ function MenuSystem:init()
     self.selectionBGColorOnFocus = Gfx.RGBA8(0x4F, 0x52, 0x57, 0xFF)
     self.scroll = 0
     self.selLineY = 0
-end
+    
+    self.selLine = 1
 
-function MenuSystem:drawSelectionRectangle()
-    Gfx.drawRectangle(0, (self.selLine - 1) * self.lineHeight, self.columnWidth, self.lineHeight, self.selectionBGColor)
+    self.entries = {}
+    self.entriesIndex = {}
 end
 
 function MenuSystem:reset()
+    self.selLine = 1
     self.lineI = 1
     self.lineY = self.lineHeight
 end
@@ -132,4 +135,119 @@ function MenuSystem:addSpacer(str)
     self.lineY = self.lineY + self.lineHeight
     self.lineCount = self.lineCount + 1
     Gfx.setFontVerticalAlignment(self.font, oldAlignment)
+end
+
+function MenuSystem:increaseEntryValue(index)
+    if index >= 1 and index <= #self.entries then
+        if #self.entries[index].optionsValue > 0 then
+            self.entries[index].curOptionIndex = 1 + (self.entries[index].curOptionIndex % #self.entries[index].optionsValue)
+        end
+    end
+end
+
+function MenuSystem:decreaseEntryValue(index)
+    if index >= 1 and index <= #self.entries then
+        if #self.entries[index].optionsValue > 0 then
+            self.entries[index].curOptionIndex = 1 + ((self.entries[index].curOptionIndex + #self.entries[index].optionsValue - 2) % #self.entries[index].optionsValue)
+        end
+    end
+end
+
+function MenuSystem:addEntry(id, showChanges)
+    table.insert(self.entries, {id = id, index = #self.entries + 1, showChanges = showChanges, setOptionIndex = 1, curOptionIndex = 1, optionsName = {}, optionsValue = {}, selectAction = nil, increaseAction = nil, decreaseAction = nil})
+    self.entriesIndex[id] = #self.entries
+end
+
+function MenuSystem:addEntryOption(name, value)
+    table.insert(self.entries[#self.entries].optionsName, name)
+    table.insert(self.entries[#self.entries].optionsValue, value)
+end
+
+function MenuSystem:setEntrySelectAction(action)
+    self.entries[#self.entries].selectAction = action
+end
+
+function MenuSystem:setEntryIncreaseAction(action)
+    self.entries[#self.entries].increaseAction = action
+end
+
+function MenuSystem:setEntryDecreaseAction(action)
+    self.entries[#self.entries].decreaseAction = action
+end
+
+function MenuSystem:getEntriesWithOptions()
+    entriesIdList = {}
+    for i = 1, #self.entries do
+        if #self.entries[i].optionsValue > 0 then
+            table.insert(entriesIdList, self.entries[i].id)
+        end
+    end
+    
+    return entriesIdList
+end
+
+function MenuSystem:addYesNoEntry(id, showChanges, yesValue, noValue)
+    self:addEntry(id, showChanges)
+    self:addEntryOption("Yes", yesValue)
+    self:addEntryOption("No", noValue)
+    self:setEntrySelectAction(self.increaseEntryValue)
+    self:setEntryIncreaseAction(self.increaseEntryValue)
+    self:setEntryDecreaseAction(self.decreaseEntryValue)
+end
+
+function MenuSystem:setEntryValue(id, value)
+    entryIndex = self.entriesIndex[id]
+    valueIndex = nil
+
+    if entryIndex ~= nil then
+        valueIndex = table.contains(self.entries[entryIndex].optionsValue, value)
+    end
+
+    if valueIndex ~= nil then
+        self.entries[entryIndex].curOptionIndex = valueIndex
+        self.entries[entryIndex].setOptionIndex = valueIndex
+    end
+end
+
+function MenuSystem:getEntryValue(id)
+    entryIndex = self.entriesIndex[id]
+
+    if entryIndex ~= nil then
+        return self.entries[entryIndex].optionsValue[self.entries[entryIndex].curOptionIndex]
+    end
+end
+
+function MenuSystem:printMenu(onFocus)
+    self:start(onFocus)
+    for i = 1, #self.entries do
+        self:printLine(self.entries[i].id, self.selLine)
+        if #self.entries[i].optionsValue > 0 then
+            self:printLineValue(self.entries[i].optionsName[self.entries[i].curOptionIndex], showChanges and (self.entries[i].curOptionIndex ~= self.entries[i].setOptionIndex))
+        end
+    end
+    self:finish()
+end
+
+function MenuSystem:handleInputs()
+    local down = Pad.gendown(0)
+
+    if down.BUTTON_DOWN and self.selLine < #self.entries then
+        self.selLine = self.selLine + 1
+    elseif down.BUTTON_UP and self.selLine > 1 then
+        self.selLine = self.selLine - 1
+    end
+
+    self.selLineY = self.selLine * self.lineHeight
+
+    if down.BUTTON_A and self.entries[self.selLine].selectAction ~= nil then
+        self.entries[self.selLine].selectAction(self, self.selLine)
+    end
+
+    if down.BUTTON_RIGHT and self.entries[self.selLine].increaseAction ~= nil then
+        self.entries[self.selLine].increaseAction(self, self.selLine)
+    end
+
+    if down.BUTTON_LEFT and self.entries[self.selLine].decreaseAction ~= nil then
+        self.entries[self.selLine].decreaseAction(self, self.selLine)
+    end
 end
