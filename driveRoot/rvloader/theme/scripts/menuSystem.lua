@@ -187,12 +187,19 @@ function MenuSystem:getEntriesWithOptions()
 end
 
 function MenuSystem:addYesNoEntry(id, showChanges, yesValue, noValue)
-    self:addEntry(id, showChanges)
+    self:addEntry(id, showChanges, false)
     self:addEntryOption("Yes", yesValue)
     self:addEntryOption("No", noValue)
     self:setEntrySelectAction(self.increaseEntryValue)
     self:setEntryIncreaseAction(self.increaseEntryValue)
     self:setEntryDecreaseAction(self.decreaseEntryValue)
+end
+
+--Very crude system, but gets the job done for nintendont's video width for now
+function MenuSystem:addRangeToOptions(min, max, step)
+    for i = min, max, step do
+        self:addEntryOption(tostring(i), i)
+    end
 end
 
 function MenuSystem:setEntryValue(id, value)

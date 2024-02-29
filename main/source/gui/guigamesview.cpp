@@ -185,6 +185,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Memory Card Emulation", 1);
             if (!gameConfig.getValue("Max Pads", &tempVal))
                 gameConfig.setValue("Max Pads", 4);
+            if (!gameConfig.getValue("Video Width", &tempVal))
+                gameConfig.setValue("Video Width", 0);
 
             //GC+2.0 mapping
             if (!gameConfig.getValue("GCPMap_A", &tempVal))
@@ -619,6 +621,10 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             tempVal = 4;
             thisView->gameConfig.getValue("Max Pads", &tempVal);
             cfg.MaxPads = tempVal;
+
+            tempVal = 0;
+            thisView->gameConfig.getValue("Video Width", &tempVal);
+            cfg.VideoScale = tempVal - 600;
 
             //GC+2.0 map
             thisView->gameConfig.getValue("GCPMap_A", &thisView->gcpMap[GCP_MAP_BUTTON_A_ID]);
