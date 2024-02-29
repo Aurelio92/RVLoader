@@ -77,7 +77,7 @@ namespace GCPlus {
     bool reset();
     bool bootBootloader();
     bool resetIDX();
-    bool fillBuffer(u8* data, u8 len);
+    bool fillBuffer(u8* data, u8 len, u8* error);
     bool readBuffer(u8* output, u8 len);
     bool writeFlash(u16 addr);
     bool readFlash(u16 addr);
