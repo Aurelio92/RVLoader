@@ -221,6 +221,23 @@ int main(int argc, char **argv) {
         }
     }
 
+    //Make default dir structure if missing
+    mkdir("/rvloader", 777);
+    mkdir("/rvloader/covers", 777);
+    mkdir("/rvloader/themes", 777);
+    mkdir("/rvloader/configs", 777);
+    mkdir("/wmemu", 777);
+
+    //Load main config
+    mainConfig.open(MAINCONFIG_PATH);
+
+    std::string skipSplash;
+    if (!mainConfig.getValue("SkipSplash", &skipSplash)) {
+        skipSplash = "off";
+        mainConfig.setValue("SkipSplash", skipSplash);
+        mainConfig.save(MAINCONFIG_PATH);
+    }
+
     {
         const int textHeight = 32;
         int textCenterOffsetY = (textHeight + font.getCharBearingY('O')) / 2 - font.getSize();
@@ -228,9 +245,13 @@ int main(int argc, char **argv) {
         //Repeated twice to avoid buffering issues
         Gfx::startDrawing();
         GFXWindow(pos.x, pos.y, RVLlogo.getDimensions().x, RVLlogo.getDimensions().y + 2 * textHeight) {
-            RVLlogo.draw();
-            font.printf(0, RVLlogo.getDimensions().y + textCenterOffsetY, "RVLoader v%u.%u", VER_MAJOR, VER_MINOR);
-            font.printf(0, RVLlogo.getDimensions().y + textCenterOffsetY + textHeight, "Loading...");
+            if (skipSplash == "on") {
+                RVLlogo.draw();
+                font.printf(0, RVLlogo.getDimensions().y + textCenterOffsetY, "RVLoader v%u.%u", VER_MAJOR, VER_MINOR);
+                font.printf(0, RVLlogo.getDimensions().y + textCenterOffsetY + textHeight, "Loading...");
+            } else {
+                Gfx::setClearColor(0x00, 0x00, 0x00);
+            }
         }
         Gfx::endDrawing();
     }
@@ -238,12 +259,7 @@ int main(int argc, char **argv) {
 
     HUD::init();
 
-    //Make default dir structure if missing
-    mkdir("/rvloader", 777);
-    mkdir("/rvloader/covers", 777);
-    mkdir("/rvloader/themes", 777);
-    mkdir("/rvloader/configs", 777);
-    mkdir("/wmemu", 777);
+    //Load content
     wiiTDB::parse();
     addWiiGames();
     addGCGames();
@@ -263,8 +279,6 @@ int main(int argc, char **argv) {
         GCPlus::lock();
     }
 
-    //Load main config
-    mainConfig.open(MAINCONFIG_PATH);
     //Load theme
     std::string curTheme;
     std::string themePath;
