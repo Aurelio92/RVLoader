@@ -238,6 +238,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable USB saves", 0);
             if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
                 gameConfig.setValue("Enable GC2Wiimote", 0);
+            if (!gameConfig.getValue("Patch MX chip", &tempVal))
+                gameConfig.setValue("Patch MX chip", 0);
         break;
 
         case WII_CHANNEL:
@@ -247,6 +249,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable Bluetooth", 0);
             if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
                 gameConfig.setValue("Enable GC2Wiimote", 0);
+            if (!gameConfig.getValue("Patch MX chip", &tempVal))
+                gameConfig.setValue("Patch MX chip", 0);
         break;
 
         case WII_VC:
@@ -256,6 +260,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable Bluetooth", 0);
             if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
                 gameConfig.setValue("Enable GC2Wiimote", 0);
+            if (!gameConfig.getValue("Patch MX chip", &tempVal))
+                gameConfig.setValue("Patch MX chip", 0);
         break;
     }
 }
