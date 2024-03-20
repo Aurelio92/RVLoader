@@ -265,6 +265,7 @@ int main(int argc, char **argv) {
 
     //Load main config
     mainConfig.open(MAINCONFIG_PATH);
+    
     //Load theme
     std::string curTheme;
     std::string themePath;

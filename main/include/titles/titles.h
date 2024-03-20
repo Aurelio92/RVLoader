@@ -19,11 +19,12 @@ class GameContainer {
         std::string path;
         std::string coverPath;
         std::string confPath;
+        std::string cheatPath;
         std::string gameIDString;
         u32 gameID;
         GuiImage* image;
 
-        GameContainer(std::string _name, std::string _path, std::string _coverPath, std::string _confPath, std::string _gameIDString, u32 _gameID) : name(_name), path(_path), coverPath(_coverPath), confPath(_confPath), gameIDString(_gameIDString), gameID(_gameID), image(NULL) {}
+        GameContainer(std::string _name, std::string _path, std::string _coverPath, std::string _confPath, std::string _cheatPath, std::string _gameIDString, u32 _gameID) : name(_name), path(_path), coverPath(_coverPath), confPath(_confPath), cheatPath(_cheatPath), gameIDString(_gameIDString), gameID(_gameID), image(NULL) {}
 
         static bool compare(GameContainer gc1, GameContainer gc2) {
             const char* buffer1 = gc1.name.c_str();

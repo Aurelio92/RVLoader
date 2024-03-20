@@ -97,6 +97,7 @@ static void listWiiGames(const char* path) {
             char gameName[0x41];
             char coverPath[PATH_MAX];
             char configPath[PATH_MAX];
+            std::string cheatPath;
 
             sprintf(tempPath, "%s/%s", path, dirp->d_name);
             FILE* fp = fopen(tempPath, "rb");
@@ -109,6 +110,8 @@ static void listWiiGames(const char* path) {
                 continue;
             }
 
+            cheatPath = std::string(tempPath, strlen(tempPath) - 5).append(".cheat");
+
             fseek(fp, 0x200, SEEK_SET);
             fread(&gameIdU32, 1, sizeof(u32), fp);
             fseek(fp, 0x200, SEEK_SET);
@@ -119,45 +122,14 @@ static void listWiiGames(const char* path) {
 
             //Try grabbing the game name from wiiTDB, otherwise read it from the disc image
             try {
-                wiiGames.push_back(GameContainer(wiiTDB::getGameName(gameId), tempPath, coverPath, configPath, gameId, gameIdU32));
+                wiiGames.push_back(GameContainer(wiiTDB::getGameName(gameId), tempPath, coverPath, configPath, cheatPath, gameId, gameIdU32));
             } catch (std::out_of_range& e) {
                 fseek(fp, 0x220, SEEK_SET);
                 fread(gameName, 1, 0x40, fp);
                 gameName[0x40] = '\0';
-                wiiGames.push_back(GameContainer(gameName, tempPath, coverPath, configPath, gameId, gameIdU32));
+                wiiGames.push_back(GameContainer(gameName, tempPath, coverPath, configPath, cheatPath, gameId, gameIdU32));
             }
             fclose(fp);
-
-            /*FILE* coverFP = fopen(coverPath, "rb");
-            if (coverFP) {
-                fclose(coverFP);
-            } else {
-                //Try looking for a cover of the same game from a different region
-                bool coverFound = false;
-                for (u32 i = 0; i < sizeof(_gamesRegions) && !coverFound; i++) {
-                    gameId[3] = _gamesRegions[i];
-                    sprintf(coverPath, "%s/%s.png", COVER_PATH, gameId);
-                    coverFP = fopen(coverPath, "rb");
-                    if (coverFP) {
-                        coverFound = true;
-                        fclose(coverFP);
-                    }
-                }
-                if (!coverFound)
-                    sprintf(coverPath, "%s/dummy.png", COVER_PATH);
-                coverFP = fopen(coverPath, "rb");
-                if (coverFP) {
-                    fclose(coverFP);
-                } else {
-                    coverPath[0] = '\0';
-                }
-            }
-
-            //Read again gameid to restore the right one
-            fseek(fp, 0x200, SEEK_SET);
-            fread(gameId, 1, 6, fp);*/
-
-
         }
     }
     closedir(dp);

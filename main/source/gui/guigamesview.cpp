@@ -80,6 +80,8 @@ void GuiGamesView::initLUA() {
         {"saveGameConfig", lua_saveGameConfig},
         {"setGameConfigValue", lua_setGameConfigValue},
         {"getGameConfigValue", lua_getGameConfigValue},
+        {"readGameCheats", lua_readGameCheats},
+        {"getCheatNameHash", lua_getCheatNameHash},
         {"openGC2WiimoteGameConfig", lua_openGC2WiimoteGameConfig},
         {"saveGC2WiimoteGameConfig", lua_saveGC2WiimoteGameConfig},
         {"setGC2WiimoteGameConfigValue", lua_setGC2WiimoteGameConfigValue},
@@ -240,6 +242,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
                 gameConfig.setValue("Patch MX chip", 0);
+            if (!gameConfig.getValue("Enable Cheats", &tempVal))
+                gameConfig.setValue("Enable Cheats", 0);
         break;
 
         case WII_CHANNEL:
@@ -251,6 +255,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
                 gameConfig.setValue("Patch MX chip", 0);
+            if (!gameConfig.getValue("Enable Cheats", &tempVal))
+                gameConfig.setValue("Enable Cheats", 0);
         break;
 
         case WII_VC:
@@ -262,6 +268,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
                 gameConfig.setValue("Patch MX chip", 0);
+            if (!gameConfig.getValue("Enable Cheats", &tempVal))
+                gameConfig.setValue("Enable Cheats", 0);
         break;
     }
 }
@@ -510,6 +518,7 @@ int GuiGamesView::lua_getGamesType(lua_State* L) {
 }
 
 int GuiGamesView::lua_bootGame(lua_State* L) {
+    char oldPath[PATH_MAX];
     int argc = lua_gettop(L);
     if (argc != 1) {
         return luaL_error(L, "wrong number of arguments");
@@ -569,6 +578,27 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             thisView->gameConfig.getValue("Patch MX chip", &tempVal);
             if (tempVal)
                 cfg.Config |= HIIDRA_CFG_PATCHMX;
+            
+            //Handle cheats
+            tempVal = 0;
+            thisView->gameConfig.getValue("Enable Cheats", &tempVal);
+            if (tempVal) {
+                //Read cheats
+                getcwd(oldPath, PATH_MAX);
+                chdir("/");
+                thisView->cheatCodes.parseFile(gc.cheatPath);
+                chdir(oldPath);
+
+                for (auto& cheat : thisView->cheatCodes) {
+                    std::string cheatConfName = "Cheat_" + Cheat::getCheatNameHash(cheat.first);
+                    thisView->gameConfig.getValue(cheatConfName.c_str(), &tempVal);
+                    thisView->cheatCodes.setCheatActive(cheat.first, tempVal);
+                }
+
+                thisView->cheatCodes.generateGCT();
+
+                //TODO: copy gct.data() to appropriate buffer. Let Hiidra handle this
+            }
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
@@ -688,6 +718,27 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             thisView->gameConfig.getValue("Patch MX chip", &tempVal);
             if (tempVal)
                 cfg.Config |= HIIDRA_CFG_PATCHMX;
+            
+            //Handle cheats
+            tempVal = 0;
+            thisView->gameConfig.getValue("Enable Cheats", &tempVal);
+            if (tempVal) {
+                //Read cheats
+                getcwd(oldPath, PATH_MAX);
+                chdir("/");
+                thisView->cheatCodes.parseFile(gc.cheatPath);
+                chdir(oldPath);
+
+                for (auto& cheat : thisView->cheatCodes) {
+                    std::string cheatConfName = "Cheat_" + Cheat::getCheatNameHash(cheat.first);
+                    thisView->gameConfig.getValue(cheatConfName.c_str(), &tempVal);
+                    thisView->cheatCodes.setCheatActive(cheat.first, tempVal);
+                }
+
+                thisView->cheatCodes.generateGCT();
+
+                //TODO: copy gct.data() to appropriate buffer. Let Hiidra handle this
+            }
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
@@ -724,6 +775,27 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             thisView->gameConfig.getValue("Patch MX chip", &tempVal);
             if (tempVal)
                 cfg.Config |= HIIDRA_CFG_PATCHMX;
+            
+            //Handle cheats
+            tempVal = 0;
+            thisView->gameConfig.getValue("Enable Cheats", &tempVal);
+            if (tempVal) {
+                //Read cheats
+                getcwd(oldPath, PATH_MAX);
+                chdir("/");
+                thisView->cheatCodes.parseFile(gc.cheatPath);
+                chdir(oldPath);
+
+                for (auto& cheat : thisView->cheatCodes) {
+                    std::string cheatConfName = "Cheat_" + Cheat::getCheatNameHash(cheat.first);
+                    thisView->gameConfig.getValue(cheatConfName.c_str(), &tempVal);
+                    thisView->cheatCodes.setCheatActive(cheat.first, tempVal);
+                }
+
+                thisView->cheatCodes.generateGCT();
+
+                //TODO: copy gct.data() to appropriate buffer. Let Hiidra handle this
+            }
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
@@ -803,6 +875,54 @@ int GuiGamesView::lua_getGameConfigValue(lua_State* L) {
 
     thisView->gameConfig.getValue(luaL_checkstring(L, 1), &val);
     lua_pushinteger(L, val);
+
+    return 1;
+}
+
+int GuiGamesView::lua_readGameCheats(lua_State* L) {
+    int index = 1;
+    int argc = lua_gettop(L);
+    if (argc != 1) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_getglobal(L, "_this");
+    GuiGamesView* thisView = (GuiGamesView*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+    lua_getglobal(L, "_gamesList");
+    std::vector<GameContainer>* gamesList = (std::vector<GameContainer>*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    u32 idx = luaL_checkinteger(L, 1);
+
+    //Open cheat
+    try {
+        GameContainer& gc = gamesList->at(idx);
+        char oldPath[PATH_MAX];
+        getcwd(oldPath, PATH_MAX);
+        chdir("/");
+        thisView->cheatCodes.parseFile(gc.cheatPath);
+        chdir(oldPath);
+    } catch (std::out_of_range& e) {
+        return luaL_error(L, "Can't find game at index %u", idx);
+    }
+
+    lua_newtable(L);
+
+    for (auto& cheat : thisView->cheatCodes) {
+        luaSetArrayStringField(L, index++, cheat.first.c_str());
+    }
+
+    return 1;
+}
+
+int GuiGamesView::lua_getCheatNameHash(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 1) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushstring(L, Cheat::getCheatNameHash(luaL_checkstring(L, 1)).c_str());
 
     return 1;
 }

@@ -128,7 +128,7 @@ void addGCGames() {
 
         //Try grabbing the game name from wiiTDB, otherwise read it from the disc image
         try {
-            gcGames.push_back(GameContainer(wiiTDB::getGameName(gameId), tempPath, coverPath, configPath, gameId, gameIdU32));
+            gcGames.push_back(GameContainer(wiiTDB::getGameName(gameId), tempPath, coverPath, configPath, "", gameId, gameIdU32));
         } catch (std::out_of_range& e) {
             if (magic == GC_MAGIC) {
                 fseek(fp, 0x20, SEEK_SET);
@@ -139,7 +139,7 @@ void addGCGames() {
                 fread(gameName, 1, 0x40, fp);
                 gameName[0x40] = '\0';
             }
-            gcGames.push_back(GameContainer(gameName, tempPath, coverPath, configPath, gameId, gameIdU32));
+            gcGames.push_back(GameContainer(gameName, tempPath, coverPath, configPath, "", gameId, gameIdU32));
         }
         fclose(fp);
     }

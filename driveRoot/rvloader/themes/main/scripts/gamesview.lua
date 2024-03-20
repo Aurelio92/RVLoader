@@ -6,9 +6,11 @@ require 'scripts/gc+map'
 require 'scripts/topbarcmd'
 
 menuSystem = MenuSystem()
+cheatsMenuSystem = MenuSystem()
 
 function init()
     showingGameConfig = false
+    showingGameCheats = false
     showingGC2Wiimote = false
     showingGCPMapping = false
 
@@ -97,6 +99,9 @@ function init()
         menuSystem:addEntry("Configure GC2Wiimote", false)
         menuSystem:setEntrySelectAction(activateGC2WMapping)
         menuSystem:addYesNoEntry("Patch MX chip", false, GamesView.config.YES, GamesView.config.NO)
+        menuSystem:addYesNoEntry("Enable Cheats", false, GamesView.config.YES, GamesView.config.NO)
+        menuSystem:addEntry("Configure cheats", false)
+        menuSystem:setEntrySelectAction(activateCheatsConfig)
     elseif GamesView.getGamesType() == GamesView.gameType.WII_CHANNEL then
         menuSystem:addYesNoEntry("Enable WiFi", false, GamesView.config.YES, GamesView.config.NO)
         menuSystem:addYesNoEntry("Enable Bluetooth", false, GamesView.config.YES, GamesView.config.NO)
@@ -104,6 +109,9 @@ function init()
         menuSystem:addEntry("Configure GC2Wiimote", false)
         menuSystem:setEntrySelectAction(activateGC2WMapping)
         menuSystem:addYesNoEntry("Patch MX chip", false, GamesView.config.YES, GamesView.config.NO)
+        menuSystem:addYesNoEntry("Enable Cheats", false, GamesView.config.YES, GamesView.config.NO)
+        menuSystem:addEntry("Configure cheats", false)
+        menuSystem:setEntrySelectAction(activateCheatsConfig)
     elseif GamesView.getGamesType() == GamesView.gameType.WII_VC then
         menuSystem:addYesNoEntry("Enable WiFi", false, GamesView.config.YES, GamesView.config.NO)
         menuSystem:addYesNoEntry("Enable Bluetooth", false, GamesView.config.YES, GamesView.config.NO)
@@ -111,6 +119,9 @@ function init()
         menuSystem:addEntry("Configure GC2Wiimote", false)
         menuSystem:setEntrySelectAction(activateGC2WMapping)
         menuSystem:addYesNoEntry("Patch MX chip", false, GamesView.config.YES, GamesView.config.NO)
+        menuSystem:addYesNoEntry("Enable Cheats", false, GamesView.config.YES, GamesView.config.NO)
+        menuSystem:addEntry("Configure cheats", false)
+        menuSystem:setEntrySelectAction(activateCheatsConfig)
     end
 
     fonts = {}
@@ -121,6 +132,12 @@ function init()
     menuSystem.lineHeight = SETTING_EL_HEIGHT
     menuSystem.columnWidth = SETTINGS_WIN_WIDTH
     menuSystem.sideMargin = SETTINGS_SIDE_MARGIN
+
+    cheatsMenuSystem.font = fonts[SETTING_FONT_SIZE]
+    cheatsMenuSystem.lineHeight = SETTING_EL_HEIGHT
+    cheatsMenuSystem.columnWidth = SETTINGS_WIN_WIDTH
+    cheatsMenuSystem.sideMargin = SETTINGS_SIDE_MARGIN
+    cheatsMenuSystem.lineWidth = 280
 
     initGC2WiimoteConf()
     initGCPMapConf()
@@ -135,6 +152,17 @@ function activateGC2WMapping(index)
     resetGC2WiimoteConf()
     GamesView.openGC2WiimoteGameConfig(selectedGame)
     showingGC2Wiimote = true
+end
+
+function activateCheatsConfig(index)
+    gameCheats = GamesView.readGameCheats(selectedGame)
+    cheatsMenuSystem:clearEntries()
+    cheatsMenuSystem:reset()
+    for i = 1, #gameCheats do
+        cheatsMenuSystem:addYesNoEntry(gameCheats[i], false, GamesView.config.YES, GamesView.config.NO)
+        cheatsMenuSystem:setEntryValue(gameCheats[i], GamesView.getGameConfigValue("Cheat_" .. GamesView.getCheatNameHash(gameCheats[i])))
+    end
+    showingGameCheats = true
 end
 
 function draw(onFocus)
@@ -216,7 +244,9 @@ function draw(onFocus)
     Gfx.popScissorBox()
     Gfx.popMatrix()
 
-    if showingGameConfig then
+    if showingGameCheats then
+        drawGameCheats(onFocus)
+    elseif showingGameConfig then
         drawGameConfig(onFocus)
     end
 end
@@ -236,7 +266,10 @@ function handleInputs(onFocus)
             return
         end
 
-        if showingGameConfig then
+        if showingGameCheats then
+            handleGameCheats()
+            return
+        elseif showingGameConfig then
             handleGameConfig()
             return
         end
@@ -320,7 +353,6 @@ function handleInputs(onFocus)
             --Show game config if requested
             if down.BUTTON_B then
                 GamesView.openGameConfig(selectedGame)
-                GamesView.getGameConfigValue("Enable Bluetooth")
                 configOptions = menuSystem:getEntriesWithOptions()
                 for i = 1, #configOptions do
                     menuSystem:setEntryValue(configOptions[i], GamesView.getGameConfigValue(configOptions[i]))
@@ -369,4 +401,34 @@ function handleGameConfig()
     end
 
     menuSystem:handleInputs()
+end
+
+function drawGameCheats(onFocus)
+    Gfx.pushMatrix()
+    Gfx.identity()
+    Gfx.pushIdentityScissorBox()
+    Gfx.drawRectangle(0, 0, Gui.getScreenSize().x, Gui.getScreenSize().y, Gfx.RGBA8(0x00, 0x00, 0x00, 0xA0))
+    Gfx.translate((Gui.getScreenSize().x - SETTINGS_WIN_WIDTH) / 2, (Gui.getScreenSize().y - SETTINGS_WIN_HEIGHT) / 2)
+    Gfx.pushScissorBox(SETTINGS_WIN_WIDTH, SETTINGS_WIN_HEIGHT)
+    Gfx.drawRectangle(0, 0, SETTINGS_WIN_WIDTH, SETTINGS_WIN_HEIGHT, Gfx.RGBA8(0x2D, 0x2D, 0x2D, 0xB0))
+
+    cheatsMenuSystem:printMenu(onFocus)
+
+    Gfx.popScissorBox()
+    Gfx.popScissorBox()
+    Gfx.popMatrix()
+end
+
+function handleGameCheats()
+    local down = Pad.gendown(0)
+
+    if down.BUTTON_B then
+        for i = 1, #gameCheats do
+            GamesView.setGameConfigValue("Cheat_" .. GamesView.getCheatNameHash(gameCheats[i]), cheatsMenuSystem:getEntryValue(gameCheats[i]))
+        end
+        showingGameCheats = false
+        return
+    end
+
+    cheatsMenuSystem:handleInputs()
 end

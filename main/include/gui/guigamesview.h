@@ -9,6 +9,7 @@
 #include "gc2wiimote.h"
 #include "guiluaelement.h"
 #include "gcplus.h"
+#include "cheats.h"
 
 typedef enum {
     GC_GAME = 0,
@@ -26,6 +27,8 @@ class GuiGamesView : public GuiLuaElement {
         TitleType titlesType;
 
         Config gameConfig;
+
+        Cheat cheatCodes;
 
         //GC2Wiimote
         WMEmuConfig_t emuConfig;
@@ -223,6 +226,8 @@ class GuiGamesView : public GuiLuaElement {
         static int lua_saveGameConfig(lua_State* L);
         static int lua_setGameConfigValue(lua_State* L);
         static int lua_getGameConfigValue(lua_State* L);
+        static int lua_readGameCheats(lua_State* L);
+        static int lua_getCheatNameHash(lua_State* L);
         static int lua_openGC2WiimoteGameConfig(lua_State* L);
         static int lua_saveGC2WiimoteGameConfig(lua_State* L);
         static int lua_setGC2WiimoteGameConfigValue(lua_State* L);

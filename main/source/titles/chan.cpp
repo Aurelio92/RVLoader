@@ -87,6 +87,7 @@ void addWiiChannels() {
         char gameName[0x41];
         char coverPath[PATH_MAX];
         char configPath[PATH_MAX];
+        std::string cheatPath;
 
         if (dirp->d_name == NULL)
             continue;
@@ -117,6 +118,8 @@ void addWiiChannels() {
             continue;
         }
 
+        cheatPath = std::string(tempPath, strlen(tempPath) - 4).append(".cheat");
+
         //Jump to titleIDOffset offset
         size_t titleIDOffset = ((wad.header.headerSize + 0x3F) & ~0x3F) + ((wad.header.certSize + 0x3F) & ~0x3F) + ((wad.header.crlSize + 0x3F) & ~0x3F) + ((wad.header.tikSize + 0x3F) & ~0x3F) + 0x190;
         fseek(fp, titleIDOffset, SEEK_SET);
@@ -134,11 +137,11 @@ void addWiiChannels() {
 
         //Try grabbing the game name from wiiTDB, otherwise read it from the disc image
         try {
-            wiiChannels.push_back(GameContainer(wiiTDB::getGameName(gameId), tempPath, coverPath, configPath, gameId, gameIdU32));
+            wiiChannels.push_back(GameContainer(wiiTDB::getGameName(gameId), tempPath, coverPath, configPath, cheatPath, gameId, gameIdU32));
         } catch (std::out_of_range& e) {
             snprintf(gameName, 0x40, "%s", dirp->d_name);
             gameName[0x40] = '\0';
-            wiiChannels.push_back(GameContainer(gameName, tempPath, coverPath, configPath, gameId, gameIdU32));
+            wiiChannels.push_back(GameContainer(gameName, tempPath, coverPath, configPath, cheatPath, gameId, gameIdU32));
         }
 
         fclose(fp);

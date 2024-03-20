@@ -6,6 +6,11 @@ MenuSystem = class()
 function MenuSystem:init()
     self.font = 0
     self.lineHeight = 32
+    self.lineWidth = 1000
+    self.lineScroll = 0
+    self.lineScrollTextGap = 32
+    self.lineScrollTextTimeRef = 0
+    self.lineScrollTextTime = 50
     self.columnWidth = 100
     self.sideMargin = 16
     self.lineI = 1
@@ -77,6 +82,7 @@ end
 
 function MenuSystem:printLine(str, sel)
     local oldAlignment = Gfx.getFontVerticalAlignment(self.font)
+    local strWidth = Gfx.getTextWidth(self.font, str)
     Gfx.setFontVerticalAlignment(self.font, Gfx.CENTER_ALIGN)
     local oldColor = Gfx.getFontColor(self.font)
     if self.lineI == sel then
@@ -85,7 +91,25 @@ function MenuSystem:printLine(str, sel)
     else
         Gfx.setFontColor(self.font, Gfx.RGBA8(0xA0, 0xA0, 0xA0, 0xFF))
     end
-    Gfx.print(self.font, 2 * self.sideMargin, self.lineY - 0.5 * self.lineHeight, str)
+    Gfx.pushMatrix()
+    Gfx.translate(2 * self.sideMargin, self.lineY - self.lineHeight)
+    Gfx.pushScissorBox(self.lineWidth, self.lineHeight)
+    if self.lineI == sel then
+        Gfx.translate(-self.lineScroll, 0)
+        Gfx.print(self.font, 0, 0.5 * self.lineHeight, str)
+        if strWidth > self.lineWidth then
+            Gfx.print(self.font, strWidth + self.lineScrollTextGap, 0.5 * self.lineHeight, str)
+            self.lineScroll = (Time.getms() - self.lineScrollTextTimeRef) // self.lineScrollTextTime
+            if self.lineScroll > strWidth + self.lineScrollTextGap then
+                self.lineScroll = self.lineScroll - (strWidth + self.lineScrollTextGap)
+                self.lineScrollTextTimeRef = Time.getms() - self.lineScroll * self.lineScrollTextTime
+            end
+        end
+    else
+        Gfx.print(self.font, 0, 0.5 * self.lineHeight, str)
+    end
+    Gfx.popScissorBox()
+    Gfx.popMatrix()
     Gfx.drawLine(0, self.lineY, self.columnWidth, self.lineY, 1, self.lineColor)
     Gfx.setFontColor(self.font, oldColor)
     self.lineI = self.lineI + 1
@@ -135,6 +159,11 @@ function MenuSystem:addSpacer(str)
     self.lineY = self.lineY + self.lineHeight
     self.lineCount = self.lineCount + 1
     Gfx.setFontVerticalAlignment(self.font, oldAlignment)
+end
+
+function MenuSystem:clearEntries()
+    self.entries = {}
+    self.entriesIndex = {}
 end
 
 function MenuSystem:increaseEntryValue(index)
@@ -240,8 +269,12 @@ function MenuSystem:handleInputs()
 
     if down.BUTTON_DOWN and self.selLine < #self.entries then
         self.selLine = self.selLine + 1
+        self.lineScroll = 0
+        self.lineScrollTextTimeRef = Time.getms()
     elseif down.BUTTON_UP and self.selLine > 1 then
         self.selLine = self.selLine - 1
+        self.lineScroll = 0
+        self.lineScrollTextTimeRef = Time.getms()
     end
 
     self.selLineY = self.selLine * self.lineHeight
