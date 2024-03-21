@@ -40,6 +40,8 @@
 #define ES_IOCTL_ENABLEVGA 0x63
 #define ES_IOCTL_ENABLEGC2WIIMOTE 0x64
 
+#define DIP_IOCTL_DVDLoadGame 0xF0
+
 static char moduleSHA[0x1C] ALIGNED(32);
 static char modulePath[1024] ALIGNED(32);
 #define MODULE_BUFFER_SIZE 0x1000
@@ -573,6 +575,7 @@ int loadIOSModules(void) {
         DCFlushRange(modulePath, sizeof(modulePath));
 
         FILE* fp = NULL;
+        
         if (!memcmp((char*)(moduleSHA+8), EHCI_SHA1, 0x14)) {
             fp = fopen("/rvloader/Hiidra/IOS58/EHCI.app", "rb");
             if (fp) {
@@ -883,7 +886,6 @@ static void* bootHiidraThread(void* arg) {
     HIIDRA_CFG hcfg = *(HIIDRA_CFG*)arg;
     u32 gameIDU32 = *(u32*)(arg + sizeof(HIIDRA_CFG));
 
-    static char __usbfs[] ATTRIBUTE_ALIGN(32) = "/dev/usbfs";
     static char __di[] ATTRIBUTE_ALIGN(32) = "/dev/di";
     static char __bt[] ATTRIBUTE_ALIGN(32) = "/dev/usb/oh1/57e/305";
 
@@ -892,8 +894,8 @@ static void* bootHiidraThread(void* arg) {
     uint8_t* kernelModule;
     uint8_t* usbfsModule;
     uint8_t* fspluginModule;
-    uint8_t* modulesUSB[6];
-    u32 modulesUSBSize[6];
+    uint8_t* modulesUSB[4];
+    u32 modulesUSBSize[4];
     char* kernelAddress;
     u32 totalUSBSize = 0;
 
@@ -970,15 +972,13 @@ static void* bootHiidraThread(void* arg) {
     readFile("/rvloader/Hiidra/IOS58/EHCI.app", &modulesUSB[0], &modulesUSBSize[0]);
     readFile("/rvloader/Hiidra/IOS58/OHCI0.app", &modulesUSB[1], &modulesUSBSize[1]);
     readFile("/rvloader/Hiidra/IOS58/USB.app", &modulesUSB[2], &modulesUSBSize[2]);
-    readFile("/rvloader/Hiidra/IOS58/USB_HID.app", &modulesUSB[3], &modulesUSBSize[3]);
-    readFile("/rvloader/Hiidra/IOS58/USB_HUB.app", &modulesUSB[4], &modulesUSBSize[4]);
-    readFile("/rvloader/Hiidra/IOS58/USB_VEN.app", &modulesUSB[5], &modulesUSBSize[5]);
+    readFile("/rvloader/Hiidra/IOS58/USB_VEN.app", &modulesUSB[3], &modulesUSBSize[3]);
 
     readFile("/rvloader/Hiidra/modules/kernel_es.elf", &kernelModule, NULL);
     readFile("/rvloader/Hiidra/modules/usbfs.elf", &usbfsModule, NULL);
     readFile("/rvloader/Hiidra/modules/fsplugin.elf", &fspluginModule, NULL);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < sizeof(modulesUSBSize) / sizeof(u32); i++) {
         totalUSBSize += modulesUSBSize[i];
     }
 
@@ -988,8 +988,8 @@ static void* bootHiidraThread(void* arg) {
 
     printf("Forging custom kernel\n");
     hiidraAddLogLine("Forging custom kernel");
-    const uint8_t* customModules[] = {kernelModule, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], modulesUSB[4], modulesUSB[5], usbfsModule, fspluginModule};
-    forgeKernel(kernelAddress, kernelSize, customModules, 9, 0, 1);
+    const uint8_t* customModules[] = {kernelModule, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], usbfsModule, fspluginModule};
+    forgeKernel(kernelAddress, kernelSize, customModules, sizeof(customModules) / sizeof(uint8_t*), 0, 1);
     
     unmountFAT();
     printf("Injecting Hiidra bootpoint\n");
@@ -1056,7 +1056,7 @@ static void* bootHiidraThread(void* arg) {
         s32 ret;
         printf("Loading disc game\n");
         hiidraAddLogLine("Loading disc game");
-        ret = IOS_Ioctl(fd, 0xF0, gamePath, 0x80, NULL, 0);
+        ret = IOS_Ioctl(fd, DIP_IOCTL_DVDLoadGame, gamePath, 0x80, NULL, 0);
         if (ret == 0) {
             printf("Success\n");
         } else {
