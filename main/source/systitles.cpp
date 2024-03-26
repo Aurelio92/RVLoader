@@ -271,7 +271,7 @@ void freeWAD(WAD* wad) {
     return true;
 }*/
 
-bool openAndInstallWAD(const char* filepath, u64* titleID) {
+bool openAndInstallWAD(const char* filepath, u64* titleID, bool forceReinstall) {
     int i;
     WAD wad;
     char path[256];
@@ -319,15 +319,17 @@ bool openAndInstallWAD(const char* filepath, u64* titleID) {
     *titleID = wad.tmd->TitleID;
 
     //Check if wad is already installed by reading the tmd
-    sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/title.tmd", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
-    fpTest = fopen(path, "rb");
-    if (fpTest) {
-        hiidraAddLogLine("WAD already installed");
-        free(wad.tik);
-        free(wad.tmd);
-        fclose(fp);
-        fclose(fpTest);
-        return true;
+    if (!forceReinstall) {
+        sprintf(path, "/rvloader/Hiidra/emunand/title/%08x/%08x/content/title.tmd", (u32)(wad.tmd->TitleID >> 32), (u32)(wad.tmd->TitleID & 0xFFFFFFFF));
+        fpTest = fopen(path, "rb");
+        if (fpTest) {
+            hiidraAddLogLine("WAD already installed");
+            free(wad.tik);
+            free(wad.tmd);
+            fclose(fp);
+            fclose(fpTest);
+            return true;
+        }
     }
 
     mkdir("/rvloader/Hiidra/emunand", 777);

@@ -885,6 +885,7 @@ void copyWBFSData(const char* wbfsPath) {
 static void* bootHiidraThread(void* arg) {
     HIIDRA_CFG hcfg = *(HIIDRA_CFG*)arg;
     u32 gameIDU32 = *(u32*)((u32)arg + sizeof(HIIDRA_CFG));
+    bool forceReinstall = *(bool*)((u32)arg + sizeof(HIIDRA_CFG) + sizeof(u32));
 
     static char __di[] ATTRIBUTE_ALIGN(32) = "/dev/di";
     static char __bt[] ATTRIBUTE_ALIGN(32) = "/dev/usb/oh1/57e/305";
@@ -934,7 +935,7 @@ static void* bootHiidraThread(void* arg) {
     if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 4], ".wad", 4)) {
         printf("Installing WAD\n");
         hiidraAddLogLine("Starting WAD installation");
-        if (!openAndInstallWAD(hcfg.GamePath, &wadTitleID)) {
+        if (!openAndInstallWAD(hcfg.GamePath, &wadTitleID, forceReinstall)) {
             hiidraAddLogLine("Error while installing WAD");
             while(1);
         }
@@ -1187,7 +1188,7 @@ void luaRegisterHiidraLib(lua_State* L) {
     lua_setglobal(L, "Hiidra");
 }
 
-int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::vector<uint32_t> cheats) {
+int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::vector<uint32_t> cheats, bool forceReinstall) {
     static lwp_t bootHiidraThreadHandle;
     static void* bootHiidraThreadArg = NULL;
     static u8* bootHiidraThreadStack = NULL;
@@ -1200,9 +1201,10 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::vector<uint32_t> cheats) {
         writeFile("/rvloader/Hiidra/cheats.gct", cheats.data(), cheats.size() * sizeof(uint32_t));
     }
 
-    bootHiidraThreadArg = (void*)malloc(sizeof(HIIDRA_CFG) + sizeof(u32));
+    bootHiidraThreadArg = (void*)malloc(sizeof(HIIDRA_CFG) + sizeof(u32) + sizeof(bool));
     memcpy(bootHiidraThreadArg, &hcfg, sizeof(HIIDRA_CFG));
     memcpy((void*)((u32)bootHiidraThreadArg + sizeof(HIIDRA_CFG)), &gameIDU32, sizeof(u32));
+    memcpy((void*)((u32)bootHiidraThreadArg + sizeof(HIIDRA_CFG) + sizeof(u32)), &forceReinstall, sizeof(bool));
     bootHiidraThreadStack = (u8*)memalign(32, STACKSIZE);
 
     LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);

@@ -288,6 +288,13 @@ function draw(onFocus)
     tempX = tempX + Gfx.print(fonts[SETTING_FONT_SIZE], tempX, SETTING_EL_HEIGHT / 2, "Configure game")
     tempX = tempX + 16
 
+    if GamesView.getGamesType() == GamesView.gameType.WII_CHANNEL or GamesView.getGamesType() == GamesView.gameType.WII_VC then
+        Gfx.drawImage(button_y_icon, tempX, 0)
+        tempX = tempX + 40
+        tempX = tempX + Gfx.print(fonts[SETTING_FONT_SIZE], tempX, SETTING_EL_HEIGHT / 2, "Reinstall & boot")
+        tempX = tempX + 16
+    end
+
     Gfx.setFontVerticalAlignment(fonts[SETTING_FONT_SIZE], oldAlignment)
     Gfx.popScissorBox()
     Gfx.popMatrix()
@@ -396,6 +403,10 @@ function handleInputs(onFocus)
             --Boot game if requested
             if down.BUTTON_A then
                 GamesView.bootGame(selectedGame)
+            end
+
+            if down.BUTTON_Y and (GamesView.getGamesType() == GamesView.gameType.WII_CHANNEL or GamesView.getGamesType() == GamesView.gameType.WII_VC) then
+                GamesView.bootGame(selectedGame, true)
             end
 
             --Show game config if requested

@@ -10,7 +10,7 @@ void unmountFAT();
 void shutdown();
 void bootDOL(const char* path, const char* args, bool patchMX);
 void bootGCGame(NIN_CFG cfg);
-void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::vector<uint32_t> cheats);
+void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::vector<uint32_t> cheats, bool forceReinstall);
 void bootDiscLoader();
 void bootPriiloader();
 void bootSysMenu();

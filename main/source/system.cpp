@@ -365,7 +365,7 @@ void bootGCGame(NIN_CFG cfg) {
     _CPU_ISR_Restore(level);
 }
 
-void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::vector<uint32_t> cheats) {
+void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::vector<uint32_t> cheats, bool forceReinstall) {
     static const char __conf_file[] ATTRIBUTE_ALIGN(32) = "/shared2/sys/SYSCONF";
     static const char __conf_txt_file[] ATTRIBUTE_ALIGN(32) = "/title/00000001/00000002/data/setting.txt";
     static u8 __conf_buffer[0x4000] ATTRIBUTE_ALIGN(32);
@@ -410,7 +410,7 @@ void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::vector<uint32_t> cheats) {
 
     i2c_deinit();
 
-    bootHiidra(cfg, gameIDU32, cheats);
+    bootHiidra(cfg, gameIDU32, cheats, forceReinstall);
 }
 
 void bootDiscLoader() {

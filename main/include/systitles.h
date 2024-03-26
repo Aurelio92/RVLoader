@@ -103,4 +103,4 @@ bool openWAD(std::string filepath, WAD* wad);
 void copyWAD(WAD* dst, WAD* src);
 void installWAD(WAD* wad);
 void freeWAD(WAD* wad);
-bool openAndInstallWAD(const char* filepath, u64* titleID);
+bool openAndInstallWAD(const char* filepath, u64* titleID, bool forceReinstall);

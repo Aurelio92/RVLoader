@@ -547,7 +547,8 @@ int GuiGamesView::lua_getGamesType(lua_State* L) {
 int GuiGamesView::lua_bootGame(lua_State* L) {
     char oldPath[PATH_MAX];
     int argc = lua_gettop(L);
-    if (argc != 1) {
+    bool forceReinstall = false;
+    if (argc != 1 && argc != 2) {
         return luaL_error(L, "wrong number of arguments");
     }
 
@@ -560,6 +561,9 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
     lua_pop(L, 1);
 
     u32 idx = luaL_checkinteger(L, 1);
+    if (argc == 2) {
+        forceReinstall = lua_toboolean(L, 2);
+    }
 
     printf("lua_bootGame\n");
 
@@ -639,7 +643,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
-            bootWiiGame(cfg, gc.gameID, cheats);
+            bootWiiGame(cfg, gc.gameID, cheats, forceReinstall);
         } else if (thisView->titlesType == GC_GAME) {
             int tempVal;
             NIN_CFG cfg;
@@ -787,7 +791,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
-            bootWiiGame(cfg, gc.gameID, cheats);
+            bootWiiGame(cfg, gc.gameID, cheats, forceReinstall);
         } else if (thisView->titlesType == WII_CHANNEL) {
             int tempVal;
             HIIDRA_CFG cfg;
@@ -852,7 +856,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
-            bootWiiGame(cfg, gc.gameID, cheats);
+            bootWiiGame(cfg, gc.gameID, cheats, forceReinstall);
         }
     } catch (std::out_of_range& e) {
 
