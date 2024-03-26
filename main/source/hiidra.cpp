@@ -884,7 +884,7 @@ void copyWBFSData(const char* wbfsPath) {
 
 static void* bootHiidraThread(void* arg) {
     HIIDRA_CFG hcfg = *(HIIDRA_CFG*)arg;
-    u32 gameIDU32 = *(u32*)(arg + sizeof(HIIDRA_CFG));
+    u32 gameIDU32 = *(u32*)((u32)arg + sizeof(HIIDRA_CFG));
 
     static char __di[] ATTRIBUTE_ALIGN(32) = "/dev/di";
     static char __bt[] ATTRIBUTE_ALIGN(32) = "/dev/usb/oh1/57e/305";
@@ -984,8 +984,6 @@ static void* bootHiidraThread(void* arg) {
 
     printf("Total USB modules size: %u\n", totalUSBSize);
 
-    //kernelAddress = (char*)SYS_AllocArena2MemLo(kernelSize + totalUSBSize, 0x20);
-
     printf("Forging custom kernel\n");
     hiidraAddLogLine("Forging custom kernel");
     const uint8_t* customModules[] = {kernelModule, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], usbfsModule, fspluginModule};
@@ -1014,7 +1012,6 @@ static void* bootHiidraThread(void* arg) {
     write16(MEM_PROT, 0);
 
     s32 hId = iosCreateHeap(1024);
-    u32* tempU32ES = (u32*)iosAlloc(hId, sizeof(u32));
     printf("Waiting for ES\n");
     hiidraAddLogLine("Waiting for ES");
     do {
@@ -1038,6 +1035,35 @@ static void* bootHiidraThread(void* arg) {
     }
     char* gamePath = (char*)iosAlloc(hId, 0x80);
     sprintf(gamePath, "/dev/usbfs%s", hcfg.GamePath);
+
+    //Copying cheats
+    /*memcpy((void*)0x80001900, codehandleronly_bin, codehandleronly_bin_size);
+    DCFlushRange((void*)0x80001900, codehandleronly_bin_size);
+    memcpy((void*)(0x80001900+codehandleronly_bin_size-8), cheats, cheatsSize);
+    DCFlushRange((void*)(0x80001900+codehandleronly_bin_size-8), cheatsSize);*/
+    /*
+    s32 gamePatcherFD = IOS_Open("/dev/patcher", 0);
+    if (gamePatcherFD >= 0) {
+        s32 gamePatcherRet;
+        u32* gctSize = (u32*)iosAlloc(hId, sizeof(u32));
+        u32** gctAddress = (u32**)iosAlloc(hId, sizeof(u32*));
+        *gctSize = cheatsSize;
+
+        gamePatcherRet = IOS_Ioctl(gamePatcherFD, 0x00, gctSize, sizeof(u32), gctAddress, sizeof(u32*));
+        printf("GCT Address: %08X %08X\n", (u32)(*gctAddress), (u32)MEM_PHYSICAL_TO_K0((void*)*gctAddress));
+        memcpy(MEM_PHYSICAL_TO_K0((void*)*gctAddress), cheats, cheatsSize);
+        DCFlushRange(MEM_PHYSICAL_TO_K0((void*)*gctAddress), cheatsSize);
+        *(u32*)0x800022A8 = (u32)MEM_PHYSICAL_TO_K0((void*)*gctAddress);
+        DCFlushRange((u8*)0x800022A8, 4);
+        //memcpy((void*)0x800022A0, cheats, cheatsSize);
+        //DCFlushRange((void*)0x800022A0, cheatsSize);
+        memcpy((void*)0x800022C0, cheats, cheatsSize);
+        DCFlushRange((void*)0x800022C0, cheatsSize);
+        *(u32*)0x800022A8 = 0x800022C0;
+        DCFlushRange((u8*)0x800022A8, 4);
+        IOS_Close(gamePatcherFD);
+    }
+    */
 
     printf("Launching %s\n", gamePath);
     hiidraAddLogLine("Launching %s\n", gamePath);
@@ -1161,7 +1187,7 @@ void luaRegisterHiidraLib(lua_State* L) {
     lua_setglobal(L, "Hiidra");
 }
 
-int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
+int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::vector<uint32_t> cheats) {
     static lwp_t bootHiidraThreadHandle;
     static void* bootHiidraThreadArg = NULL;
     static u8* bootHiidraThreadStack = NULL;
@@ -1170,9 +1196,13 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32) {
         return -1;
     }
 
+    if (hcfg.Config & HIIDRA_CFG_CHEATS) {
+        writeFile("/rvloader/Hiidra/cheats.gct", cheats.data(), cheats.size() * sizeof(uint32_t));
+    }
+
     bootHiidraThreadArg = (void*)malloc(sizeof(HIIDRA_CFG) + sizeof(u32));
     memcpy(bootHiidraThreadArg, &hcfg, sizeof(HIIDRA_CFG));
-    memcpy(bootHiidraThreadArg + sizeof(HIIDRA_CFG), &gameIDU32, sizeof(u32));
+    memcpy((void*)((u32)bootHiidraThreadArg + sizeof(HIIDRA_CFG)), &gameIDU32, sizeof(u32));
     bootHiidraThreadStack = (u8*)memalign(32, STACKSIZE);
 
     LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);

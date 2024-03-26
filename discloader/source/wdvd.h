@@ -38,6 +38,7 @@ s32 WDVD_Eject(void);
 s32 WDVD_Read_Disc_BCA(void *);
 s32 WDVD_SetFragList(int device, void *fraglist, int size);
 int WDVD_EnableAudio(int enable);
+s32 WDVD_GetDOLHeader(u8* header);
 
 #ifdef __cplusplus
 }

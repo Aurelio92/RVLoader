@@ -69,6 +69,8 @@
         "utility": "cpp",
         "__verbose_abort": "cpp",
         "charconv": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "deque": "cpp",
+        "stack": "cpp"
     }
 }

@@ -538,6 +538,8 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
     //Return result
     try {
+        std::vector<uint32_t> cheats;
+
         GameContainer& gc = gamesList->at(idx);
         //Read the configuration file or set the default values if they are missing
         thisView->openGameConfig(idx);
@@ -583,6 +585,8 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             tempVal = 0;
             thisView->gameConfig.getValue("Enable Cheats", &tempVal);
             if (tempVal) {
+                cfg.Config |= HIIDRA_CFG_CHEATS;
+
                 //Read cheats
                 getcwd(oldPath, PATH_MAX);
                 chdir("/");
@@ -595,14 +599,12 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
                     thisView->cheatCodes.setCheatActive(cheat.first, tempVal);
                 }
 
-                thisView->cheatCodes.generateGCT();
-
-                //TODO: copy gct.data() to appropriate buffer. Let Hiidra handle this
+                cheats = thisView->cheatCodes.generateGCT();
             }
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
-            bootWiiGame(cfg, gc.gameID);
+            bootWiiGame(cfg, gc.gameID, cheats);
         } else if (thisView->titlesType == GC_GAME) {
             int tempVal;
             NIN_CFG cfg;
@@ -723,6 +725,8 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             tempVal = 0;
             thisView->gameConfig.getValue("Enable Cheats", &tempVal);
             if (tempVal) {
+                cfg.Config |= HIIDRA_CFG_CHEATS;
+
                 //Read cheats
                 getcwd(oldPath, PATH_MAX);
                 chdir("/");
@@ -735,14 +739,12 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
                     thisView->cheatCodes.setCheatActive(cheat.first, tempVal);
                 }
 
-                thisView->cheatCodes.generateGCT();
-
-                //TODO: copy gct.data() to appropriate buffer. Let Hiidra handle this
+                cheats = thisView->cheatCodes.generateGCT();
             }
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
-            bootWiiGame(cfg, gc.gameID);
+            bootWiiGame(cfg, gc.gameID, cheats);
         } else if (thisView->titlesType == WII_CHANNEL) {
             int tempVal;
             HIIDRA_CFG cfg;
@@ -780,6 +782,8 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             tempVal = 0;
             thisView->gameConfig.getValue("Enable Cheats", &tempVal);
             if (tempVal) {
+                cfg.Config |= HIIDRA_CFG_CHEATS;
+
                 //Read cheats
                 getcwd(oldPath, PATH_MAX);
                 chdir("/");
@@ -792,14 +796,12 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
                     thisView->cheatCodes.setCheatActive(cheat.first, tempVal);
                 }
 
-                thisView->cheatCodes.generateGCT();
-
-                //TODO: copy gct.data() to appropriate buffer. Let Hiidra handle this
+                cheats = thisView->cheatCodes.generateGCT();
             }
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
-            bootWiiGame(cfg, gc.gameID);
+            bootWiiGame(cfg, gc.gameID, cheats);
         }
     } catch (std::out_of_range& e) {
 

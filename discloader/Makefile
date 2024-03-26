@@ -137,9 +137,9 @@ $(OUTPUT).elf: $(OFILES)
 $(OFILES_SOURCES) : $(HFILES)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with the .jpg extension
+# This rule links in binary data with the .bin extension
 #---------------------------------------------------------------------------------
-%.jpg.o	%_jpg.h :	%.jpg
+%.bin.o	%_bin.h :	%.bin
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)

@@ -20,6 +20,7 @@
 #define IOCTL_DI_OFFSET         0xD9
 #define IOCTL_DI_DISC_BCA       0xDA
 #define IOCTL_DI_STOPMOTOR      0xE3
+#define IOCTL_DVDGetDOLHeader   0xF1
 
 #define DIRENT_T_FILE 0
 #define DIRENT_T_DIR 1
@@ -27,6 +28,7 @@
 /* Variables */
 static u32 inbuf[8]  ATTRIBUTE_ALIGN(32);
 static u32 outbuf[8] ATTRIBUTE_ALIGN(32);
+static u8 dolHeaderBuffer[0x100] ATTRIBUTE_ALIGN(32);
 
 static const char di_fs[] ATTRIBUTE_ALIGN(32) = "/dev/di";
 static s32 di_fd = -1;
@@ -304,6 +306,23 @@ s32 WDVD_GetCoverStatus(u32 *status)
     if (ret == 1) {
         /* Copy cover status */
         memcpy(status, outbuf, sizeof(u32));
+
+        return 0;
+    }
+
+    return -ret;
+}
+
+s32 WDVD_GetDOLHeader(u8* header) {
+    s32 ret;
+    ret = IOS_Ioctl(di_fd, IOCTL_DVDGetDOLHeader, NULL, 0, dolHeaderBuffer, sizeof(dolHeaderBuffer));
+    if (ret < 0) {
+        return ret;
+    }
+
+    if (ret == 1) {
+        /* Copy cover status */
+        memcpy(header, dolHeaderBuffer, sizeof(dolHeaderBuffer));
 
         return 0;
     }

@@ -110,7 +110,7 @@ static void listWiiGames(const char* path) {
                 continue;
             }
 
-            cheatPath = std::string(tempPath, strlen(tempPath) - 5).append(".cheat");
+            cheatPath = std::string(tempPath, strlen(tempPath) - 5).append(".txt");
 
             fseek(fp, 0x200, SEEK_SET);
             fread(&gameIdU32, 1, sizeof(u32), fp);

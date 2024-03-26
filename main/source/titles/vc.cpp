@@ -118,7 +118,7 @@ void addVCGames() {
             continue;
         }
 
-        cheatPath = std::string(tempPath, strlen(tempPath) - 4).append(".cheat");
+        cheatPath = std::string(tempPath, strlen(tempPath) - 4).append(".txt");
 
         //Jump to titleIDOffset offset
         size_t titleIDOffset = ((wad.header.headerSize + 0x3F) & ~0x3F) + ((wad.header.certSize + 0x3F) & ~0x3F) + ((wad.header.crlSize + 0x3F) & ~0x3F) + ((wad.header.tikSize + 0x3F) & ~0x3F) + 0x190;

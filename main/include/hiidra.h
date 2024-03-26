@@ -2,6 +2,8 @@
 
 #include <gccore.h>
 #include <lua.hpp>
+#include <stdint.h>
+#include <vector>
 
 #define HIIDRA_MAGIC        0x48445241
 
@@ -46,4 +48,4 @@ void unlockHiidraLogMutex();
 u32 hiidraAddLogLine(const char* line, ...);
 void hiidraUpdateLogLine(u32 index, const char* line, ...);
 void luaRegisterHiidraLib(lua_State* L);
-int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32);
+int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::vector<uint32_t> cheats);
