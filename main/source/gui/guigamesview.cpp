@@ -138,6 +138,14 @@ void GuiGamesView::initLUA() {
     luaSetTableIntField(L, "LANG_DUTCH", NIN_LAN_DUTCH);
     lua_settable(L, -3);
 
+    //Create GamesView.hiidra table
+    lua_pushstring(L, "hiidra");
+    lua_newtable(L);
+    luaSetTableIntField(L, "PADREAD_AUTO", HIIDRA_PADREAD_AUTO);
+    luaSetTableIntField(L, "PADREAD_BYPASS", HIIDRA_PADREAD_BYPASS);
+    luaSetTableIntField(L, "PADREAD_REDIRECT", HIIDRA_PADREAD_REDIRECT);
+    lua_settable(L, -3);
+
     //Create GamesView.GC2Wiimote
     lua_pushstring(L, "GC2Wiimote");
     lua_newtable(L);
@@ -242,6 +250,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
                 gameConfig.setValue("Patch MX chip", 0);
+            if (!gameConfig.getValue("PADRead mode", &tempVal))
+                gameConfig.setValue("PADRead mode", HIIDRA_PADREAD_AUTO);
             if (!gameConfig.getValue("Enable Cheats", &tempVal))
                 gameConfig.setValue("Enable Cheats", 0);
         break;
@@ -255,6 +265,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
                 gameConfig.setValue("Patch MX chip", 0);
+            if (!gameConfig.getValue("PADRead mode", &tempVal))
+                gameConfig.setValue("PADRead mode", HIIDRA_PADREAD_AUTO);
             if (!gameConfig.getValue("Enable Cheats", &tempVal))
                 gameConfig.setValue("Enable Cheats", 0);
         break;
@@ -268,6 +280,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
                 gameConfig.setValue("Patch MX chip", 0);
+            if (!gameConfig.getValue("PADRead mode", &tempVal))
+                gameConfig.setValue("PADRead mode", HIIDRA_PADREAD_AUTO);
             if (!gameConfig.getValue("Enable Cheats", &tempVal))
                 gameConfig.setValue("Enable Cheats", 0);
         break;
@@ -580,6 +594,10 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             thisView->gameConfig.getValue("Patch MX chip", &tempVal);
             if (tempVal)
                 cfg.Config |= HIIDRA_CFG_PATCHMX;
+
+            tempVal = HIIDRA_PADREAD_AUTO;
+            thisView->gameConfig.getValue("PADRead mode", &tempVal);
+            cfg.PADReadMode = tempVal;
             
             //Handle cheats
             tempVal = 0;
@@ -720,6 +738,10 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             thisView->gameConfig.getValue("Patch MX chip", &tempVal);
             if (tempVal)
                 cfg.Config |= HIIDRA_CFG_PATCHMX;
+
+            tempVal = HIIDRA_PADREAD_AUTO;
+            thisView->gameConfig.getValue("PADRead mode", &tempVal);
+            cfg.PADReadMode = tempVal;
             
             //Handle cheats
             tempVal = 0;
@@ -777,6 +799,10 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
             thisView->gameConfig.getValue("Patch MX chip", &tempVal);
             if (tempVal)
                 cfg.Config |= HIIDRA_CFG_PATCHMX;
+
+            tempVal = HIIDRA_PADREAD_AUTO;
+            thisView->gameConfig.getValue("PADRead mode", &tempVal);
+            cfg.PADReadMode = tempVal;
             
             //Handle cheats
             tempVal = 0;

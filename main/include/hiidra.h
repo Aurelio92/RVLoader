@@ -7,13 +7,14 @@
 
 #define HIIDRA_MAGIC        0x48445241
 
-#define HIIDRA_CFG_VERSION  0x00000003
+#define HIIDRA_CFG_VERSION  0x00000004
 
 typedef struct HIIDRA_CFG {
     u32     Magicbytes;
     u32     Version;
     u32     Config;
     u64     TitleID;
+    u32     PADReadMode;
     char    GamePath[256];
     char    CheatPath[256];
 } HIIDRA_CFG;
@@ -36,6 +37,12 @@ enum hiidraconfig {
     HIIDRA_CFG_CHEATS           =   (1 << HIIDRA_CFG_BIT_CHEATS),
     HIIDRA_CFG_USBSAVES         =   (1 << HIIDRA_CFG_BIT_USBSAVES),
     HIIDRA_CFG_PATCHMX          =   (1 << HIIDRA_CFG_BIT_PATCHMX),
+};
+
+enum hiidrapadreadmode {
+    HIIDRA_PADREAD_AUTO = 0,
+    HIIDRA_PADREAD_BYPASS,
+    HIIDRA_PADREAD_REDIRECT
 };
 
 void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32 nExtraModules, u32 keepES, u32 keepFS);
