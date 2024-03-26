@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
         Gfx::startDrawing();
         GFXWindow(pos.x, pos.y, RVLlogo.getDimensions().x, RVLlogo.getDimensions().y + 2 * textHeight) {
             RVLlogo.draw();
-            font.printf(0, RVLlogo.getDimensions().y + textCenterOffsetY, "RVLoader v%u.%u", VER_MAJOR, VER_MINOR);
+            font.printf(0, RVLlogo.getDimensions().y + textCenterOffsetY, "RVLoader v%u.%u %s", VER_MAJOR, VER_MINOR, VER_NAME);
             font.printf(0, RVLlogo.getDimensions().y + textCenterOffsetY + textHeight, "Loading...");
         }
         Gfx::endDrawing();

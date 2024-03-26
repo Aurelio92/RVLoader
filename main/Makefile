@@ -10,8 +10,9 @@ endif
 include $(DEVKITPPC)/wii_rules
 
 # Must be integers
-RVLOADERVERSION_MAJOR := 1
-RVLOADERVERSION_MINOR := 6
+RVLOADERVERSION_MAJOR	:= 2
+RVLOADERVERSION_MINOR	:= 0
+RVLOADERVERSION_NAME	:= beta
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -33,7 +34,7 @@ INCLUDES	:=	include include/titles include/gui \
 #---------------------------------------------------------------------------------
 
 CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DLUA_32BITS \
-			-DVER_MAJOR=${RVLOADERVERSION_MAJOR} -DVER_MINOR=${RVLOADERVERSION_MINOR}
+			-DVER_MAJOR=${RVLOADERVERSION_MAJOR} -DVER_MINOR=${RVLOADERVERSION_MINOR} -DVER_NAME=\"${RVLOADERVERSION_NAME}\"
 CXXFLAGS	=	$(CFLAGS) -std=c++11
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
