@@ -144,6 +144,13 @@ void GuiGamesView::initLUA() {
     luaSetTableIntField(L, "PADREAD_AUTO", HIIDRA_PADREAD_AUTO);
     luaSetTableIntField(L, "PADREAD_BYPASS", HIIDRA_PADREAD_BYPASS);
     luaSetTableIntField(L, "PADREAD_REDIRECT", HIIDRA_PADREAD_REDIRECT);
+    luaSetTableIntField(L, "HOOKTYPE_VBI", HIIDRA_HOOKTYPE_VBI);
+    luaSetTableIntField(L, "HOOKTYPE_KPADRead", HIIDRA_HOOKTYPE_KPADRead);
+    luaSetTableIntField(L, "HOOKTYPE_Joypad", HIIDRA_HOOKTYPE_Joypad);
+    luaSetTableIntField(L, "HOOKTYPE_GXDraw", HIIDRA_HOOKTYPE_GXDraw);
+    luaSetTableIntField(L, "HOOKTYPE_GXFlush", HIIDRA_HOOKTYPE_GXFlush);
+    luaSetTableIntField(L, "HOOKTYPE_OSSleepThread", HIIDRA_HOOKTYPE_OSSleepThread);
+    luaSetTableIntField(L, "HOOKTYPE_AXNextFrame", HIIDRA_HOOKTYPE_AXNextFrame);
     lua_settable(L, -3);
 
     //Create GamesView.GC2Wiimote
@@ -254,6 +261,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("PADRead mode", HIIDRA_PADREAD_AUTO);
             if (!gameConfig.getValue("Enable Cheats", &tempVal))
                 gameConfig.setValue("Enable Cheats", 0);
+            if (!gameConfig.getValue("Cheats Hooktype", &tempVal))
+                gameConfig.setValue("Cheats Hooktype", HIIDRA_HOOKTYPE_VBI);
         break;
 
         case WII_CHANNEL:
@@ -269,6 +278,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("PADRead mode", HIIDRA_PADREAD_AUTO);
             if (!gameConfig.getValue("Enable Cheats", &tempVal))
                 gameConfig.setValue("Enable Cheats", 0);
+            if (!gameConfig.getValue("Cheats Hooktype", &tempVal))
+                gameConfig.setValue("Cheats Hooktype", HIIDRA_HOOKTYPE_VBI);
         break;
 
         case WII_VC:
@@ -284,6 +295,8 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("PADRead mode", HIIDRA_PADREAD_AUTO);
             if (!gameConfig.getValue("Enable Cheats", &tempVal))
                 gameConfig.setValue("Enable Cheats", 0);
+            if (!gameConfig.getValue("Cheats Hooktype", &tempVal))
+                gameConfig.setValue("Cheats Hooktype", HIIDRA_HOOKTYPE_VBI);
         break;
     }
 }
@@ -620,6 +633,10 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
                 cheats = thisView->cheatCodes.generateGCT();
             }
 
+            tempVal = HIIDRA_HOOKTYPE_VBI;
+            thisView->gameConfig.getValue("Cheats Hooktype", &tempVal);
+            cfg.Hooktype = tempVal;
+
             strcpy(cfg.GamePath, gc.path.c_str());
 
             bootWiiGame(cfg, gc.gameID, cheats);
@@ -764,6 +781,10 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
                 cheats = thisView->cheatCodes.generateGCT();
             }
 
+            tempVal = HIIDRA_HOOKTYPE_VBI;
+            thisView->gameConfig.getValue("Cheats Hooktype", &tempVal);
+            cfg.Hooktype = tempVal;
+
             strcpy(cfg.GamePath, gc.path.c_str());
 
             bootWiiGame(cfg, gc.gameID, cheats);
@@ -824,6 +845,10 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
                 cheats = thisView->cheatCodes.generateGCT();
             }
+
+            tempVal = HIIDRA_HOOKTYPE_VBI;
+            thisView->gameConfig.getValue("Cheats Hooktype", &tempVal);
+            cfg.Hooktype = tempVal;
 
             strcpy(cfg.GamePath, gc.path.c_str());
 

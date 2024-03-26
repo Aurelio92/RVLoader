@@ -15,6 +15,7 @@ typedef struct HIIDRA_CFG {
     u32     Config;
     u64     TitleID;
     u32     PADReadMode;
+    u32     Hooktype;
     char    GamePath[256];
     char    CheatPath[256];
 } HIIDRA_CFG;
@@ -43,6 +44,16 @@ enum hiidrapadreadmode {
     HIIDRA_PADREAD_AUTO = 0,
     HIIDRA_PADREAD_BYPASS,
     HIIDRA_PADREAD_REDIRECT
+};
+
+enum hiidrahooktype {
+    HIIDRA_HOOKTYPE_VBI = 1,
+    HIIDRA_HOOKTYPE_KPADRead,
+    HIIDRA_HOOKTYPE_Joypad,
+    HIIDRA_HOOKTYPE_GXDraw,
+    HIIDRA_HOOKTYPE_GXFlush,
+    HIIDRA_HOOKTYPE_OSSleepThread,
+    HIIDRA_HOOKTYPE_AXNextFrame,
 };
 
 void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32 nExtraModules, u32 keepES, u32 keepFS);
