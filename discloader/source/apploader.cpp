@@ -249,95 +249,6 @@ static void patch_NoDiscinDrive(void *buffer, u32 len)
     }
 }
 
-static void patch_SISetXY(void* buffer, u32 len) {
-    u32 i;
-    u32 SISetXYPattern[23] = {
-        0x9421fff0, //stwu    r1,-16(r1)
-        0x7c0802a6, //mflr    r0
-        0x90010014, //stw     r0,20(r1)
-        0x5480402e, //rlwinm  r0,r4,8,0,23
-        0x93e1000c, //stw     r31,12(r1)
-        0x547f801e, //rlwinm  r31,r3,16,0,15
-        0x7fff0378, //or      r31,r31,r0
-        0x00000000, //bl      <OSDisableInterrupts>
-
-
-        0x3ca00000, //lis     r5,0          Patch with: addi    r5,0,0x00f0
-        0x3c80cd00, //lis     r4,0xCD00     Patch with: lis     r4,0xCD00
-        0x38a50000, //addi    r5,r5,0       Patch with: nop
-        0x80050004, //lwz     r0,4(r5)      Patch with: nop
-        0x5400060a, //rlwinm  r0,r0,0,24,5  Patch with: nop
-        0x7c1ffb78, //or      r31,r0,r31    Patch with: or      r31,r5,r31
-        0x93e50004, //stw     r31,4(r5)     Patch with: nop
-
-        0x93e46430, //stw     r31,0x6430(r4)
-        0x00000000, //bl      <OSRestoreInterrupts>
-        0x7fe3fb78, //mr      r3,r31
-        0x83e1000c, //lwz     r31,12(r1)
-        0x80010014, //lwz     r0,20(r1)
-        0x7c0803a6, //mtlr    r0
-        0x38210010, //addi    r1,r1,16
-        0x4e800020, //blr
-    };
-
-    u32 SISetXYMask[23] = {
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0x00000000,
-        0xffff0000,
-        0xffffffff,
-        0xffff0000,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0x00000000,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-    };
-
-    //Offset 32
-    u32 SISetXYPatch[7] = {
-        0x38a000f0, //addi    r5,0,0x00f0
-        0x3c80cd00, //lis     r4,0xCD00
-        0x60000000, //nop
-        0x60000000, //nop
-        0x60000000, //nop
-        0x7cbffb78, //or      r31,r5,r31
-        0x60000000, //nop
-    };
-
-    for(i=0; i < len; i+=4) {
-        int j;
-        int found = 1;
-        for (j = 0; j < 23; j++) {
-            if (i + j * 4 >= len) {
-                found = 0;
-                break;
-            }
-            if ((*(vu32*)(buffer+i+j*4) & SISetXYMask[j] ) != SISetXYPattern[j]) {
-                found = 0;
-                break;
-            }
-        }
-        if (found) {
-            for (j = 0; j < 7; j++) {
-                *(vu32*)(buffer+i+32+j*4) = SISetXYPatch[j];
-            }
-        }
-    }
-}
-
 static bool maindolpatches(void *dst, int len) {
         bool ret = false;
         u32 i;
@@ -349,7 +260,6 @@ static bool maindolpatches(void *dst, int len) {
         Remove_001_Protection(dst, len);
         Anti_002_fix(dst, len);
         PatchCountryStrings(dst, len);
-        //patch_SISetXY(dst, len);
 
         DCFlushRange(dst, len);
 
