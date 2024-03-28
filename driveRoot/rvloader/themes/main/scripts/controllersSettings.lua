@@ -361,7 +361,7 @@ function buttonsTester:handleInputs(onFocus)
 
     if held.BUTTON_A and held.BUTTON_B then
         Pad.setRumble(0, true)
-    end else
+    else
         Pad.setRumble(0, false)
     end
 
