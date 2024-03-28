@@ -58,6 +58,7 @@ Config mainConfig;
 volatile u32 connectedPads;
 static mutex_t SIMutex;
 static bool controllersEnabled;
+static bool hasToShutdown = false;
 
 extern "C" {
     extern void udelay(int us);
@@ -98,7 +99,7 @@ void setVGAEnabled(bool en) {
 }
 
 void shutdownCB() {
-    powerOff();
+    hasToShutdown = true;
 }
 
 void WMPowerButtonCB(s32 chan) {
@@ -298,6 +299,10 @@ int main(int argc, char **argv) {
             lockSIMutex();
             connectedPads = PAD_ScanPads();
             unlockSIMutex();
+        }
+
+        if (hasToShutdown) {
+            powerOff();
         }
 
         WPAD_ScanPads();

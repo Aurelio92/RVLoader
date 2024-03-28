@@ -435,7 +435,19 @@ void bootDiscLoader() {
 
 void powerOff() {
     shutdown();
-    SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+    if (CONF_GetShutdownMode() == CONF_SHUTDOWN_IDLE) {
+        s32 ret;
+
+        /* Set LED mode */
+        ret = CONF_GetIdleLedMode();
+        if (ret >= 0 && ret <= 2) STM_SetLedMode(ret);
+
+        /* Shutdown to idle */
+        STM_ShutdownToIdle();
+    }  else {
+        /* Shutdown to standby */
+        STM_ShutdownToStandby();
+    }
 }
 
 void bootPriiloader() {
