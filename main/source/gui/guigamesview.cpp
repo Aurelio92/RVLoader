@@ -252,7 +252,7 @@ void GuiGamesView::openGameConfig(u32 idx) {
             if (!gameConfig.getValue("Enable Bluetooth", &tempVal))
                 gameConfig.setValue("Enable Bluetooth", 0);
             if (!gameConfig.getValue("Enable USB saves", &tempVal))
-                gameConfig.setValue("Enable USB saves", 0);
+                gameConfig.setValue("Enable USB saves", 1);
             if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
