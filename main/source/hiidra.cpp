@@ -1207,13 +1207,13 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::vector<uint32_t> cheats, boo
     memcpy((void*)((u32)bootHiidraThreadArg + sizeof(HIIDRA_CFG) + sizeof(u32)), &forceReinstall, sizeof(bool));
     bootHiidraThreadStack = (u8*)memalign(32, STACKSIZE);
 
-    LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
-
     //Disable any controller input
     disableControllers();
 
     //Switch to Hiidra's loading screen
     mainWindowSwitchElement("HiidraBootScreen");
 
+    LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
+    
     return 0;
 }
