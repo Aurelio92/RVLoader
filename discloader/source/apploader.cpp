@@ -6,6 +6,7 @@
 #include "apploader.h"
 #include "wdvd.h"
 #include "disc.h"
+#include "hiidratypes.h"
 
 /* Constants */
 #define APPLDR_OFFSET 0x2440
@@ -42,7 +43,7 @@ typedef void  (*app_entry)(app_init* report, app_main* main, app_final* final);
 static u32 buffer[0x20] ATTRIBUTE_ALIGN(32);
 
 static void readCheats();
-static bool maindolpatches(void *dst, int len);
+static bool maindolpatches(void *dst, int len, u8 deflicker);
 static bool Remove_001_Protection(void *Address, int Size);
 static void Anti_002_fix(void *Address, int Size);
 
@@ -51,7 +52,7 @@ static void __noprint(const char *fmt, ...)
 }
 
 s32 Apploader_Run(entry_point* entry) {
-
+    HIIDRA_CFG hiidraCfg ALIGNED(32);
     void *dst = NULL;
     int len = 0;
     int offset = 0;
@@ -87,11 +88,22 @@ s32 Apploader_Run(entry_point* entry) {
     printf("appldr_init\n");
     appldr_init(__noprint);
 
+    //Read hiidraCfg
+    s32 hiidraCfgFD = IOS_Open("$rvloader/Hiidra/boot.cfg", 1);
+    if (hiidraCfgFD >= 0) {
+        IOS_Read(hiidraCfgFD, (void*)&hiidraCfg, sizeof(HIIDRA_CFG));
+        IOS_Close(hiidraCfgFD);
+    } else {
+        hiidraCfg.DeflickerMode = HIIDRA_DEFLICKER_AUTO;
+    }
+
+    printf("Deflicker mode: %u\n", hiidraCfg.DeflickerMode);
+
     while (appldr_main(&dst, &len, &offset)) {
         /* Read data from DVD */
         ret = WDVD_Read(dst, len, (u64)(offset << 2));
 
-        maindolpatches(dst, len);
+        maindolpatches(dst, len, hiidraCfg.DeflickerMode);
     }
     printf("appldr_main (done)\n");
 
@@ -249,19 +261,121 @@ static void patch_NoDiscinDrive(void *buffer, u32 len)
     }
 }
 
-static bool maindolpatches(void *dst, int len) {
+void deflicker_patch(u8 *addr, u32 len) {
+    u32 SearchPattern[18] = {
+        0x3D20CC01, 0x39400061, 0x99498000,
+        0x2C050000, 0x38800053, 0x39600000,
+        0x90098000, 0x38000054, 0x39800000,
+        0x508BC00E, 0x99498000, 0x500CC00E,
+        0x90698000, 0x99498000, 0x90E98000,
+        0x99498000, 0x91098000, 0x41820040};
+    u8 *addr_start = addr;
+    u8 *addr_end = addr + len - sizeof(SearchPattern);
+    while (addr_start <= addr_end) {
+        if (memcmp(addr_start, SearchPattern, sizeof(SearchPattern)) == 0) {
+            *((u32 *)addr_start + 17) = 0x48000040; // Change beq to b
+            printf("Patched GXSetCopyFilter @ %p\n", addr_start);
+            return;
+        }
+        addr_start += 4;
+    }
+}
+
+void patch_vfilters(u8 *addr, u32 len, u8 *vfilter) {
+    static u8 PATTERN[12][2] = {
+        {6, 6}, {6, 6}, {6, 6},
+        {6, 6}, {6, 6}, {6, 6},
+        {6, 6}, {6, 6}, {6, 6},
+        {6, 6}, {6, 6}, {6, 6}
+    };
+
+    static u8 PATTERN_AA[12][2] = {
+        {3, 2}, {9, 6}, {3, 10},
+        {3, 2}, {9, 6}, {3, 10},
+        {9, 2}, {3, 6}, {9, 10},
+        {9, 2}, {3, 6}, {9, 10}
+    };
+    u8 *addr_start = addr;
+    while (len >= sizeof(GXRModeObj)) {
+        GXRModeObj* vidmode = (GXRModeObj*)addr_start;
+        if ((memcmp(vidmode->sample_pattern, PATTERN, 24) == 0 || memcmp(vidmode->sample_pattern, PATTERN_AA, 24) == 0) &&
+            (vidmode->fbWidth == 640 || vidmode->fbWidth == 608 || vidmode->fbWidth == 512) &&
+            (vidmode->field_rendering == 0 || vidmode->field_rendering == 1) &&
+            (vidmode->aa == 0 || vidmode->aa == 1)) {
+            printf("Replaced vfilter %02x%02x%02x%02x%02x%02x%02x @ %p (GXRModeObj)\n",
+                    vidmode->vfilter[0], vidmode->vfilter[1], vidmode->vfilter[2], vidmode->vfilter[3],
+                    vidmode->vfilter[4], vidmode->vfilter[5], vidmode->vfilter[6], addr_start);
+            memcpy(vidmode->vfilter, vfilter, 7);
+            addr_start += (sizeof(GXRModeObj) - 4);
+            len -= (sizeof(GXRModeObj) - 4);
+        }
+        addr_start += 4;
+        len -= 4;
+    }
+}
+
+// Patch rogue vfilters found in some games
+void patch_vfilters_rogue(u8 *addr, u32 len, u8 *vfilter) {
+    u8 known_vfilters[7][7] = {
+        {8, 8, 10, 12, 10, 8, 8},
+        {4, 8, 12, 16, 12, 8, 4},
+        {7, 7, 12, 12, 12, 7, 7},
+        {5, 5, 15, 14, 15, 5, 5},
+        {4, 4, 15, 18, 15, 4, 4},
+        {4, 4, 16, 16, 16, 4, 4},
+        {2, 2, 17, 22, 17, 2, 2}
+    };
+    u8 *addr_start = addr;
+    u8 *addr_end = addr + len - 8;
+    while (addr_start <= addr_end) {
+        u8 known_vfilter[7];
+        for (int i = 0; i < 7; i++) {
+            for (int x = 0; x < 7; x++)
+                known_vfilter[x] = known_vfilters[i][x];
+            if (!addr_start[7] && memcmp(addr_start, known_vfilter, 7) == 0) {
+                printf("Replaced vfilter %02x%02x%02x%02x%02x%02x%02x @ %p\n", addr_start[0], addr_start[1],
+                        addr_start[2], addr_start[3], addr_start[4], addr_start[5], addr_start[6], addr_start);
+                memcpy(addr_start, vfilter, 7);
+                addr_start += 7;
+                break;
+            }
+        }
+        addr_start += 1;
+    }
+}
+
+static bool maindolpatches(void *dst, int len, u8 deflicker) {
+        u8 vfilter_off[7] = {0, 0, 21, 22, 21, 0, 0};
+        u8 vfilter_low[7] = {4, 4, 16, 16, 16, 4, 4};
+        u8 vfilter_medium[7] = {4, 8, 12, 16, 12, 8, 4};
+        u8 vfilter_high[7] = {8, 8, 10, 12, 10, 8, 8};
         bool ret = false;
         u32 i;
 
         ICInvalidateRange(dst, len);
 
-        //dogamehooks(1, dst, len);
-
         Remove_001_Protection(dst, len);
         Anti_002_fix(dst, len);
         PatchCountryStrings(dst, len);
 
-        DCFlushRange(dst, len);
+        if (deflicker == HIIDRA_DEFLICKER_ON_LOW) {
+            patch_vfilters((u8*)dst, len, vfilter_low);
+            patch_vfilters_rogue((u8*)dst, len, vfilter_low);
+        } else if (deflicker == HIIDRA_DEFLICKER_ON_MEDIUM) {
+            patch_vfilters((u8*)dst, len, vfilter_medium);
+            patch_vfilters_rogue((u8*)dst, len, vfilter_medium);
+        } else if (deflicker == HIIDRA_DEFLICKER_ON_HIGH) {
+            patch_vfilters((u8*)dst, len, vfilter_high);
+            patch_vfilters_rogue((u8*)dst, len, vfilter_high);
+        } else if (deflicker != HIIDRA_DEFLICKER_AUTO) {
+            patch_vfilters((u8*)dst, len, vfilter_off);
+            patch_vfilters_rogue((u8*)dst, len, vfilter_off);
+            // This might break fade and brightness effects
+            if (deflicker == HIIDRA_DEFLICKER_OFF_EXTENDED)
+                deflicker_patch((u8*)dst, len);
+        }
+
+        DCFlushRange((u8*)dst, len);
 
         return ret;
 }

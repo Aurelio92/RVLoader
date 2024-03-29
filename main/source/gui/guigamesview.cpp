@@ -151,6 +151,12 @@ void GuiGamesView::initLUA() {
     luaSetTableIntField(L, "HOOKTYPE_GXFlush", HIIDRA_HOOKTYPE_GXFlush);
     luaSetTableIntField(L, "HOOKTYPE_OSSleepThread", HIIDRA_HOOKTYPE_OSSleepThread);
     luaSetTableIntField(L, "HOOKTYPE_AXNextFrame", HIIDRA_HOOKTYPE_AXNextFrame);
+    luaSetTableIntField(L, "DEFLICKER_AUTO", HIIDRA_DEFLICKER_AUTO);
+    luaSetTableIntField(L, "DEFLICKER_OFF", HIIDRA_DEFLICKER_OFF);
+    luaSetTableIntField(L, "DEFLICKER_OFF_EXTENDED", HIIDRA_DEFLICKER_OFF_EXTENDED);
+    luaSetTableIntField(L, "DEFLICKER_ON_LOW", HIIDRA_DEFLICKER_ON_LOW);
+    luaSetTableIntField(L, "DEFLICKER_ON_MEDIUM", HIIDRA_DEFLICKER_ON_MEDIUM);
+    luaSetTableIntField(L, "DEFLICKER_ON_HIGH", HIIDRA_DEFLICKER_ON_HIGH);
     lua_settable(L, -3);
 
     //Create GamesView.GC2Wiimote
@@ -257,8 +263,10 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
                 gameConfig.setValue("Patch MX chip", 0);
-            if (!gameConfig.getValue("PADRead mode", &tempVal))
-                gameConfig.setValue("PADRead mode", HIIDRA_PADREAD_AUTO);
+            if (!gameConfig.getValue("PADRead Mode", &tempVal))
+                gameConfig.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
+            if (!gameConfig.getValue("Deflicker Mode", &tempVal))
+                gameConfig.setValue("Deflicker Mode", HIIDRA_DEFLICKER_AUTO);
             if (!gameConfig.getValue("Enable Cheats", &tempVal))
                 gameConfig.setValue("Enable Cheats", 0);
             if (!gameConfig.getValue("Cheats Hooktype", &tempVal))
@@ -274,8 +282,10 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
                 gameConfig.setValue("Patch MX chip", 0);
-            if (!gameConfig.getValue("PADRead mode", &tempVal))
-                gameConfig.setValue("PADRead mode", HIIDRA_PADREAD_AUTO);
+            if (!gameConfig.getValue("PADRead Mode", &tempVal))
+                gameConfig.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
+            if (!gameConfig.getValue("Deflicker Mode", &tempVal))
+                gameConfig.setValue("Deflicker Mode", HIIDRA_DEFLICKER_AUTO);
             if (!gameConfig.getValue("Enable Cheats", &tempVal))
                 gameConfig.setValue("Enable Cheats", 0);
             if (!gameConfig.getValue("Cheats Hooktype", &tempVal))
@@ -291,8 +301,10 @@ void GuiGamesView::openGameConfig(u32 idx) {
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
                 gameConfig.setValue("Patch MX chip", 0);
-            if (!gameConfig.getValue("PADRead mode", &tempVal))
-                gameConfig.setValue("PADRead mode", HIIDRA_PADREAD_AUTO);
+            if (!gameConfig.getValue("PADRead Mode", &tempVal))
+                gameConfig.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
+            if (!gameConfig.getValue("Deflicker Mode", &tempVal))
+                gameConfig.setValue("Deflicker Mode", HIIDRA_DEFLICKER_AUTO);
             if (!gameConfig.getValue("Enable Cheats", &tempVal))
                 gameConfig.setValue("Enable Cheats", 0);
             if (!gameConfig.getValue("Cheats Hooktype", &tempVal))
@@ -613,8 +625,12 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
                 cfg.Config |= HIIDRA_CFG_PATCHMX;
 
             tempVal = HIIDRA_PADREAD_AUTO;
-            thisView->gameConfig.getValue("PADRead mode", &tempVal);
+            thisView->gameConfig.getValue("PADRead Mode", &tempVal);
             cfg.PADReadMode = tempVal;
+
+            tempVal = HIIDRA_DEFLICKER_AUTO;
+            thisView->gameConfig.getValue("Deflicker Mode", &tempVal);
+            cfg.DeflickerMode = tempVal;
             
             //Handle cheats
             tempVal = 0;
@@ -761,8 +777,12 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
                 cfg.Config |= HIIDRA_CFG_PATCHMX;
 
             tempVal = HIIDRA_PADREAD_AUTO;
-            thisView->gameConfig.getValue("PADRead mode", &tempVal);
+            thisView->gameConfig.getValue("PADRead Mode", &tempVal);
             cfg.PADReadMode = tempVal;
+
+            tempVal = HIIDRA_DEFLICKER_AUTO;
+            thisView->gameConfig.getValue("Deflicker Mode", &tempVal);
+            cfg.DeflickerMode = tempVal;
             
             //Handle cheats
             tempVal = 0;
@@ -826,8 +846,12 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
                 cfg.Config |= HIIDRA_CFG_PATCHMX;
 
             tempVal = HIIDRA_PADREAD_AUTO;
-            thisView->gameConfig.getValue("PADRead mode", &tempVal);
+            thisView->gameConfig.getValue("PADRead Mode", &tempVal);
             cfg.PADReadMode = tempVal;
+
+            tempVal = HIIDRA_DEFLICKER_AUTO;
+            thisView->gameConfig.getValue("Deflicker Mode", &tempVal);
+            cfg.DeflickerMode = tempVal;
             
             //Handle cheats
             tempVal = 0;

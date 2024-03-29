@@ -12,7 +12,7 @@
 #define IOCTL_DI_WAITCVRCLOSE   0x79
 #define IOCTL_DI_GETCOVER       0x88
 #define IOCTL_DI_RESET          0x8A
-#define IOCTL_DI_OPENPART      0x8B
+#define IOCTL_DI_OPENPART       0x8B
 #define IOCTL_DI_CLOSEPART      0x8C
 #define IOCTL_DI_UNENCREAD      0x8D
 #define IOCTL_DI_SEEK           0xAB

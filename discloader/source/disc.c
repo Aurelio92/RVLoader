@@ -13,8 +13,6 @@
 
 void printd(const char *text, ...);
 
-#define ALIGNED(x) __attribute__((aligned(x)))
-
 /* Constants */
 #define PTABLE_OFFSET   0x40000
 #define WII_MAGIC       0x5D1C9EA3

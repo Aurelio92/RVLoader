@@ -15,6 +15,9 @@ int main(int argc, char **argv) {
     rmode = VIDEO_GetPreferredMode(NULL);
     xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
     console_init(xfb,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+    if (usb_isgeckoalive(EXI_CHANNEL_1)) {
+        CON_EnableGecko(EXI_CHANNEL_1, 1);
+    }
     VIDEO_Configure(rmode);
     VIDEO_SetNextFramebuffer(xfb);
     VIDEO_SetBlack(FALSE);
