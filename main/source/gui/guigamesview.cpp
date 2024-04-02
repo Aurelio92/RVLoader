@@ -262,7 +262,7 @@ void GuiGamesView::openGameConfig(u32 idx) {
             if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
-                gameConfig.setValue("Patch MX chip", 0);
+                gameConfig.setValue("Patch MX chip", MX::isConnected() ? 0 : 1);
             if (!gameConfig.getValue("PADRead Mode", &tempVal))
                 gameConfig.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
             if (!gameConfig.getValue("Deflicker Mode", &tempVal))
@@ -281,7 +281,7 @@ void GuiGamesView::openGameConfig(u32 idx) {
             if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
-                gameConfig.setValue("Patch MX chip", 0);
+                gameConfig.setValue("Patch MX chip", MX::isConnected() ? 0 : 1);
             if (!gameConfig.getValue("PADRead Mode", &tempVal))
                 gameConfig.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
             if (!gameConfig.getValue("Deflicker Mode", &tempVal))
@@ -300,7 +300,7 @@ void GuiGamesView::openGameConfig(u32 idx) {
             if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
                 gameConfig.setValue("Enable GC2Wiimote", 0);
             if (!gameConfig.getValue("Patch MX chip", &tempVal))
-                gameConfig.setValue("Patch MX chip", 0);
+                gameConfig.setValue("Patch MX chip", MX::isConnected() ? 0 : 1);
             if (!gameConfig.getValue("PADRead Mode", &tempVal))
                 gameConfig.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
             if (!gameConfig.getValue("Deflicker Mode", &tempVal))
