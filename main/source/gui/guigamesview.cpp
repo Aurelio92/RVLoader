@@ -12,6 +12,7 @@
 #include "hiidra.h"
 #include "gc2wiimote.h"
 #include "rvldd.h"
+#include "mx.h"
 
 GuiGamesView::GuiGamesView(TitleType _titlesType) {
     //Set default cover size
