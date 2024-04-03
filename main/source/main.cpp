@@ -58,7 +58,9 @@ Config mainConfig;
 volatile u32 connectedPads;
 static mutex_t SIMutex;
 static bool controllersEnabled;
+static bool controlledRedraw = false;
 static bool hasToShutdown = false;
+static lwpq_t redrawQueue;
 
 extern "C" {
     extern void udelay(int us);
@@ -80,6 +82,14 @@ void enableControllers() {
 
 void disableControllers() {
     controllersEnabled = false;
+}
+
+void enableControlledRedraw() {
+    controlledRedraw = true;
+}
+
+void forceRedraw() {
+    LWP_ThreadSignal(redrawQueue);
 }
 
 void mainWindowSwitchElement(const char* el) {
@@ -111,6 +121,7 @@ int main(int argc, char **argv) {
     float mem1Max = (float)SYS_GetArena1Size() / 1048576.0f;
     float mem2Max = (float)SYS_GetArena2Size() / 1048576.0f;
 
+    LWP_InitQueue(&redrawQueue);
     LWP_MutexInit(&SIMutex, true);
     enableControllers();
     initHiidra();
@@ -295,6 +306,10 @@ int main(int argc, char **argv) {
     }
 
     while(1) {
+        if (controlledRedraw) {
+            LWP_ThreadSleep(redrawQueue);
+        }
+
         if (controllersEnabled) {
             lockSIMutex();
             connectedPads = PAD_ScanPads();
@@ -319,6 +334,8 @@ int main(int argc, char **argv) {
         //font.printf(300, 10, "PADS: %u", connectedPads);
         Gfx::endDrawing();
         //VIDEO_WaitVSync();
+
+        hiidraSignalRedraw();
     }
 
     return 0;

@@ -18,6 +18,8 @@ void lockSIMutex();
 void unlockSIMutex();
 void enableControllers();
 void disableControllers();
+void enableControlledRedraw();
+void forceRedraw();
 void mainWindowSwitchElement(const char* el);
 Vector2 getScreenSize();
 bool isVGAEnabled();

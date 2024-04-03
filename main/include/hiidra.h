@@ -13,6 +13,8 @@ int loadIOSModules(void);
 void initHiidra();
 void lockHiidraLogMutex();
 void unlockHiidraLogMutex();
+void hiidraSignalRedraw();
+void hiidraWaitForRedraw();
 u32 hiidraAddLogLine(const char* line, ...);
 void hiidraUpdateLogLine(u32 index, const char* line, ...);
 void luaRegisterHiidraLib(lua_State* L);

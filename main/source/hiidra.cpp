@@ -26,12 +26,12 @@
 #include "ELF.h"
 #include "luasupport.h"
 
-#define COPY_LIMIT (32*1024)
+#define COPY_LIMIT (128*1024)
 
 #define HIIDRA_LOG_LINES 32
 #define HIIDRA_LOG_LINE_LENGTH 256
 
-#define STACKSIZE 8192
+#define STACKSIZE (128*1024)
 
 #define MEM_PROT       0x0D8B420A
 
@@ -57,6 +57,7 @@ static mutex_t logMutex = 0;
 static char logBuffer[HIIDRA_LOG_LINES][HIIDRA_LOG_LINE_LENGTH];
 static u32 logLineIndex;
 static u32 logNLines;
+static lwpq_t logQueue = 0;
 
 extern "C" {
     extern void* SYS_AllocArena2MemLo(u32 size,u32 align);
@@ -131,16 +132,18 @@ void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32
     u32 noteSize;
     unsigned int loadersize = *(vu32*)(kernel) + *(vu32*)(kernel+4);
     //Copy old kernel in a buffer so we can overwrite the kernel memory region
-    char* oldKernel = (char*)malloc(kernelSize);
+    char* oldKernel = (char*)SYS_AllocArena2MemLo(kernelSize, 0x20);
     memcpy(oldKernel, kernel, kernelSize);
     for (i = loadersize; i < kernelSize; i+=4) {
         if (memcmp(oldKernel+i, HWAccess_ES, sizeof(HWAccess_ES)) == 0) {
             printf("Found HWAccess_ES at %08X\r\n", i);
+            hiidraAddLogLine("Found HWAccess_ES at %08X", i);
             memcpy(oldKernel+i, HWAccess_ESPatch, sizeof(HWAccess_ESPatch));
         }
 
         if (memcmp(oldKernel+i, KernelAccess, sizeof(KernelAccess)) == 0) {
             printf("Found KernelAccess at %08X\r\n", i);
+            hiidraAddLogLine("Found KernelAccess at %08X", i);
             memcpy(oldKernel+i, KernelAccessPatch, sizeof(KernelAccessPatch));
         }
     }
@@ -340,14 +343,23 @@ void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32
     DCFlushRange(kernel, loadersize + elfSize);
 
     printf("Saving hiidra.bin\n");
+    hiidraAddLogLine("Saving hiidra.bin");
     FILE* fp = fopen("/hiidra.bin", "wb");
     if (fp == NULL) {
         printf("Couldn't\n");
     } else {
-        printf("Saving %u\n", loadersize + elfSize);
-        fwrite(kernel, loadersize + elfSize, 1, fp);
+        u8* bufferToSave = (u8*)kernel;
+        u32 toSave = loadersize + elfSize;
+        printf("Saving %u\n", toSave);
+        while (toSave > 0) {
+            u32 chunkSize = (toSave > COPY_LIMIT) ? COPY_LIMIT : toSave;
+            fwrite(bufferToSave, chunkSize, 1, fp);
+            bufferToSave += chunkSize;
+            toSave -= chunkSize;
+        }
         fclose(fp);
         printf("Success\n");
+        hiidraAddLogLine("Success");
     } 
 }
 
@@ -1037,35 +1049,6 @@ static void* bootHiidraThread(void* arg) {
     char* gamePath = (char*)iosAlloc(hId, 0x80);
     sprintf(gamePath, "/dev/usbfs%s", hcfg.GamePath);
 
-    //Copying cheats
-    /*memcpy((void*)0x80001900, codehandleronly_bin, codehandleronly_bin_size);
-    DCFlushRange((void*)0x80001900, codehandleronly_bin_size);
-    memcpy((void*)(0x80001900+codehandleronly_bin_size-8), cheats, cheatsSize);
-    DCFlushRange((void*)(0x80001900+codehandleronly_bin_size-8), cheatsSize);*/
-    /*
-    s32 gamePatcherFD = IOS_Open("/dev/patcher", 0);
-    if (gamePatcherFD >= 0) {
-        s32 gamePatcherRet;
-        u32* gctSize = (u32*)iosAlloc(hId, sizeof(u32));
-        u32** gctAddress = (u32**)iosAlloc(hId, sizeof(u32*));
-        *gctSize = cheatsSize;
-
-        gamePatcherRet = IOS_Ioctl(gamePatcherFD, 0x00, gctSize, sizeof(u32), gctAddress, sizeof(u32*));
-        printf("GCT Address: %08X %08X\n", (u32)(*gctAddress), (u32)MEM_PHYSICAL_TO_K0((void*)*gctAddress));
-        memcpy(MEM_PHYSICAL_TO_K0((void*)*gctAddress), cheats, cheatsSize);
-        DCFlushRange(MEM_PHYSICAL_TO_K0((void*)*gctAddress), cheatsSize);
-        *(u32*)0x800022A8 = (u32)MEM_PHYSICAL_TO_K0((void*)*gctAddress);
-        DCFlushRange((u8*)0x800022A8, 4);
-        //memcpy((void*)0x800022A0, cheats, cheatsSize);
-        //DCFlushRange((void*)0x800022A0, cheatsSize);
-        memcpy((void*)0x800022C0, cheats, cheatsSize);
-        DCFlushRange((void*)0x800022C0, cheatsSize);
-        *(u32*)0x800022A8 = 0x800022C0;
-        DCFlushRange((u8*)0x800022A8, 4);
-        IOS_Close(gamePatcherFD);
-    }
-    */
-
     printf("Launching %s\n", gamePath);
     hiidraAddLogLine("Launching %s\n", gamePath);
     if (wadTitleID) {
@@ -1105,6 +1088,7 @@ static void* bootHiidraThread(void* arg) {
 
 void initHiidra() {
     LWP_MutexInit(&logMutex, false);
+    LWP_InitQueue(&logQueue);
     logLineIndex = 0;
     logNLines = 0;
 }
@@ -1116,9 +1100,17 @@ void lockHiidraLogMutex() {
 }
 
 void unlockHiidraLogMutex() {
-     if (logMutex) {
+    if (logMutex) {
         LWP_MutexUnlock(logMutex);
     }
+}
+
+void hiidraSignalRedraw() {
+    LWP_ThreadSignal(logQueue);
+}
+
+void hiidraWaitForRedraw() {
+    LWP_ThreadSleep(logQueue);
 }
 
 u32 hiidraAddLogLine(const char* line, ...) {
@@ -1143,6 +1135,9 @@ u32 hiidraAddLogLine(const char* line, ...) {
 
     unlockHiidraLogMutex();
 
+    forceRedraw();
+    hiidraWaitForRedraw();
+
     return prevIndex;
 }
 
@@ -1153,6 +1148,9 @@ void hiidraUpdateLogLine(u32 index, const char* line, ...) {
     vsnprintf(logBuffer[index], HIIDRA_LOG_LINE_LENGTH, line, args);
     va_end(args);
     unlockHiidraLogMutex();
+
+    forceRedraw();
+    hiidraWaitForRedraw();
 }
 
 static int lua_getLogLines(lua_State* L) {
@@ -1210,8 +1208,11 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::vector<uint32_t> cheats, boo
     //Disable any controller input
     disableControllers();
 
+
     //Switch to Hiidra's loading screen
     mainWindowSwitchElement("HiidraBootScreen");
+
+    enableControlledRedraw();
 
     LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
     

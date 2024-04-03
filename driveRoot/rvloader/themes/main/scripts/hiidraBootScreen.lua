@@ -24,7 +24,7 @@ function draw(onFocus)
 
     --Scroll if needed
     if lineHeight * (#logLines) > getDimensions()[2] then
-        Gfx.translate(0, lineHeight * (#logLines) - getDimensions()[2])
+        Gfx.translate(0, getDimensions()[2] - lineHeight * (#logLines))
     end
 
     for i = 1, #logLines do

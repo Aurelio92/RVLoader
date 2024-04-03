@@ -11,8 +11,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
 
-#define OUT_FILE_BUFFER_SIZE 4096
+#define OUT_FILE_BUFFER_SIZE (128*1024)
 
 #define u8 unsigned char       /* 8 bits  */
 #define u32 unsigned long       /* 32 bits */
@@ -374,11 +375,15 @@ void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen,
   u8 tempBlock[16];
   u8 prevBlock[16];
   u8 outblock[16];
-  u8 outBuffer[OUT_FILE_BUFFER_SIZE];
+  u8* outBuffer;
   u32 outBufferIdx = 0;
   unsigned int blockno = 0, i;
 
   unsigned long long outLenFinal = outLen;
+
+  u32 progressPercentage = 0;
+
+  outBuffer = memalign(0x20, OUT_FILE_BUFFER_SIZE);
 
   if (progressCb != NULL) {
     progressCb(arg0, 0); //Print 0% progress
@@ -413,8 +418,9 @@ void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen,
     if (outBufferIdx == OUT_FILE_BUFFER_SIZE) {
       outBufferIdx = 0;
       fwrite(outBuffer, 1, OUT_FILE_BUFFER_SIZE, outfp);
-      if (progressCb != NULL) {
-        progressCb(arg0, 100 * (outLenFinal - outLen) / outLenFinal); //Print progress
+      if (progressCb != NULL && progressPercentage != (100 * (outLenFinal - outLen) / outLenFinal)) {
+        progressPercentage = 100 * (outLenFinal - outLen) / outLenFinal;
+        progressCb(arg0, progressPercentage); //Print progress
       }
     }
     memcpy(prevBlock, tempBlock, 16);
@@ -428,6 +434,8 @@ void aes_decrypt_file(u8 *iv, FILE* infp, FILE* outfp, unsigned long long inLen,
   if (progressCb != NULL) {
     progressCb(arg0, 100); //Print 100% progress
   }
+  
+  free(outBuffer);
 }
 
 // CBC mode encryption
