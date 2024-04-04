@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
+<app version="1">
+	<name>RVLoader</name>
+	<coder>Aurelio</coder>
+	<version>2.0</version>
+	<release_date>20240404000000</release_date>
+	<short_description>Games loader for Wii portables</short_description>
+	<long_description></long_description>
+	<no_ios_reload/>
+	<ahb_access/>
+</app>

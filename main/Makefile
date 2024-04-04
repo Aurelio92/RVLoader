@@ -12,7 +12,7 @@ include $(DEVKITPPC)/wii_rules
 # Must be integers
 RVLOADERVERSION_MAJOR	:= 2
 RVLOADERVERSION_MINOR	:= 0
-RVLOADERVERSION_NAME	:= "beta 2"
+RVLOADERVERSION_NAME	:= ""
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
