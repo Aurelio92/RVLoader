@@ -25,6 +25,8 @@
 #include "hiidra.h"
 #include "ELF.h"
 #include "luasupport.h"
+#include "ash.h"
+#include "discAnim.h"
 
 #define COPY_LIMIT (128*1024)
 
@@ -58,6 +60,9 @@ static char logBuffer[HIIDRA_LOG_LINES][HIIDRA_LOG_LINE_LENGTH];
 static u32 logLineIndex;
 static u32 logNLines;
 static lwpq_t logQueue = 0;
+
+//Flag to manage HiidraThread log lines (needed for verbose hiidra loading)
+volatile bool hideLogLines = false;
 
 extern "C" {
     extern void* SYS_AllocArena2MemLo(u32 size,u32 align);
@@ -956,8 +961,6 @@ static void* bootHiidraThread(void* arg) {
         hcfg.TitleID = 0;
     }
 
-    patchFSAccess();
-
     if (!strncmp(&hcfg.GamePath[strlen(hcfg.GamePath) - 5], ".wbfs", 5) && (hcfg.Config & HIIDRA_CFG_USBSAVES)) {
         hiidraAddLogLine("Copying game data");
         copyWBFSData(hcfg.GamePath);
@@ -1081,7 +1084,9 @@ static void* bootHiidraThread(void* arg) {
 
     printf("Booting discloader\n");
     hiidraAddLogLine("Booting discloader");
-    bootDiscLoader();
+    insertDisc = 1; // This flag tells discAnim() to enter the last part of the animation where the disc is inserted in the tray
+    udelay(1000000); // 1 second delay to allow for the disc to enter the tray before loading bootDiscLoader which changes the scene
+    bootDiscLoader(hideLogLines);
     
     return NULL;
 }
@@ -1114,6 +1119,7 @@ void hiidraWaitForRedraw() {
 }
 
 u32 hiidraAddLogLine(const char* line, ...) {
+    if(hideLogLines) return 0;
     va_list args;
     u32 prevIndex;
 
@@ -1142,6 +1148,7 @@ u32 hiidraAddLogLine(const char* line, ...) {
 }
 
 void hiidraUpdateLogLine(u32 index, const char* line, ...) {
+    if(hideLogLines) return;
     va_list args;
     lockHiidraLogMutex();
     va_start(args, line);
@@ -1186,10 +1193,18 @@ void luaRegisterHiidraLib(lua_State* L) {
     lua_setglobal(L, "Hiidra");
 }
 
-int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::vector<uint32_t> cheats, bool forceReinstall) {
+int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::string gameIDString, std::vector<uint32_t> cheats, bool forceReinstall) {
     static lwp_t bootHiidraThreadHandle;
     static void* bootHiidraThreadArg = NULL;
     static u8* bootHiidraThreadStack = NULL;
+    int wiiLoad;
+    bool isWiiGame = false;
+    char wbfsPath[6] = "/wbfs";
+
+    patchFSAccess();
+    
+    mainConfig.getValue("WiiLoadScreen", &wiiLoad);
+    if(strncmp(hcfg.GamePath, wbfsPath, 5) == 0) isWiiGame = true;
 
     if (bootHiidraThreadArg != NULL) {
         return -1;
@@ -1208,13 +1223,20 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::vector<uint32_t> cheats, boo
     //Disable any controller input
     disableControllers();
 
-
     //Switch to Hiidra's loading screen
-    mainWindowSwitchElement("HiidraBootScreen");
-
-    enableControlledRedraw();
-
-    LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
+    if(!wiiLoad || !isWiiGame){
+		hideLogLines = false;
+        mainWindowSwitchElement("HiidraBootScreen");
+        enableControlledRedraw();
+        LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
+    }
+    else{
+		hideLogLines = true;
+        u8* arcData = ashExtract();
+        enableControlledRedraw();
+        LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
+        discAnim(arcData, gameIDString);
+    }
     
     return 0;
 }
