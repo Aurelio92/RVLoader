@@ -365,7 +365,7 @@ void bootGCGame(NIN_CFG cfg) {
     _CPU_ISR_Restore(level);
 }
 
-void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::vector<uint32_t> cheats, bool forceReinstall) {
+void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::string gameIDString, std::vector<uint32_t> cheats, bool forceReinstall) {
     static const char __conf_file[] ATTRIBUTE_ALIGN(32) = "/shared2/sys/SYSCONF";
     static const char __conf_txt_file[] ATTRIBUTE_ALIGN(32) = "/title/00000001/00000002/data/setting.txt";
     static u8 __conf_buffer[0x4000] ATTRIBUTE_ALIGN(32);
@@ -410,12 +410,28 @@ void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::vector<uint32_t> cheats, bo
 
     i2c_deinit();
 
-    bootHiidra(cfg, gameIDU32, cheats, forceReinstall);
+    bootHiidra(cfg, gameIDU32, gameIDString, cheats, forceReinstall);
 }
 
-void bootDiscLoader() {
+void bootDiscLoader(bool hideLog) {
     u32 level;
+	
+    struct __argv arg;
+    memset(&arg, 0, sizeof(arg));
+    arg.argvMagic = ARGV_MAGIC;
+    arg.length = 3; // \0 + '0' or '1' + \0
+    arg.commandLine = (char*)CMDL_ADDR;
+    arg.commandLine[0] = '\0';
+    if(hideLog) arg.commandLine[1] = '1';
+	else arg.commandLine[1] = '0';
+    arg.commandLine[2] = '\0';
+    arg.argv = &arg.commandLine;
+    arg.endARGV = arg.argv + 1;
+    DCFlushRange(arg.commandLine, arg.length);
 
+    memmove(ARGS_ADDR, &arg, sizeof(arg));
+    DCFlushRange(ARGS_ADDR, sizeof(arg));
+	
     memcpy(EXECUTE_ADDR, discloader_dol, discloader_dol_size);
     DCFlushRange(EXECUTE_ADDR, discloader_dol_size);
 
