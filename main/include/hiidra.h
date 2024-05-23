@@ -7,6 +7,9 @@
 #include <string>
 #include "hiidratypes.h"
 
+#define WII_LOAD_VERBOSE 0
+#define WII_LOAD_ANIM    1
+
 void forgeKernel(char* kernel, u32 kernelSize, const uint8_t** extraModules, u32 nExtraModules, u32 keepES, u32 keepFS);
 int getKernelSize(u32* kernelSize);
 int loadKernel(char* kernel, u32* kernelSize, u32* FoundVersion);
