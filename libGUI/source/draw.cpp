@@ -4,6 +4,42 @@
 #include <math.h>
 #include "draw.h"
 
+// texture header
+struct _tplimgheader {
+    u16 height;
+    u16 width;
+    u32 fmt;
+    void *data;
+    u32 wraps;
+    u32 wrapt;
+    u32 minfilter;
+    u32 magfilter;
+    f32 lodbias;
+    u8 edgelod;
+    u8 minlod;
+    u8 maxlod;
+    u8 unpacked;
+} ATTRIBUTE_PACKED;
+
+// texture palette header
+struct _tplpalheader {
+    u16 nitems;
+    u8 unpacked;
+    u8 pad;
+    u32 fmt;
+    void *data;
+} ATTRIBUTE_PACKED;
+
+typedef struct _tplpalheader TPLPalHeader;
+typedef struct _tplimgheader TPLImgHeader;
+
+struct _tpldesc {
+    TPLImgHeader *imghead;
+    TPLPalHeader *palhead;
+} ATTRIBUTE_PACKED;
+
+typedef struct _tpldesc TPLDescHeader;
+
 Texture createTextureARGB8(u8* buffer, u16 width, u16 height) {
     u16 x, y;
     u8* d;
@@ -180,7 +216,11 @@ Texture createTextureFromTPL(TPLFile *tdf, s32 id) {
     TPL_GetTextureInfo(tdf, id, NULL, &tex.realWidth, &tex.realHeight);
     tex.width = (tex.realWidth & 3) ? tex.realWidth + (4 - (tex.realWidth & 3)) : tex.realWidth;
     tex.height = (tex.realHeight & 3) ? tex.realHeight + (4 - (tex.realHeight & 3)) : tex.realHeight;
-    TPL_GetTexture(tdf, id, &tex.texObj);
+    if (!TPL_GetTexture(tdf, id, &tex.texObj)) {
+        TPLDescHeader* deschead = (TPLDescHeader*)tdf->texdesc;
+        TPLImgHeader* imghead = (TPLImgHeader*)deschead[id].imghead;
+        tex.data = (u8*)imghead->data;
+    }
     return tex;
 }
 
@@ -263,8 +303,25 @@ void drawTextureColor(int x, int y, u32 rgba, Texture tex) {
 }
 
 void drawTextureResized(int x, int y, int width, int height, Texture tex) {
-    //GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    //GX_SetCopyFilter(GX_FALSE, screenMode.sample_pattern, GX_FALSE, screenMode.vfilter);
+    f32 left, right, top, bottom;
+
+    if (width < 0) {
+        width = -width;
+        left = (f32)tex.realWidth / tex.width;
+        right = 0;
+    } else {
+        left = 0;
+        right = (f32)tex.realWidth / tex.width;
+    }
+
+    if (height < 0) {
+        height = -height;
+        top = (f32)tex.realHeight / tex.height;
+        bottom = 0;
+    } else {
+        top = 0;
+        bottom = (f32)tex.realHeight / tex.height;
+    }
 
     GX_LoadTexObj(&tex.texObj, GX_TEXMAP0);
 
@@ -274,24 +331,100 @@ void drawTextureResized(int x, int y, int width, int height, Texture tex) {
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
         GX_Position3f32(x, y, 0);
         GX_Color4u8(0xFF, 0xFF, 0xFF, 0xFF);
-        GX_TexCoord2f32(0, 0);
+        GX_TexCoord2f32(left, top);
 
         GX_Position3f32(x + width, y, 0);
         GX_Color4u8(0xFF, 0xFF, 0xFF, 0xFF);
-        GX_TexCoord2f32((f32)tex.realWidth / tex.width, 0);
+        GX_TexCoord2f32(right, top);
 
         GX_Position3f32(x + width, y + height, 0);
         GX_Color4u8(0xFF, 0xFF, 0xFF, 0xFF);
-        GX_TexCoord2f32((f32)tex.realWidth / tex.width, (f32)tex.realHeight / tex.height);
+        GX_TexCoord2f32(right, bottom);
 
         GX_Position3f32(x, y + height, 0);
         GX_Color4u8(0xFF, 0xFF, 0xFF, 0xFF);
-        GX_TexCoord2f32(0, (f32)tex.realHeight / tex.height);
+        GX_TexCoord2f32(left, bottom);
     GX_End();
 
     GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
     GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
 }
+
+void drawTextureResizedAlpha(int x, int y, int width, int height, int alpha, Texture tex) {
+    f32 left, right, top, bottom;
+
+    if (width < 0) {
+        width = -width;
+        left = (f32)tex.realWidth / tex.width;
+        right = 0;
+    } else {
+        left = 0;
+        right = (f32)tex.realWidth / tex.width;
+    }
+
+    if (height < 0) {
+        height = -height;
+        top = (f32)tex.realHeight / tex.height;
+        bottom = 0;
+    } else {
+        top = 0;
+        bottom = (f32)tex.realHeight / tex.height;
+    }
+
+    GX_LoadTexObj(&tex.texObj, GX_TEXMAP0);
+
+    GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+        GX_Position3f32(x, y, 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+        GX_TexCoord2f32(left, top);
+
+        GX_Position3f32(x + width, y, 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+        GX_TexCoord2f32(right, top);
+
+        GX_Position3f32(x + width, y + height, 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+        GX_TexCoord2f32(right, bottom);
+
+        GX_Position3f32(x, y + height, 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+        GX_TexCoord2f32(left, bottom);
+    GX_End();
+
+    GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
+}
+
+void drawTextureAlphaResizeTexCoords(int x, int y, int width, int height, int alpha, f32 texCoords[], Texture tex){
+    GX_LoadTexObj(&tex.texObj, GX_TEXMAP0);
+
+    GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+        GX_Position3f32(x, y, 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+        GX_TexCoord2f32(texCoords[0], texCoords[1]);
+
+        GX_Position3f32(x + width, y, 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+        GX_TexCoord2f32(texCoords[2], texCoords[3]);
+
+        GX_Position3f32(x + width, y + height, 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+        GX_TexCoord2f32(texCoords[4], texCoords[5]);
+
+        GX_Position3f32(x, y + height, 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, alpha);
+        GX_TexCoord2f32(texCoords[6], texCoords[7]);
+    GX_End();
+
+    GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
+}    
 
 void drawRectangle(int x, int y, int width, int height, u32 rgba) {
     GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
@@ -360,4 +493,9 @@ void drawLine(int x1, int y1, int x2, int y2, float width, u32 rgba) {
         GX_Position3f32(x2 - hwsin, y2 - hwcos, 0);
         GX_Color1u32(rgba);
     GX_End();
+}
+
+// Sets the texture coordinate wrapping mode for a given texture: GX_CLAMP, GX_REPEAT or GX_MIRROR
+void setTextureST(GXTexObj* texObj, u8 wrap_s, u8 wrap_t) {
+    GX_InitTexObjWrapMode(texObj,wrap_s,wrap_t);
 }
