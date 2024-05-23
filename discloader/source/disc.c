@@ -168,7 +168,7 @@ void __Disc_SetVMode(void)
         }
 
     /* Setup video  */
-    VIDEO_SetBlack(FALSE);
+    VIDEO_SetBlack(TRUE);
     VIDEO_Flush();
     VIDEO_WaitVSync();
     if (vmode->viTVMode & VI_NON_INTERLACE)
@@ -327,7 +327,7 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode)
     entry_point p_entry;
 
     s32 ret = WDVD_OpenPartition(offset, 0, 0, 0, Tmd_Buffer);
-    printf("WDVD_OpenPartition(%08llX) returned %d\n", (offset >> 2), ret);
+    if(!hideLines) printf("WDVD_OpenPartition(%08llX) returned %d\n", (offset >> 2), ret);
     if (ret < 0) return ret;
 
     /* Select an appropriate video mode */
@@ -338,8 +338,10 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode)
 
     /* Run apploader */
     ret = Apploader_Run(&p_entry);
-    printf("Apploader_Run() returned %d\n", ret);
-    printf("Entry point: %08X\n", (u32)p_entry);
+    if(!hideLines){
+	    printf("Apploader_Run() returned %d\n", ret);
+        printf("Entry point: %08X\n", (u32)p_entry);
+	}
 
     // free_wip();
     if (ret < 0) return ret;
@@ -419,7 +421,7 @@ s32 Disc_WiiBoot(u8 vidMode)
 
         /* Find game partition offset */
         s32 ret = __Disc_FindPartition(&offset);
-        printf("__Disc_FindPartition returned %d\n", ret);
+        if(!hideLines) printf("__Disc_FindPartition returned %d\n", ret);
         if (ret < 0) return ret;
 
         /* Boot partition */
