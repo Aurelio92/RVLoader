@@ -1225,13 +1225,13 @@ int bootHiidra(HIIDRA_CFG hcfg, u32 gameIDU32, std::string gameIDString, std::ve
 
     //Switch to Hiidra's loading screen
     if(!wiiLoad || !isWiiGame){
-		hideLogLines = false;
+	hideLogLines = false;
         mainWindowSwitchElement("HiidraBootScreen");
         enableControlledRedraw();
         LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
     }
     else{
-		hideLogLines = true;
+	hideLogLines = true;
         u8* arcData = ashExtract();
         enableControlledRedraw();
         LWP_CreateThread(&bootHiidraThreadHandle, bootHiidraThread, bootHiidraThreadArg, bootHiidraThreadStack, STACKSIZE, 50);
