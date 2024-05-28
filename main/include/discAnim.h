@@ -3,7 +3,7 @@
 
 #include <gccore.h>
 
-#define DISC_PATH	"/rvloader/discs"
+#define DISC_PATH   "/rvloader/discs"
 
 extern u8 insertDisc;
 

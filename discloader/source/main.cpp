@@ -27,17 +27,17 @@ int main(int argc, char **argv) {
     if(rmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
 
     printf("\x1b[2;0H");
-	if(argv[1][0] == '1'){
-	    hideLines = true;
-	    Disc_Init();
-		header = (struct discHdr *)memalign(32, sizeof(struct discHdr));
-		while (Disc_Open() < 0);
-		Disc_IsWii();
-		Disc_ReadHeader(header);
-		Disc_WiiBoot(0);
-	}
+    if(argv[1][0] == '1'){
+        hideLines = true;
+        Disc_Init();
+        header = (struct discHdr *)memalign(32, sizeof(struct discHdr));
+        while (Disc_Open() < 0);
+        Disc_IsWii();
+        Disc_ReadHeader(header);
+        Disc_WiiBoot(0);
+    }
     else{
-	    printf("Disc_Init() returned: %d\n", Disc_Init());
+        printf("Disc_Init() returned: %d\n", Disc_Init());
         header = (struct discHdr *)memalign(32, sizeof(struct discHdr));
         while (Disc_Open() < 0);
         //printf("Disc_Open() returned: %d\n", Disc_Open());
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
         printf("Disc_ReadHeader() returned: %d\n", Disc_ReadHeader(header));
         printf("Disc_WiiBoot() returned: %d\n", Disc_WiiBoot(0));
     }
-	
+    
     while(1) {
         VIDEO_WaitVSync();
     }

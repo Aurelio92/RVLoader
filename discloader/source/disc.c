@@ -339,9 +339,9 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode)
     /* Run apploader */
     ret = Apploader_Run(&p_entry);
     if(!hideLines){
-	    printf("Apploader_Run() returned %d\n", ret);
+        printf("Apploader_Run() returned %d\n", ret);
         printf("Entry point: %08X\n", (u32)p_entry);
-	}
+    }
 
     // free_wip();
     if (ret < 0) return ret;

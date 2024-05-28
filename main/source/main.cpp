@@ -277,14 +277,14 @@ int main(int argc, char **argv) {
 
     //Load main config
     mainConfig.open(MAINCONFIG_PATH);
-	
-	//Load anim for Wii game loading
-	int wiiLoad;
-	if (!mainConfig.getValue("WiiLoadScreen", &wiiLoad)) {
-		wiiLoad = WII_LOAD_VERBOSE;
-		mainConfig.setValue("WiiLoadScreen", wiiLoad);
-		mainConfig.save(MAINCONFIG_PATH);
-	}
+    
+    //Load anim for Wii game loading
+    int wiiLoad;
+    if (!mainConfig.getValue("WiiLoadScreen", &wiiLoad)) {
+        wiiLoad = WII_LOAD_VERBOSE;
+        mainConfig.setValue("WiiLoadScreen", wiiLoad);
+        mainConfig.save(MAINCONFIG_PATH);
+    }
     
     //Load theme
     std::string curTheme;

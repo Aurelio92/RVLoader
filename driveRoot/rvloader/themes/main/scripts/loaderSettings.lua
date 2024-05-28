@@ -19,7 +19,7 @@ function loaderSettings:init(font, lineHeight, columnWidth, sideMargin)
     self.availBackgrounds = Theme.getBackgrounds()
     self.curBackground = Theme.getLoadedBackground()
     self.curBackgroundId = 1
-	
+
     self.wiiLoadScreen = Theme.getWiiLoadingScreen()
     self.curWiiLoadScreen = self.wiiLoadScreen
 
@@ -99,10 +99,10 @@ function loaderSettings:handleInputs(onFocus)
                 Theme.setBackground(self.availBackgrounds[self.curBackgroundId])
                 Sys.reboot()
             end
-			if self.curWiiLoadScreen ~= self.wiiLoadScreen then
-				Theme.setWiiLoadingScreen(self.curWiiLoadScreen)
-				self.wiiLoadScreen = self.curWiiLoadScreen
-			end
+            if self.curWiiLoadScreen ~= self.wiiLoadScreen then
+                Theme.setWiiLoadingScreen(self.curWiiLoadScreen)
+                self.wiiLoadScreen = self.curWiiLoadScreen
+            end
         elseif self.selected == self.selectionEmu.bootPriiloader then
             Sys.bootPriiloader()
         elseif self.selected == self.selectionEmu.runInstaller then
@@ -121,7 +121,7 @@ function loaderSettings:handleInputs(onFocus)
             end
         elseif self.selected == self.selectionEmu.selLoad then
             if self.curWiiLoadScreen == 0 then
-			    self.curWiiLoadScreen = 1
+                self.curWiiLoadScreen = 1
             elseif self.curWiiLoadScreen == 1 then
                 self.curWiiLoadScreen = 0
             end

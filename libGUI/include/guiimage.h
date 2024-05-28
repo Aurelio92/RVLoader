@@ -21,10 +21,10 @@ class GuiImage : public GuiElement {
         void setSize(int _width, int _height);
         void draw();
         void draw(bool onFocus);
-		void drawAlpha(int alpha);
-		void drawTextureAlphaTexCoords(int alpha, f32 textCoords[]);
+        void drawAlpha(int alpha);
+        void drawTextureAlphaTexCoords(int alpha, f32 textCoords[]);
         Vector2 getDimensions() {return Vector2(width, height);};
 
         GuiImage& operator = (const GuiImage& img);
-		void setTextureWrap(int wrap_s, int wrap_t);
+        void setTextureWrap(int wrap_s, int wrap_t);
 };

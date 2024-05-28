@@ -415,15 +415,18 @@ void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::string gameIDString, std::v
 
 void bootDiscLoader(bool hideLog) {
     u32 level;
-	
+
     struct __argv arg;
     memset(&arg, 0, sizeof(arg));
     arg.argvMagic = ARGV_MAGIC;
     arg.length = 3; // \0 + '0' or '1' + \0
     arg.commandLine = (char*)CMDL_ADDR;
     arg.commandLine[0] = '\0';
-    if(hideLog) arg.commandLine[1] = '1';
-	else arg.commandLine[1] = '0';
+    if(hideLog) {
+        arg.commandLine[1] = '1';
+    } else {
+        arg.commandLine[1] = '0';
+    }
     arg.commandLine[2] = '\0';
     arg.argv = &arg.commandLine;
     arg.endARGV = arg.argv + 1;
@@ -431,7 +434,7 @@ void bootDiscLoader(bool hideLog) {
 
     memmove(ARGS_ADDR, &arg, sizeof(arg));
     DCFlushRange(ARGS_ADDR, sizeof(arg));
-	
+
     memcpy(EXECUTE_ADDR, discloader_dol, discloader_dol_size);
     DCFlushRange(EXECUTE_ADDR, discloader_dol_size);
 

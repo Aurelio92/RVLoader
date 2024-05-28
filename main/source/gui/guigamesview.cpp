@@ -660,7 +660,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
             strcpy(cfg.GamePath, gc.path.c_str());
 
-			bootWiiGame(cfg, gc.gameID, gc.gameIDString, cheats, forceReinstall);
+            bootWiiGame(cfg, gc.gameID, gc.gameIDString, cheats, forceReinstall);
         } else if (thisView->titlesType == GC_GAME) {
             int tempVal;
             NIN_CFG cfg;
