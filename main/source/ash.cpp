@@ -52,7 +52,7 @@ u8* ashExtract()
         ISFS_Close(in);
         ISFS_Deinitialize();
         free(ashData);
-        return 0;
+        return NULL;
     }
     DCInvalidateRange(ashData, size);
 
