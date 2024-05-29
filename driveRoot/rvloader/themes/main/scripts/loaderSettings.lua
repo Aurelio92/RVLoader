@@ -88,20 +88,24 @@ function loaderSettings:handleInputs(onFocus)
 
     if down.BUTTON_A then
         if self.selected == self.selectionEmu.saveConfig then
+            local hasToReboot = false
             if self.availThemes[self.curThemeId] ~= self.curTheme then
                 Theme.setTheme(self.availThemes[self.curThemeId])
-                Sys.reboot()
+                hasToReboot = true
             end
             if self.curBackgroundId == 0  and "None" ~= self.curBackground then
                 Theme.setBackground("None")
-                Sys.reboot()
+                hasToReboot = true
             elseif self.availBackgrounds[self.curBackgroundId] ~= self.curBackground then
                 Theme.setBackground(self.availBackgrounds[self.curBackgroundId])
-                Sys.reboot()
+                hasToReboot = true
             end
             if self.curWiiLoadScreen ~= self.wiiLoadScreen then
                 Theme.setWiiLoadingScreen(self.curWiiLoadScreen)
                 self.wiiLoadScreen = self.curWiiLoadScreen
+            end
+            if hasToReboot then
+                Sys.reboot()
             end
         elseif self.selected == self.selectionEmu.bootPriiloader then
             Sys.bootPriiloader()
