@@ -6,6 +6,7 @@
 
 GuiImage::GuiImage() {
     tex.data = NULL;
+    tplMode = false;
 }
 
 GuiImage::GuiImage(const char* filename) {
@@ -21,6 +22,7 @@ GuiImage::GuiImage(const char* filename) {
     char header[8]; // Check for support PNG header.
 
     tex.data = NULL;
+    tplMode = false;
 
     FILE* fp = NULL;
     u8* buffer;
@@ -144,16 +146,19 @@ GuiImage::GuiImage(const GuiImage& img) {
     tex = copyTexture(img.tex);
     width = img.width;
     height = img.height;
+    tplMode = false;
 }
 
 GuiImage::GuiImage(TPLFile *tdf, s32 id) {
     tex = createTextureFromTPL(tdf, id);
     width = tex.realWidth;
     height = tex.realHeight;
+    tplMode = true;
 }
 
 GuiImage::~GuiImage() {
-    if (tex.data != NULL) {
+    //tpl texture must be deallocated externally 
+    if (tex.data != NULL && !tplMode) {
         free(tex.data);
         tex.data = NULL;
     }
@@ -174,18 +179,41 @@ void GuiImage::draw() {
     draw(false);
 }
 
+void GuiImage::drawAlpha(int alpha) {
+    if (tex.data != NULL) {
+       drawTextureResizedAlpha(0, 0, width, height, alpha, tex);
+    }
+}
+
+void GuiImage::drawTextureAlphaTexCoords(int alpha, f32 textCoords[]) {
+    if (tex.data != NULL) {
+        drawTextureAlphaResizeTexCoords(0, 0, width, height, alpha, textCoords, tex);
+    }
+}
+
 GuiImage& GuiImage::operator = (const GuiImage& img) {
     if (this == &img) { //Copying itself?
         return *this;
     }
 
-    if (tex.data != NULL) {
+    if (tex.data != NULL && !tplMode) {
         free(tex.data);
     }
 
-    this->tex = copyTexture(img.tex);
+    if (img.tplMode) {
+        this->tex = img.tex;
+    } else {
+        this->tex = copyTexture(img.tex);
+    }
+
     this->width = img.width;
     this->height = img.height;
+    this->tplMode = img.tplMode;
 
     return *this;
+}
+
+// Sets the texture coordinate wrapping mode for a given texture: GX_CLAMP, GX_REPEAT or GX_MIRROR
+void GuiImage::setTextureWrap(int wrap_s, int wrap_t) {
+    setTextureST(&tex.texObj, wrap_s, wrap_t);
 }

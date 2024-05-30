@@ -4,7 +4,7 @@
 #include <malloc.h>
 #include <ogcsys.h>
 #include "wdvd.h"
-
+#include "disc.h"
 
 /* Constants */
 #define IOCTL_DI_READID         0x70
@@ -258,7 +258,7 @@ s32 WDVD_Read(void *buf, u32 len, u64 offset)
 {
     s32 ret;
 
-    printf("WDVD_Read(%08X, %08X, %08x)\n", buf, len, (u32)(offset >> 2));
+    if(!hideLines) printf("WDVD_Read(%08X, %08X, %08x)\n", buf, len, (u32)(offset >> 2));
 
     memset(inbuf, 0, sizeof(inbuf));
 

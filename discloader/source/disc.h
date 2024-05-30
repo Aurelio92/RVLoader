@@ -7,6 +7,8 @@
 #define ALT_DOL_DISC 2
 #define ALT_DOL_PLUS 3
 
+extern bool hideLines;
+
 /* Disc header structure */
 struct discHdr
 {
@@ -94,4 +96,3 @@ extern "C" {
 #endif /* __cplusplus */
 
 #endif
-
