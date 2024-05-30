@@ -22,17 +22,6 @@
 
 static u8 dolHeaderBuffer[0x100] ATTRIBUTE_ALIGN(32);
 
-typedef struct _SPatchCfg
-{
-    bool cheat;
-    u8 vidMode;
-    GXRModeObj *vmode;
-    bool vipatch;
-    bool countryString;
-    u8 patchVidModes;
-    u8 patchDiscCheck;
-} SPatchCfg;
-
 /* Apploader function pointers */
 typedef int   (*app_main)(void **dst, int *size, int *offset);
 typedef void  (*app_init)(void (*report)(const char *fmt, ...));
