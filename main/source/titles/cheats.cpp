@@ -20,6 +20,7 @@ void Cheat::parseFile(const std::string filename) {
     std::getline(infile, gameName);
 
     while (std::getline(infile, codeLine)) {
+        codeLine.erase(std::remove(codeLine.begin(), codeLine.end(), '\r'), codeLine.end()); //Remove tailing CR, if any
         std::istringstream lineStream(codeLine);
         uint32_t gecko1, gecko2;
 
