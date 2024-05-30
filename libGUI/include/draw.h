@@ -25,5 +25,6 @@ void drawTextureResizedAlpha(int x, int y, int width, int height, int alpha, Tex
 void drawRectangle(int x, int y, int width, int height, u32 rgba);
 void drawEmptyRectangle(int x, int y, int width, int height, float lineWidth, u32 rgba);
 void draw4ColorsRectangle(int x, int y, int width, int height, u32 rgba1, u32 rgba2, u32 rgba3, u32 rgba4);
+void drawRectangleFromCorners(f32* corners, u32 rgba);
 void drawLine(int x1, int y1, int x2, int y2, float width, u32 rgba);
 void setTextureST(GXTexObj* texObj, u8 wrap_s, u8 wrap_t);

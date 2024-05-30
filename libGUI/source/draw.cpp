@@ -471,6 +471,18 @@ void draw4ColorsRectangle(int x, int y, int width, int height, u32 rgba1, u32 rg
     GX_End();
 }
 
+void drawRectangleFromCorners(f32* corners, u32 rgba) {
+    GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
+
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+    for (int i = 0; i < 4; i++) {
+        GX_Position3f32(corners[2*i], corners[2*i+1], 0);
+        GX_Color1u32(rgba);
+    }
+    GX_End();
+}
+
 void drawLine(int x1, int y1, int x2, int y2, float width, u32 rgba) {
     GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
     GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
@@ -497,5 +509,5 @@ void drawLine(int x1, int y1, int x2, int y2, float width, u32 rgba) {
 
 // Sets the texture coordinate wrapping mode for a given texture: GX_CLAMP, GX_REPEAT or GX_MIRROR
 void setTextureST(GXTexObj* texObj, u8 wrap_s, u8 wrap_t) {
-    GX_InitTexObjWrapMode(texObj,wrap_s,wrap_t);
+    GX_InitTexObjWrapMode(texObj, wrap_s, wrap_t);
 }
