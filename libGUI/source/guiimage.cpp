@@ -169,14 +169,21 @@ void GuiImage::setSize(int _width, int _height) {
     height = _height;
 }
 
-void GuiImage::draw(bool onFocus) {
-    if (tex.data != NULL) {
-        drawTextureResized(0, 0, width, height, tex);
-    }
+void GuiImage::draw() {
+    draw(false, false, false);
 }
 
-void GuiImage::draw() {
-    draw(false);
+void GuiImage::draw(bool onFocus) {
+    draw(onFocus, false, false);
+}
+
+void GuiImage::draw(bool onFocus, bool xMirror, bool yMirror) {
+    int tempWidth = xMirror ? -width : width;
+    int tempHeight = yMirror ? -height : height;
+
+    if (tex.data != NULL) {
+        drawTextureResized(0, 0, tempWidth, tempHeight, tex);
+    }
 }
 
 void GuiImage::drawAlpha(int alpha) {

@@ -21,6 +21,7 @@ class GuiImage : public GuiElement {
         void setSize(int _width, int _height);
         void draw();
         void draw(bool onFocus);
+        void draw(bool onFocus, bool xMirror, bool yMirror);
         void drawAlpha(int alpha);
         void drawTextureAlphaTexCoords(int alpha, f32 textCoords[]);
         Vector2 getDimensions() {return Vector2(width, height);};

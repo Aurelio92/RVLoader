@@ -350,6 +350,8 @@ static int lua_Gfx_loadImage(lua_State* L) {
 }
 
 static int lua_Gfx_drawImage(lua_State* L) {
+    bool xMirror = false;
+    bool yMirror = false;
     int argc = lua_gettop(L);
     if (argc < 1) {
         return luaL_error(L, "wrong number of arguments");
@@ -358,9 +360,14 @@ static int lua_Gfx_drawImage(lua_State* L) {
     GuiImage* img = (GuiImage*)luaL_checkinteger(L, 1);
     if (img) {
         Gfx::pushMatrix();
-        if (argc == 3)
+        if (argc == 3 || argc == 5) {
             Gfx::translate(luaL_checknumber(L, 2), luaL_checknumber(L, 3));
-        img->draw();
+        }
+        if (argc == 5) {
+            xMirror = lua_toboolean(L, 4);
+            yMirror = lua_toboolean(L, 5);
+        }
+        img->draw(false, xMirror, yMirror);
         Gfx::popMatrix();
     }
 
