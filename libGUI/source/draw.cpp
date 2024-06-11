@@ -48,11 +48,13 @@ Texture createTextureARGB8(u8* buffer, u16 width, u16 height) {
     int idx;
     Texture tex;
 
-    tex.width = (width & 3) ? width + (4 - (width & 3)) : width;
-    tex.height = (height & 3) ? height + (4 - (height & 3)) : height;
+    tex.textureFormat = GX_TF_RGBA8;
+    tex.width = (width + 3) & ~3;
+    tex.height = (height + 3) & ~3;
     tex.realWidth = width;
     tex.realHeight = height;
-    tex.data = (u8*)memalign(32, tex.width * tex.height * 4);
+    tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u32));
+    tex.palette = NULL;
 
     d = tex.data;
     s = tex.data;
@@ -91,8 +93,8 @@ Texture createTextureARGB8(u8* buffer, u16 width, u16 height) {
         }
     }
 
-    GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    DCFlushRange(tex.data, tex.width * tex.height * 4);
+    DCFlushRange(tex.data, tex.width * tex.height * sizeof(u32));
+    GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
     return tex;
 }
@@ -105,11 +107,13 @@ Texture createTextureRGB8(u8* buffer, u16 width, u16 height) {
     int idx;
     Texture tex;
 
-    tex.width = (width & 3) ? width + (4 - (width & 3)) : width;
-    tex.height = (height & 3) ? height + (4 - (height & 3)) : height;
+    tex.textureFormat = GX_TF_RGBA8;
+    tex.width = (width + 3) & ~3;
+    tex.height = (height + 3) & ~3;
     tex.realWidth = width;
     tex.realHeight = height;
-    tex.data = (u8*)memalign(32, tex.width * tex.height * 4);
+    tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u32));
+    tex.palette = NULL;
 
     d = tex.data;
     s = tex.data;
@@ -148,8 +152,8 @@ Texture createTextureRGB8(u8* buffer, u16 width, u16 height) {
         }
     }
 
-    GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    DCFlushRange(tex.data, tex.width * tex.height * 4);
+    DCFlushRange(tex.data, tex.width * tex.height * sizeof(u32));
+    GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
     return tex;
 }
@@ -162,11 +166,13 @@ Texture createTextureA8(u8* buffer, u16 width, u16 height) {
     int idx;
     Texture tex;
 
-    tex.width = (width & 3) ? width + (4 - (width & 3)) : width;
-    tex.height = (height & 3) ? height + (4 - (height & 3)) : height;
+    tex.textureFormat = GX_TF_RGBA8;
+    tex.width = (width + 3) & ~3;
+    tex.height = (height + 3) & ~3;
     tex.realWidth = width;
     tex.realHeight = height;
-    tex.data = (u8*)memalign(32, tex.width * tex.height * 4);
+    tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u32));
+    tex.palette = NULL;
 
     d = tex.data;
     s = tex.data;
@@ -205,8 +211,50 @@ Texture createTextureA8(u8* buffer, u16 width, u16 height) {
         }
     }
 
-    GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    DCFlushRange(tex.data, tex.width * tex.height * 4);
+    DCFlushRange(tex.data, tex.width * tex.height * sizeof(u32));
+    GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE);
+
+    return tex;
+}
+
+Texture createTextureCI8(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u8 paletteNItems) {
+    Texture tex;
+
+    tex.textureFormat = GX_TF_CI8;
+    tex.width = (width + 7) & ~7;
+    tex.height = (height + 7) & ~7;
+    tex.realWidth = width;
+    tex.realHeight = height;
+    tex.data = (u8*)memalign(32, tex.width * tex.height);
+    tex.palette = (u8*)memalign(32, paletteNItems * sizeof(u16));
+    tex.paletteNItems = paletteNItems;
+
+    memcpy(tex.data, textureBuffer, width * height);
+    memcpy(tex.palette, paletteBuffer, paletteNItems * sizeof(u16));
+
+    DCFlushRange(tex.data, tex.width * tex.height);
+    DCFlushRange(tex.palette, paletteNItems * sizeof(u16));
+    GX_InitTlutObj(&tex.tLut, tex.palette, GX_TL_RGB5A3, tex.paletteNItems);
+    GX_InitTexObjCI(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE, 0);
+
+    return tex;
+}
+
+Texture createTextureRGB5A3(u8* textureBuffer, u16 width, u16 height) {
+    Texture tex;
+
+    tex.textureFormat = GX_TF_RGB5A3;
+    tex.width = (width + 3) & ~3;
+    tex.height = (height + 3) & ~3;
+    tex.realWidth = width;
+    tex.realHeight = height;
+    tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u16));
+    tex.palette = NULL;
+
+    memcpy(tex.data, textureBuffer, width * height);
+
+    DCFlushRange(tex.data, tex.width * tex.height * sizeof(u16));
+    GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
     return tex;
 }
@@ -231,11 +279,28 @@ Texture copyTexture(Texture src) {
     tex.height = src.height;
     tex.realWidth = src.realWidth;
     tex.realHeight = src.realHeight;
-    tex.data = (u8*)memalign(32, tex.width * tex.height * 4);
-    memcpy(tex.data, src.data, tex.width * tex.height * 4);
+    tex.textureFormat = src.textureFormat;
 
-    GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    DCFlushRange(tex.data, tex.width * tex.height * 4);
+    if (tex.textureFormat >= GX_TF_CI4) {
+        tex.data = (u8*)memalign(32, tex.width * tex.height);
+        memcpy(tex.data, src.data, tex.width * tex.height);
+        tex.palette = (u8*)memalign(32, src.paletteNItems * sizeof(u16));
+        memcpy(tex.palette, src.palette, src.paletteNItems * sizeof(u16));
+        tex.paletteNItems = src.paletteNItems;
+    } else {
+        tex.data = (u8*)memalign(32, tex.width * tex.height * 4);
+        memcpy(tex.data, src.data, tex.width * tex.height * 4);
+    }
+
+    if (tex.textureFormat >= GX_TF_CI4) {
+        DCFlushRange(tex.data, tex.width * tex.height);
+        DCFlushRange(tex.palette, tex.paletteNItems * sizeof(u16));
+        GX_InitTlutObj(&tex.tLut, tex.palette, GX_TL_RGB5A3, tex.paletteNItems);
+        GX_InitTexObjCI(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE, 0);
+    } else {
+        DCFlushRange(tex.data, tex.width * tex.height * 4);
+        GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    }
 
     return tex;
 }
@@ -245,6 +310,9 @@ void drawTexture(int x, int y, Texture tex) {
     //GX_SetCopyFilter(GX_FALSE, screenMode.sample_pattern, GX_FALSE, screenMode.vfilter);
 
     GX_LoadTexObj(&tex.texObj, GX_TEXMAP0);
+    if (tex.textureFormat >= GX_TF_CI4) {
+        GX_LoadTlut(&tex.tLut, 0);
+    }
 
     GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
@@ -276,6 +344,9 @@ void drawTextureColor(int x, int y, u32 rgba, Texture tex) {
     //GX_SetCopyFilter(GX_FALSE, screenMode.sample_pattern, GX_FALSE, screenMode.vfilter);
 
     GX_LoadTexObj(&tex.texObj, GX_TEXMAP0);
+    if (tex.textureFormat >= GX_TF_CI4) {
+        GX_LoadTlut(&tex.tLut, 0);
+    }
 
     GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
@@ -324,6 +395,9 @@ void drawTextureResized(int x, int y, int width, int height, Texture tex) {
     }
 
     GX_LoadTexObj(&tex.texObj, GX_TEXMAP0);
+    if (tex.textureFormat >= GX_TF_CI4) {
+        GX_LoadTlut(&tex.tLut, 0);
+    }
 
     GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
@@ -372,6 +446,9 @@ void drawTextureResizedAlpha(int x, int y, int width, int height, int alpha, Tex
     }
 
     GX_LoadTexObj(&tex.texObj, GX_TEXMAP0);
+    if (tex.textureFormat >= GX_TF_CI4) {
+        GX_LoadTlut(&tex.tLut, 0);
+    }
 
     GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
@@ -400,6 +477,9 @@ void drawTextureResizedAlpha(int x, int y, int width, int height, int alpha, Tex
 
 void drawTextureAlphaResizeTexCoords(int x, int y, int width, int height, int alpha, f32 texCoords[], Texture tex){
     GX_LoadTexObj(&tex.texObj, GX_TEXMAP0);
+    if (tex.textureFormat >= GX_TF_CI4) {
+        GX_LoadTlut(&tex.tLut, 0);
+    }
 
     GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
@@ -424,7 +504,38 @@ void drawTextureAlphaResizeTexCoords(int x, int y, int width, int height, int al
 
     GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
     GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
-}    
+}
+
+void drawTextureFromCorners(f32* corners, Texture tex) {
+    GX_LoadTexObj(&tex.texObj, GX_TEXMAP0);
+    if (tex.textureFormat >= GX_TF_CI4) {
+        GX_LoadTlut(&tex.tLut, 0);
+    }
+
+    GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+        GX_Position3f32(corners[0], corners[1], 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, 0xFF);
+        GX_TexCoord2f32(0, 0);
+
+        GX_Position3f32(corners[2], corners[3], 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, 0xFF);
+        GX_TexCoord2f32((f32)tex.realWidth / tex.width, 0);
+
+        GX_Position3f32(corners[4], corners[5], 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, 0xFF);
+        GX_TexCoord2f32((f32)tex.realWidth / tex.width, (f32)tex.realHeight / tex.height);
+
+        GX_Position3f32(corners[6], corners[7], 0);
+        GX_Color4u8(0xFF, 0xFF, 0xFF, 0xFF);
+        GX_TexCoord2f32(0, (f32)tex.realHeight / tex.height);
+    GX_End();
+
+    GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
+}
 
 void drawRectangle(int x, int y, int width, int height, u32 rgba) {
     GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);

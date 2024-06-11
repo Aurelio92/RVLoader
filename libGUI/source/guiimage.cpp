@@ -142,6 +142,20 @@ GuiImage::GuiImage(const char* filename) {
     png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 }
 
+GuiImage::GuiImage(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u8 paletteNItems) {
+    tex = createTextureCI8(textureBuffer, paletteBuffer, width, height, paletteNItems);
+    width = width;
+    height = height;
+    tplMode = false;
+}
+
+GuiImage::GuiImage(u8* textureBuffer, u16 width, u16 height) {
+    tex = createTextureRGB5A3(textureBuffer, width, height);
+    width = width;
+    height = height;
+    tplMode = false;
+}
+
 GuiImage::GuiImage(const GuiImage& img) {
     tex = copyTexture(img.tex);
     width = img.width;
@@ -158,9 +172,15 @@ GuiImage::GuiImage(TPLFile *tdf, s32 id) {
 
 GuiImage::~GuiImage() {
     //tpl texture must be deallocated externally 
-    if (tex.data != NULL && !tplMode) {
-        free(tex.data);
+    if (!tplMode) {
+        if (tex.data != NULL) {
+            free(tex.data);
+        }
+        if (tex.palette != NULL) {
+            free(tex.palette);
+        }
         tex.data = NULL;
+        tex.palette = NULL;
     }
 }
 
@@ -198,13 +218,24 @@ void GuiImage::drawTextureAlphaTexCoords(int alpha, f32 textCoords[]) {
     }
 }
 
+void GuiImage::drawFromCorners(f32* corners) {
+    if (tex.data != NULL) {
+        drawTextureFromCorners(corners, tex);
+    }
+}
+
 GuiImage& GuiImage::operator = (const GuiImage& img) {
     if (this == &img) { //Copying itself?
         return *this;
     }
 
-    if (tex.data != NULL && !tplMode) {
-        free(tex.data);
+    if (!tplMode) {
+        if (tex.data != NULL) {
+            free(tex.data);
+        }
+        if (tex.palette != NULL) {
+            free(tex.palette);
+        }
     }
 
     if (img.tplMode) {
