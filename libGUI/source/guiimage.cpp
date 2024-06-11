@@ -142,7 +142,7 @@ GuiImage::GuiImage(const char* filename) {
     png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 }
 
-GuiImage::GuiImage(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u8 paletteNItems) {
+GuiImage::GuiImage(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u32 paletteNItems) {
     tex = createTextureCI8(textureBuffer, paletteBuffer, width, height, paletteNItems);
     width = width;
     height = height;

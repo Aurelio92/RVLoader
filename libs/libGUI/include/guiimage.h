@@ -12,7 +12,7 @@ class GuiImage : public GuiElement {
     public:
         GuiImage();
         GuiImage(const char* filename);
-        GuiImage(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u8 paletteNItems);
+        GuiImage(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u32 paletteNItems);
         GuiImage(u8* textureBuffer, u16 width, u16 height);
         GuiImage(TPLFile* tdf, s32 id);
         GuiImage(const GuiImage& img);

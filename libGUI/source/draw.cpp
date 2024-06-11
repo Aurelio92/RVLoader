@@ -217,7 +217,7 @@ Texture createTextureA8(u8* buffer, u16 width, u16 height) {
     return tex;
 }
 
-Texture createTextureCI8(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u8 paletteNItems) {
+Texture createTextureCI8(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u32 paletteNItems) {
     Texture tex;
 
     tex.textureFormat = GX_TF_CI8;

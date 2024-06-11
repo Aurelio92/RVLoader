@@ -19,7 +19,7 @@ Texture createTextureARGB8(u8* buffer, u16 width, u16 height);
 Texture createTextureRGB8(u8* buffer, u16 width, u16 height);
 Texture createTextureA8(u8* buffer, u16 width, u16 height);
 Texture createTextureFromTPL(TPLFile *tdf, s32 id);
-Texture createTextureCI8(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u8 paletteNItems);
+Texture createTextureCI8(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u32 paletteNItems);
 Texture createTextureRGB5A3(u8* textureBuffer, u16 width, u16 height);
 Texture copyTexture(Texture src);
 
