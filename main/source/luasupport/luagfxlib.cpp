@@ -66,14 +66,12 @@ static int lua_Gfx_drawRectangleFromCorners(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
     
-    
     luaL_checktype(L, 1, LUA_TTABLE);
     if (lua_rawlen(L, 1) != 8) {
         return luaL_error(L, "drawRectangleFromCorners first argument must have 8 elements");
     }
 
     for (int i = 1; i <= 8; i++) {
-        char fieldName[2] = "0";
         lua_pushnumber(L, i);
         lua_gettable(L, 1);
 
@@ -84,7 +82,6 @@ static int lua_Gfx_drawRectangleFromCorners(lua_State* L) {
         coordinates[i-1] = lua_tonumber(L, -1);
         lua_pop(L, 1);
     }
-    //lua_pop(L, 9); //pop table
 
     u32 rgba = luaL_checkinteger(L, 2);
 
