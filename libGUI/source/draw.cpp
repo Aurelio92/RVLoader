@@ -251,7 +251,7 @@ Texture createTextureRGB5A3(u8* textureBuffer, u16 width, u16 height) {
     tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u16));
     tex.palette = NULL;
 
-    memcpy(tex.data, textureBuffer, width * height);
+    memcpy(tex.data, textureBuffer, width * height * sizeof(u16));
 
     DCFlushRange(tex.data, tex.width * tex.height * sizeof(u16));
     GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE);
@@ -287,9 +287,14 @@ Texture copyTexture(Texture src) {
         tex.palette = (u8*)memalign(32, src.paletteNItems * sizeof(u16));
         memcpy(tex.palette, src.palette, src.paletteNItems * sizeof(u16));
         tex.paletteNItems = src.paletteNItems;
+    } else if (tex.textureFormat == GX_TF_RGB5A3) {
+        tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u16));
+        memcpy(tex.data, src.data, tex.width * tex.height * sizeof(u16));
+        tex.palette = NULL;
     } else {
-        tex.data = (u8*)memalign(32, tex.width * tex.height * 4);
-        memcpy(tex.data, src.data, tex.width * tex.height * 4);
+        tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u32));
+        memcpy(tex.data, src.data, tex.width * tex.height * sizeof(u32));
+        tex.palette = NULL;
     }
 
     if (tex.textureFormat >= GX_TF_CI4) {
@@ -297,8 +302,11 @@ Texture copyTexture(Texture src) {
         DCFlushRange(tex.palette, tex.paletteNItems * sizeof(u16));
         GX_InitTlutObj(&tex.tLut, tex.palette, GX_TL_RGB5A3, tex.paletteNItems);
         GX_InitTexObjCI(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE, 0);
+    } else if (tex.textureFormat == GX_TF_RGB5A3) {
+        DCFlushRange(tex.data, tex.width * tex.height * sizeof(u16));
+        GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE);
     } else {
-        DCFlushRange(tex.data, tex.width * tex.height * 4);
+        DCFlushRange(tex.data, tex.width * tex.height * sizeof(u32));
         GX_InitTexObj(&tex.texObj, tex.data, tex.width, tex.height, tex.textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE);
     }
 

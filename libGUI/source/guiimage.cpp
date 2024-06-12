@@ -6,6 +6,7 @@
 
 GuiImage::GuiImage() {
     tex.data = NULL;
+    tex.palette = NULL;
     tplMode = false;
 }
 
@@ -144,15 +145,15 @@ GuiImage::GuiImage(const char* filename) {
 
 GuiImage::GuiImage(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 height, u32 paletteNItems) {
     tex = createTextureCI8(textureBuffer, paletteBuffer, width, height, paletteNItems);
-    width = width;
-    height = height;
+    this->width = width;
+    this->height = height;
     tplMode = false;
 }
 
 GuiImage::GuiImage(u8* textureBuffer, u16 width, u16 height) {
     tex = createTextureRGB5A3(textureBuffer, width, height);
-    width = width;
-    height = height;
+    this->width = width;
+    this->height = height;
     tplMode = false;
 }
 
