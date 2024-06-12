@@ -218,6 +218,7 @@ class GuiGamesView : public GuiLuaElement {
 
         static int lua_setCoverSize(lua_State* L);
         static int lua_drawGameCover(lua_State* L);
+        static int lua_drawGameSaveIcon(lua_State* L);
         static int lua_getGamesCount(lua_State* L);
         static int lua_getGameName(lua_State* L);
         static int lua_getGamesType(lua_State* L);

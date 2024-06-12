@@ -71,12 +71,13 @@ void GuiGamesView::initLUA() {
 
     //Register GuiGamesView library
     static const luaL_Reg GuiGamesView_functions[] = {
-        {"setCoverSize", GuiGamesView::lua_setCoverSize},
-        {"drawGameCover", GuiGamesView::lua_drawGameCover},
-        {"getGamesCount", GuiGamesView::lua_getGamesCount},
-        {"getGameName", GuiGamesView::lua_getGameName},
-        {"getGamesType", GuiGamesView::lua_getGamesType},
-        {"bootGame", GuiGamesView::lua_bootGame},
+        {"setCoverSize", lua_setCoverSize},
+        {"drawGameCover", lua_drawGameCover},
+        {"drawGameSaveIcon", lua_drawGameSaveIcon},
+        {"getGamesCount", lua_getGamesCount},
+        {"getGameName", lua_getGameName},
+        {"getGamesType", lua_getGamesType},
+        {"bootGame", lua_bootGame},
         {"openGameConfig", lua_openGameConfig},
         {"saveGameConfig", lua_saveGameConfig},
         {"setGameConfigValue", lua_setGameConfigValue},
@@ -499,6 +500,74 @@ int GuiGamesView::lua_drawGameCover(lua_State* L) {
         Gfx::popMatrix();
     } catch (std::out_of_range& e) {
 
+    }
+
+    return 0;
+}
+
+int GuiGamesView::lua_drawGameSaveIcon(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 2 && argc != 3) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    //Game index is always the last argument
+    u32 idx = luaL_checkinteger(L, argc);
+
+    lua_getglobal(L, "_coverWidth");
+    int* coverWidth = (int*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+    lua_getglobal(L, "_coverHeight");
+    int* coverHeight = (int*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    //Get games list
+    lua_getglobal(L, "_gamesList");
+    std::vector<GameContainer>* gamesList = (std::vector<GameContainer>*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    lua_getglobal(L, "_this");
+    GuiGamesView* thisView = (GuiGamesView*)lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    if (argc == 2) {
+        f32 coordinates[8];
+        luaL_checktype(L, 1, LUA_TTABLE);
+        if (lua_rawlen(L, 1) != 8) {
+            return luaL_error(L, "drawRectangleFromCorners first argument must have 8 elements");
+        }
+
+        for (int i = 1; i <= 8; i++) {
+            lua_pushnumber(L, i);
+            lua_gettable(L, 1);
+
+            if (!lua_isnumber(L, -1)) // optional check
+                return luaL_error(L, "item %d invalid (number required, got %s)",
+                                i, luaL_typename(L, -1));
+
+            coordinates[i-1] = lua_tonumber(L, -1);
+            lua_pop(L, 1);
+        }
+
+        try {
+            GameContainer& gc = gamesList->at(idx);
+            gc.save.drawIcon(coordinates);
+        } catch (std::out_of_range& e) {
+
+        }
+    } else {
+        int x = luaL_checkinteger(L, 1);
+        int y = luaL_checkinteger(L, 2);
+
+        try {
+            GameContainer& gc = gamesList->at(idx);
+            Gfx::pushMatrix();
+            Gfx::translate(x, y);
+
+            Gfx::popMatrix();
+        } catch (std::out_of_range& e) {
+
+        }
     }
 
     return 0;
