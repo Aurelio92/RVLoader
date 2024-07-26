@@ -2,8 +2,8 @@
 <app version="1">
 	<name>RVLoader</name>
 	<coder>Aurelio</coder>
-	<version>2.0</version>
-	<release_date>20240404000000</release_date>
+	<version>2.1</version>
+	<release_date>20240726000000</release_date>
 	<short_description>Games loader for Wii portables</short_description>
 	<long_description></long_description>
 	<no_ios_reload/>

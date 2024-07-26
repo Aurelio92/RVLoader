@@ -11,7 +11,7 @@ include $(DEVKITPPC)/wii_rules
 
 # Must be integers
 RVLOADERVERSION_MAJOR	:= 2
-RVLOADERVERSION_MINOR	:= 0
+RVLOADERVERSION_MINOR	:= 1
 RVLOADERVERSION_NAME	:= ""
 
 #---------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ INCLUDES	:=	include include/titles include/gui \
 
 CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DLUA_32BITS \
 			-DVER_MAJOR=${RVLOADERVERSION_MAJOR} -DVER_MINOR=${RVLOADERVERSION_MINOR} -DVER_NAME=\"${RVLOADERVERSION_NAME}\"
-CXXFLAGS	=	$(CFLAGS) -std=c++11
+CXXFLAGS	=	$(CFLAGS) -std=c++17
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 
