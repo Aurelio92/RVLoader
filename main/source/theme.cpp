@@ -84,6 +84,34 @@ static int lua_Theme_getLoadedTheme(lua_State* L) {
     return 1;
 }
 
+static int lua_Theme_getWiiLoadingScreen(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    int curLoadScreen;
+    if(mainConfig.getValue("WiiLoadScreen", &curLoadScreen)){
+        lua_pushnumber(L, (int) curLoadScreen);
+    } else {
+        lua_pushnumber(L, 0);
+    }
+
+    return 1;
+}
+
+static int lua_Theme_setWiiLoadingScreen(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 1) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+    
+    mainConfig.setValue("WiiLoadScreen", luaL_checkinteger(L, 1));
+    mainConfig.save(MAINCONFIG_PATH);
+
+    return 0;
+}
+
 static int lua_Theme_setTheme(lua_State* L) {
     int argc = lua_gettop(L);
     if (argc != 1) {
@@ -157,6 +185,8 @@ static const luaL_Reg Theme_functions[] = {
     {"sendMessage", lua_Theme_sendMessage},
     {"getThemes", lua_Theme_getThemes},
     {"getLoadedTheme", lua_Theme_getLoadedTheme},
+    {"getWiiLoadingScreen", lua_Theme_getWiiLoadingScreen},
+    {"setWiiLoadingScreen", lua_Theme_setWiiLoadingScreen},
     {"setTheme", lua_Theme_setTheme},
     {"getBackgrounds", lua_Theme_getBackgrounds},
     {"getLoadedBackground", lua_Theme_getLoadedBackground},
