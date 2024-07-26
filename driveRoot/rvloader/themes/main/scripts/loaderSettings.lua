@@ -56,7 +56,7 @@ function loaderSettings:draw(onFocus)
     else
         self.menuSystem:printLineValue(self.availBackgrounds[self.curBackgroundId], self.availBackgrounds[self.curBackgroundId] ~= self.curBackground)
     end
-    self.menuSystem:printLine("Wii game loading screen:", self.selected.id)
+    self.menuSystem:printLine("Wii game loading screen", self.selected.id)
     if self.curWiiLoadScreen == 0 then
         self.menuSystem:printLineValue("Default (verbose)", self.curWiiLoadScreen ~= self.wiiLoadScreen)
     elseif self.curWiiLoadScreen == 1 then
@@ -87,7 +87,13 @@ function loaderSettings:handleInputs(onFocus)
     end
 
     if down.BUTTON_A then
-        if self.selected == self.selectionEmu.saveConfig then
+        if self.selected == self.selectionEmu.selLoad then
+            if self.curWiiLoadScreen == 0 then
+                self.curWiiLoadScreen = 1
+            elseif self.curWiiLoadScreen == 1 then
+                self.curWiiLoadScreen = 0
+            end
+        elseif self.selected == self.selectionEmu.saveConfig then
             local hasToReboot = false
             if self.availThemes[self.curThemeId] ~= self.curTheme then
                 Theme.setTheme(self.availThemes[self.curThemeId])
