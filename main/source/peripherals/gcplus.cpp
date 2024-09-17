@@ -79,6 +79,10 @@ namespace GCPlus {
     }
 
     bool isV2() {
+        if (isRunningOnDolphin()) {
+            return false;
+        }
+
         if (!GCPMutex)
             LWP_MutexInit(&GCPMutex, true);
         LWP_MutexLock(GCPMutex);

@@ -53,6 +53,8 @@ extern "C" {
 #define IOS_PATCH_END   (u16*)0x94000000
 #define HW_DIFLAGS      0x0D800180
 
+extern const DISC_INTERFACE __io_wiisd;
+
 static bool _fatInitialized = false;
 
 static bool patchAHBPROT() {
@@ -179,17 +181,29 @@ bool initFAT() {
         return true;
     }*/
 
-    for (int i = 0; i < 50 && !_fatInitialized; i++) {
-        printf("Trying to mount FAT\n");
-        if (fatMountSimple("usb", &__io_custom_usbstorage)) {
-            printf("Success\n");
-            chdir("usb:/");
-            _fatInitialized = true;
-            return true;
+    if (isRunningOnDolphin()) {
+        //Try SD mounting
+        if (!_fatInitialized) {
+            if (fatMountSimple("sd", &__io_wiisd)) {
+                printf("Falling back to SD\n");
+                chdir("sd:/");
+                _fatInitialized = true;
+                return true;
+            }
         }
-        printf("Wait\n");
-        udelay(100000); //100ms
-        printf("Failed\n");
+    } else {
+        for (int i = 0; i < 50 && !_fatInitialized; i++) {
+            printf("Trying to mount FAT\n");
+            if (fatMountSimple("usb", &__io_custom_usbstorage)) {
+                printf("Success\n");
+                chdir("usb:/");
+                _fatInitialized = true;
+                return true;
+            }
+            printf("Wait\n");
+            udelay(100000); //100ms
+            printf("Failed\n");
+        }
     }
 
     //Wait up to 2 seconds

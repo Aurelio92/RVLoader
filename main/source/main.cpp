@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gccore.h>
+#include <aesndlib.h>
 #include <fat.h>
 #include <wiiuse/wpad.h>
 #include <ogc/machine/processor.h>
@@ -9,7 +10,6 @@
 #include <libgui.h>
 #include <mxml.h>
 #include <lua.hpp>
-
 #include <lauxlib.h>
 
 #include <vector>
@@ -61,6 +61,7 @@ static bool controllersEnabled;
 static bool controlledRedraw = false;
 static bool hasToShutdown = false;
 static lwpq_t redrawQueue;
+static bool runningOnDolphin = false;
 
 extern "C" {
     extern void udelay(int us);
@@ -116,10 +117,27 @@ void WMPowerButtonCB(s32 chan) {
     shutdownCB();
 }
 
+bool isRunningOnDolphin() {
+    return runningOnDolphin;
+}
+
 int main(int argc, char **argv) {
     TPLFile mainTDF;
     float mem1Max = (float)SYS_GetArena1Size() / 1048576.0f;
     float mem2Max = (float)SYS_GetArena2Size() / 1048576.0f;
+
+    if (usb_isgeckoalive(EXI_CHANNEL_1)) {
+        CON_EnableGecko(EXI_CHANNEL_1, 1);
+    }
+
+    printf("Initializing RVLoader\n");
+
+    //Detect if we are running under dolphin
+    s32 dolphinFd = IOS_Open("/dev/dolphin", 0);
+    if (dolphinFd >= 0) {
+        IOS_Close(dolphinFd);
+        runningOnDolphin = true;
+    }
 
     LWP_InitQueue(&redrawQueue);
     LWP_MutexInit(&SIMutex, true);
@@ -133,15 +151,13 @@ int main(int argc, char **argv) {
     ISFS_Close(vgaFd);
     ISFS_Deinitialize();
 
+    printf("Checking if PMS2 is connected\n");
+
     //PMS2 includes on-board resistors on i2c lines, allowing full open-drain control
     if (PMS2::isConnected())
         i2c_setMode(I2C_MODE_OPENDRAIN);
     else
         i2c_setMode(I2C_MODE_PUSHPULL);
-
-    if (usb_isgeckoalive(EXI_CHANNEL_1)) {
-        CON_EnableGecko(EXI_CHANNEL_1, 1);
-    }
 
     //Set environment for lua interpreter (used by 'require')
     setenv("LUA_PATH", "./?.luac;./?.lua", 1);
@@ -153,6 +169,7 @@ int main(int argc, char **argv) {
     safeMenu();
     Gfx::init();
     Gfx::setClearColor(0x2D, 0x2D, 0x2D);
+    AESND_Init();
 
     SYS_SetPowerCallback(shutdownCB);
     WPAD_SetPowerButtonCallback(WMPowerButtonCB);

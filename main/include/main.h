@@ -24,3 +24,4 @@ void mainWindowSwitchElement(const char* el);
 Vector2 getScreenSize();
 bool isVGAEnabled();
 void setVGAEnabled(bool en);
+bool isRunningOnDolphin();

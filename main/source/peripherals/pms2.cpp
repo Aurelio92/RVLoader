@@ -8,6 +8,7 @@
 #include <ogc/lwp_threads.h>
 #include "i2c.h"
 #include "pms2.h"
+#include "main.h"
 
 #define PMS2_ADDR (0x20 << 1)
 #define PMS2L_ADDR (0x21 << 1)
@@ -257,6 +258,10 @@ namespace PMS2 {
     }
 
     bool isConnected() {
+        if (isRunningOnDolphin()) {
+            return false;
+        }
+
         u32 level;
         u8 i2cRet;
         static bool firstTime = true;
