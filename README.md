@@ -162,3 +162,10 @@ Covers are 160px × 224px PNG files and need to be named the same as the game ID
 ## Support
 
 This project is completely funded by the amazing donations and support I get on my Patreon page. If you'd like to contribute to the cause, you can check my page here: https://www.patreon.com/aureliomannara (I know, shameless plug).
+
+## Special thanks
+* [marcan](https://github.com/marcan), for answering any of the questions I had on Wii's architecture and IOSes
+* CrashBash, for designing the amazing masterpiece that is the boot logo of Hiidra
+* Any developer who has released stuff for the Wii or contributed to its reverse engineering
+* [HTV04](https://github.com/HTV04), for developing [audiogc](https://github.com/HTV04/audiogc)
+* All my Patreon supporters
