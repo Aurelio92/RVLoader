@@ -12,6 +12,9 @@ void luaSetGuiParentWindow(GuiWindow* win);
 void luaRegisterCustomLibs(lua_State* L);
 
 void luaRegisterGfxLib(lua_State* L);
+namespace LUALibSfx {
+    void registerLibrary(lua_State* L);
+};
 void luaRegisterTimeLib(lua_State* L);
 void luaRegisterPadLib(lua_State* L);
 void luaRegisterGuiLib(lua_State* L);

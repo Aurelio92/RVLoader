@@ -35,7 +35,7 @@ INCLUDES	:=	include include/titles include/gui \
 
 CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DLUA_32BITS \
 			-DVER_MAJOR=${RVLOADERVERSION_MAJOR} -DVER_MINOR=${RVLOADERVERSION_MINOR} -DVER_NAME=\"${RVLOADERVERSION_NAME}\"
-CXXFLAGS	=	$(CFLAGS) -std=c++17
+CXXFLAGS	=	$(CFLAGS) -std=c++20
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 

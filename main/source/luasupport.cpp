@@ -23,6 +23,7 @@ void luaSetArrayStringField(lua_State* L, int index, const char* value) {
 
 void luaRegisterCustomLibs(lua_State* L) {
     luaRegisterGfxLib(L);
+    LUALibSfx::registerLibrary(L);
     luaRegisterTimeLib(L);
     luaRegisterPadLib(L);
     luaRegisterGuiLib(L);
