@@ -1,0 +1,165 @@
+
+Discarded input sections
+
+ .text          0x00000000        0x0 main.dol.o
+ .data          0x00000000        0x0 main.dol.o
+ .bss           0x00000000        0x0 main.dol.o
+ .text          0x00000000        0x0 start.o
+ .data          0x00000000        0x0 start.o
+ .bss           0x00000000        0x0 start.o
+ .data          0x00000000        0x0 system_asm.o
+ .bss           0x00000000        0x0 system_asm.o
+ .data          0x00000000        0x0 cache_asm.o
+ .bss           0x00000000        0x0 cache_asm.o
+ .text          0x00000000        0x0 main.o
+ .data          0x00000000        0x0 main.o
+ .bss           0x00000000        0x0 main.o
+ .eh_frame      0x00000000       0x94 main.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+                0x80003400                        __base_addr = 0x80003400
+                0x80003400                        . = __base_addr
+
+.init           0x80003400       0xbc
+ *(.init)
+ .init          0x80003400       0xbc start.o
+                0x80003400                _start
+                0x800034bc                        . = ALIGN (0x4)
+
+.text           0x800034bc      0xaf8
+ *(.text.*)
+ .text._memcpy  0x800034bc       0x28 main.o
+                0x800034bc                _memcpy
+ .text._memset  0x800034e4       0x20 main.o
+                0x800034e4                _memset
+ .text.relocateDol
+                0x80003504      0x1a8 main.o
+                0x80003504                relocateDol
+ .text._main    0x800036ac       0x38 main.o
+                0x800036ac                _main
+ *(.gnu.warning)
+ *(.gnu.linkonce.t*)
+ *(.glue_7)
+ *(.glue_7t)
+                0x800036e4                        . = ALIGN (0x4)
+ .text          0x800036e4      0x3dc system_asm.o
+                0x800036e4                __realmode
+                0x800036fc                __configBATS
+                0x8000382c                __InitFPRS
+                0x80003958                __InitPS
+                0x800039b4                __InitCache
+                0x80003a0c                __InitSystem
+                0x80003a94                __InitBATS
+ .text          0x80003ac0      0x4f4 cache_asm.o
+                0x80003ac0                DCFlashInvalidate
+                0x80003ad4                DCEnable
+                0x80003ae8                DCDisable
+                0x80003afc                DCFreeze
+                0x80003b10                DCUnfreeze
+                0x80003b24                DCTouchLoad
+                0x80003b2c                DCBlockZero
+                0x80003b34                DCBlockStore
+                0x80003b3c                DCBlockFlush
+                0x80003b44                DCBlockInvalidate
+                0x80003b4c                DCInvalidateRange
+                0x80003b7c                DCFlushRange
+                0x80003bb0                DCStoreRange
+                0x80003be4                DCFlushRangeNoSync
+                0x80003c14                DCStoreRangeNoSync
+                0x80003c44                DCZeroRange
+                0x80003c74                DCTouchRange
+                0x80003ca4                ICInvalidateRange
+                0x80003cdc                ICFlashInvalidate
+                0x80003cf0                ICEnable
+                0x80003d04                ICDisable
+                0x80003d18                ICFreeze
+                0x80003d2c                ICUnfreeze
+                0x80003d40                ICBlockInvalidate
+                0x80003d48                ICSync
+                0x80003d50                L2Init
+                0x80003d98                L2Enable
+                0x80003db4                L2Disable
+                0x80003dcc                L2GlobalInvalidate
+                0x80003e24                __LCEnable
+                0x80003ef0                LCDisable
+                0x80003f18                LCAllocOneTag
+                0x80003f2c                LCAllocTags
+                0x80003f6c                LCLoadBlocks
+                0x80003f90                LCStoreBlocks
+                0x80003fb4                        __text_end = .
+
+.glink          0x80003fb4        0x0
+ .glink         0x80003fb4        0x0 start.o
+
+.rodata         0x80003fc0   0x3d2b80
+ *(.rodata)
+ *all.rodata*(*)
+ *(.roda)
+ *(.rodata.*)
+ .rodata.main_dol
+                0x80003fc0   0x3d2b80 main.dol.o
+                0x80003fc0                main_dol
+                0x803d6b40                main_dol_end
+ *(.gnu.linkonce.r*)
+                0x803d6b40                        . = ALIGN (0x4)
+
+.eh_frame       0x803d6b40        0x0
+ .eh_frame      0x803d6b40        0x0 start.o
+
+.sdata2         0x803d6b40        0x0
+ .sdata2        0x803d6b40        0x0 start.o
+
+.eh_frame_hdr   0x803d6b40        0x0
+ .eh_frame_hdr  0x803d6b40        0x0 main.o
+
+.rela.dyn       0x803d6b40        0x0
+ .rela.iplt     0x803d6b40        0x0 start.o
+
+.data           0x803d6b40        0x0
+ *(.data)
+ *(.data.*)
+ *(.gnu.linkonce.d*)
+                0x803d6b40                        . = ALIGN (0x4)
+
+.branch_lt      0x803d6b40        0x0
+ .branch_lt     0x803d6b40        0x0 start.o
+
+.sdata          0x803d6b40        0x0
+ .sdata         0x803d6b40        0x0 start.o
+
+.bss            0x803d6b40        0x0
+                0x803d6b40                        __bss_start = .
+ *(.dynbss)
+ *(.gnu.linkonce.b*)
+ *(.bss*)
+ *(.sbss*)
+ *(COMMON)
+                0x803d6b40                        . = ALIGN (0x4)
+                0x803d6b40                        __bss_end = .
+
+.iplt           0x803d6b40        0x0
+ .iplt          0x803d6b40        0x0 start.o
+
+.stack          0x803d6b40    0x10000
+                0x803d6b40                        . = ALIGN (0x4)
+ .stack         0x803d6b40    0x10000 start.o
+                0x803d6b40                _stack_start
+                0x803e6b40                _stack_end
+                [!provide]                        PROVIDE (__bss_start = __bss_start)
+                [!provide]                        PROVIDE (__bss_end = __bss_end)
+LOAD main.dol.o
+LOAD start.o
+LOAD system_asm.o
+LOAD cache_asm.o
+LOAD main.o
+OUTPUT(dolbooter.elf elf32-powerpc)
+
+.comment        0x00000000       0x25
+ .comment       0x00000000       0x25 main.o
+                                 0x26 (size before relaxing)

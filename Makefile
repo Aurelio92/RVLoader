@@ -4,10 +4,10 @@ ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
 
-SUBPROJECTS := dolbooter bootloader installer discloader codehandler libGUI main copy
+SUBPROJECTS := dolbooter bootloader installer discloader codehandler libGUI main rvlbooter copy
 .PHONY: all forced clean $(SUBPROJECTS)
 
-all: main
+all: rvlbooter
 forced: clean all
 
 dolbooter:
@@ -52,6 +52,12 @@ main: dolbooter bootloader installer discloader codehandler
 	@echo " "
 	$(MAKE) -C main
 
+rvlbooter: main
+	@echo " "
+	@echo "Building RVLoader rvlbooter"
+	@echo " "
+	$(MAKE) -C rvlbooter
+
 copy: main
 	@echo " "
 	@echo "Copying build to external drive"
@@ -71,3 +77,4 @@ clean:
 	$(MAKE) -C codehandler clean
 	$(MAKE) -C libGUI clean
 	$(MAKE) -C main clean
+	$(MAKE) -C rvlbooter clean

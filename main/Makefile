@@ -37,7 +37,7 @@ CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DLUA_32BITS \
 			-DVER_MAJOR=${RVLOADERVERSION_MAJOR} -DVER_MINOR=${RVLOADERVERSION_MINOR} -DVER_NAME=\"${RVLOADERVERSION_NAME}\"
 CXXFLAGS	=	$(CFLAGS) -std=c++20
 
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x81330000
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -142,8 +142,7 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 $(OUTPUT).dol: $(OUTPUT).elf
 	@$(MAKE) -f $(DEVKITPPC)/wii_rules $@
-	@cp $(OUTPUT).dol $(CURDIR)/../boot.dol
-	@cp $(OUTPUT).dol $(CURDIR)/../../driveRoot/apps/RVLoader/boot.dol
+	@cp $(OUTPUT).dol $(CURDIR)/../../rvlbooter/main.dol
 
 $(OUTPUT).elf: $(OFILES)
 
