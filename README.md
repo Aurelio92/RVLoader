@@ -23,7 +23,7 @@ But RVLoader is not just a simple GUI! It comes packed with features, quite a fe
  - Built-in installer that automatically detects if RVL is not installed and prompts the user to install it
  - Front-end completely developed from scratch and with Wii portables in mind
  - Integrated system clock if the MX chip [RTC] is found
- - Wide LUA integration for greater customization
+ - Wide Lua integration for greater customization
  - Complete Wiimote & Gamecube controller support
  - Custom theme integration
 
