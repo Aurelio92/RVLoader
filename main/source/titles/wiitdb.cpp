@@ -1,10 +1,11 @@
 #include <gccore.h>
+#include <bzlib.h>
 #include <map>
 #include <string>
 #include <stdio.h>
 #include <stdexcept>
 #include "titles.h"
-#include "wiitdb_txt.h"
+#include "wiitdb_txt_bz2.h"
 
 namespace wiiTDB {
     std::map<std::string, std::string> database;
@@ -16,7 +17,12 @@ namespace wiiTDB {
             SEEKING_TITLE,
             READING_TITLE
         } state = SEEKING_GAMEID;
-        char* tdb = (char*)wiitdb_txt;
+        size_t tdb_size = 10 * wiitdb_txt_bz2_size; //Take a guess
+        char* tdb_orig = (char*)malloc(tdb_size);
+        BZ2_bzBuffToBuffDecompress(tdb_orig, &tdb_size, (char*)wiitdb_txt_bz2, wiitdb_txt_bz2_size, 0, 0);
+        char* tdb = tdb_orig;
+        char* tdb_end = tdb + tdb_size;
+
         std::string gameId;
         std::string title;
 
@@ -57,7 +63,9 @@ namespace wiiTDB {
                     }
                 break;
             }
-        } while (tdb != (char*)wiitdb_txt_end);
+        } while (tdb != (char*)tdb_end);
+
+        free(tdb_orig);
     }
 
     std::string getGameName(std::string gameId) {
