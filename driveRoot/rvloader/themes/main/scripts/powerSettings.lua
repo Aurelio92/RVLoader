@@ -499,7 +499,7 @@ function powerSettings:handleInputs(onFocus)
             end
         end
 
-        if down.BUTTON_RIGHT then
+        if down.BUTTON_LEFT then
             self.autoIncreaseTime = Time.getms() + self.AUTO_INCREASE_DELAY
         else
             self.autoIncreaseTime = Time.getms() + self.AUTO_INCREASE_TIME
