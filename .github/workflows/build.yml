@@ -1,6 +1,11 @@
-name: DOL
-
-on: [push, pull_request]
+name: Automated DOL Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -10,21 +15,16 @@ jobs:
       image: devkitpro/devkitppc:latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Make
-      run: |
-        make clean
-        make
-        
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: SD Card Files
-        path: ./driveRoot/
+      - name: Make
+        run: |
+          make clean
+          make
 
-    - name: Setup tmate session
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 15
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SD Card Files
+          path: ./driveRoot/
