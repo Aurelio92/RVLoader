@@ -1,20 +1,26 @@
+# Ignore all .o, .map, .elf, and .dol files
+*.o
+*.map
+*.elf
+*.dol
+
+# Allow .dol files in driveRoot/apps/RVLoader/
+!driveRoot/apps/RVLoader/
+
+# Ignore build directories
 main/build/
-main/*.o
-main/*.elf
-main/*.dol
 bootloader/build
 installer/build
 discloader/build
-libGUI/build
-bootloader/*.o
-dolbooter/*.o
-codehandler/*.asm
-codehandler/*.bin
-readROMPatch/*.o
-readROMPatch/*.elf.map
-readROMPatch/*.elf
-readROMPatch/dis.txt
-readROMPatch/font_western_bin.h
-*.DS_Store*
 discloader/asmPatches/build
 discloader/asmPatches/out
+
+# Ignore other specific files
+*.DS_Store*
+codehandler/*.asm
+codehandler/*.bin
+readROMPatch/dis.txt
+readROMPatch/font_western_bin.h
+main/data/dolbooter.bin
+dolbooter/dis.txt
+rvlbooter/main_dol.h
