@@ -51,11 +51,11 @@ static char ascii(char s) {
 }
 
 void gprintf (const char *format, ...) {
-    char * tmp = NULL;
+    char * tmp = malloc(1024);
     va_list va;
     va_start(va, format);
 
-    if ((vasprintf(&tmp, format, va) >= 0) && tmp) {
+    if ((vsnprintf(tmp, 1024, format, va) >= 0) && tmp) {
         usb_sendbuffer(EXI_CHANNEL_1, tmp, strlen(tmp));
     }
     va_end(va);

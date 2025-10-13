@@ -28,6 +28,7 @@ x Install priiloader
 #include "debug.h"
 #include "iosinst.h"
 #include "haxx_certs.h"
+#include "linkerfix.h"
 
 static void *xfb = NULL;
 static GXRModeObj *rmode = NULL;

@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "gpio.h"
 #include "system.h"
+#include "linkerfix.h"
 
 #define AVE_ADDR (0x70 << 1) //0xE0
 #define LM49450_ADDR (0x7D << 1) //0xFA
