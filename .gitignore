@@ -6,7 +6,6 @@ bootloader/build
 bootloader/*.o
 bootloader/*.elf
 bootloader/*.dol
-bootloader/data/*.bin
 installer/build
 installer/*.o
 installer/*.elf
