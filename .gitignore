@@ -20,6 +20,7 @@ dolbooter/*.bin
 dolbooter/*.elf
 dolbooter/*.elf.map
 dolbooter/*.dol
+dolbooter/dis.txt
 codehandler/*.asm
 codehandler/*.bin
 readROMPatch/*.o
@@ -35,4 +36,5 @@ rvlbooter/*.bin
 rvlbooter/*.elf
 rvlbooter/*.elf.map
 rvlbooter/*.dol
+rvlbooter/main_dol.h
 driveRoot/apps/RVLoader/*.dol
