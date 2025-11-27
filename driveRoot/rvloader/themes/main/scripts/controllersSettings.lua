@@ -48,7 +48,7 @@ function controllerSettings:draw(onFocus)
         self.updateMenuSystem:printLineValue(Gcp.getUpdateProgress() .. " %%", false)
         if not Gcp.isUpdating() then
             topBarEnableWheel()
-            if Gcp.hasUpdateSucceeded then
+            if Gcp.hasUpdateSucceeded() then
                 self.updateMenuSystem:printLine("New version:", 0)
                 self.updateMenuSystem:printLineValue(string.format("%.1f", self.gcpNewVersion), false)
                 self.updateMenuSystem:printLine("Update complete! Will now return", 0)
