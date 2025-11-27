@@ -10,6 +10,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 
 #define u8 unsigned char       /* 8 bits  */
 #define u32 unsigned long       /* 32 bits */

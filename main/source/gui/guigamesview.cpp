@@ -551,7 +551,7 @@ int GuiGamesView::lua_drawGameSaveIcon(lua_State* L) {
 
         try {
             GameContainer& gc = gamesList->at(idx);
-            gc.save.drawIcon(coordinates);
+            //gc.save.drawIcon(coordinates);
         } catch (std::out_of_range& e) {
 
         }
