@@ -110,6 +110,9 @@ GuiImage::GuiImage(const char* filename) {
     if (color_type == PNG_COLOR_TYPE_RGBA) {
         buffer = (u8*)malloc(4 * png_get_image_width(png_ptr, info_ptr) * png_get_image_height(png_ptr, info_ptr));
 
+        if (buffer == NULL) {
+            goto freePNGStructures;
+        }
         for(y = 0; y < png_get_image_height(png_ptr, info_ptr); y++) {
             for (x = 0; x < png_get_image_width(png_ptr, info_ptr) * 4; x++) {
                 buffer[x + y * png_get_image_width(png_ptr, info_ptr) * 4] = row_pointers[y][x];
@@ -121,6 +124,9 @@ GuiImage::GuiImage(const char* filename) {
     } else if (color_type == PNG_COLOR_TYPE_RGB) {
         buffer = (u8*)malloc(3 * png_get_image_width(png_ptr, info_ptr) * png_get_image_height(png_ptr, info_ptr));
 
+        if (buffer == NULL) {
+            goto freePNGStructures;
+        }
         for(y = 0; y < png_get_image_height(png_ptr, info_ptr); y++) {
             for (x = 0; x < png_get_image_width(png_ptr, info_ptr) * 3; x++) {
                 buffer[x + y * png_get_image_width(png_ptr, info_ptr) * 3] = row_pointers[y][x];
@@ -134,6 +140,7 @@ GuiImage::GuiImage(const char* filename) {
     height = png_get_image_height(png_ptr, info_ptr);
 
     // Free up some memory
+freePNGStructures:
     if(row_pointers){
         for(y = 0; y < png_get_image_height(png_ptr, info_ptr); y++){
             free(row_pointers[y]); row_pointers[y] = NULL;

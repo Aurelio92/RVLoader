@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <malloc.h>
+#include <sys/stat.h>
+#include <string>
+#include <unistd.h>
 
 bool matchStr(const char* str1, const char* str2) {
     if (!str1 || !str2)
@@ -60,4 +63,14 @@ int writeFile(const char* path, void* buffer, uint32_t fileSize) {
     fclose(fp);
 
     return 0;
+}
+
+bool fileExists(const char* path) {
+    struct stat buffer;   
+    return (stat(path, &buffer) == 0); 
+}
+
+bool fileExists(const std::string& path) {
+    struct stat buffer;   
+    return (stat(path.c_str(), &buffer) == 0); 
 }

@@ -55,6 +55,9 @@ Texture createTextureARGB8(u8* buffer, u16 width, u16 height) {
     tex.realHeight = height;
     tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u32));
     tex.palette = NULL;
+    if (tex.data == NULL) {
+        return tex;
+    }
 
     d = tex.data;
     s = tex.data;
@@ -114,6 +117,9 @@ Texture createTextureRGB8(u8* buffer, u16 width, u16 height) {
     tex.realHeight = height;
     tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u32));
     tex.palette = NULL;
+    if (tex.data == NULL) {
+        return tex;
+    }
 
     d = tex.data;
     s = tex.data;
@@ -173,6 +179,9 @@ Texture createTextureA8(u8* buffer, u16 width, u16 height) {
     tex.realHeight = height;
     tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u32));
     tex.palette = NULL;
+    if (tex.data == NULL) {
+        return tex;
+    }
 
     d = tex.data;
     s = tex.data;
@@ -226,7 +235,15 @@ Texture createTextureCI8(u8* textureBuffer, u8* paletteBuffer, u16 width, u16 he
     tex.realWidth = width;
     tex.realHeight = height;
     tex.data = (u8*)memalign(32, tex.width * tex.height);
+    if (tex.data == NULL) {
+        return tex;
+    }
     tex.palette = (u8*)memalign(32, paletteNItems * sizeof(u16));
+    if (tex.palette == NULL) {
+        free(tex.data);
+        tex.data = NULL;
+        return tex;
+    }
     tex.paletteNItems = paletteNItems;
 
     memcpy(tex.data, textureBuffer, width * height);
@@ -249,6 +266,9 @@ Texture createTextureRGB5A3(u8* textureBuffer, u16 width, u16 height) {
     tex.realWidth = width;
     tex.realHeight = height;
     tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u16));
+    if (tex.data == NULL) {
+        return tex;
+    }
     tex.palette = NULL;
 
     memcpy(tex.data, textureBuffer, width * height * sizeof(u16));
@@ -283,16 +303,30 @@ Texture copyTexture(Texture src) {
 
     if (tex.textureFormat >= GX_TF_CI4) {
         tex.data = (u8*)memalign(32, tex.width * tex.height);
+        if (tex.data == NULL) {
+            return tex;
+        }
         memcpy(tex.data, src.data, tex.width * tex.height);
         tex.palette = (u8*)memalign(32, src.paletteNItems * sizeof(u16));
+        if (tex.palette == NULL) {
+            free(tex.data);
+            tex.data = NULL;
+            return tex;
+        }
         memcpy(tex.palette, src.palette, src.paletteNItems * sizeof(u16));
         tex.paletteNItems = src.paletteNItems;
     } else if (tex.textureFormat == GX_TF_RGB5A3) {
         tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u16));
+        if (tex.data == NULL) {
+            return tex;
+        }
         memcpy(tex.data, src.data, tex.width * tex.height * sizeof(u16));
         tex.palette = NULL;
     } else {
         tex.data = (u8*)memalign(32, tex.width * tex.height * sizeof(u32));
+        if (tex.data == NULL) {
+            return tex;
+        }
         memcpy(tex.data, src.data, tex.width * tex.height * sizeof(u32));
         tex.palette = NULL;
     }

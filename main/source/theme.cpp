@@ -212,46 +212,55 @@ static void loadThemeWindow(const char* themePath, GuiWindow* win, mxml_node_t* 
             std::string xmlElement = xmlElementChar;
             GuiLuaElement* luaElement = NULL;
 
+            std::string scriptPath;
+            if (mxmlElementGetAttr(node, "script") != NULL)
+                scriptPath = std::string(themePath) + mxmlElementGetAttr(node, "script");
+
             if (xmlElement == "gcview") {
                 GuiGamesView* gView = new GuiGamesView(GC_GAME);
                 luaElement = gView;
                 gView->setPath(themePath);
-                if (mxmlElementGetAttr(node, "script") != NULL)
-                    gView->loadScriptFile(mxmlElementGetAttr(node, "script"));
+                if (scriptPath != "") {
+                    gView->loadScriptFile(scriptPath.c_str());
+                }
 
             } else if (xmlElement == "wiiview") {
                 GuiGamesView* gView = new GuiGamesView(WII_GAME);
                 luaElement = gView;
                 gView->setPath(themePath);
-                if (mxmlElementGetAttr(node, "script") != NULL)
-                    gView->loadScriptFile(mxmlElementGetAttr(node, "script"));
+                if (scriptPath != "") {
+                    gView->loadScriptFile(scriptPath.c_str());
+                }
 
             } else if (xmlElement == "vcview") {
                 GuiGamesView* gView = new GuiGamesView(WII_VC);
                 luaElement = gView;
                 gView->setPath(themePath);
-                if (mxmlElementGetAttr(node, "script") != NULL)
-                    gView->loadScriptFile(mxmlElementGetAttr(node, "script"));
+                if (scriptPath != "") {
+                    gView->loadScriptFile(scriptPath.c_str());
+                }
 
             } else if (xmlElement == "chanview") {
                 GuiGamesView* gView = new GuiGamesView(WII_CHANNEL);
                 luaElement = gView;
                 gView->setPath(themePath);
-                if (mxmlElementGetAttr(node, "script") != NULL)
-                    gView->loadScriptFile(mxmlElementGetAttr(node, "script"));
+                if (scriptPath != "") {
+                    gView->loadScriptFile(scriptPath.c_str());
+                }
 
             } else if (xmlElement == "hbview") {
                 GuiHBView* hbView = new GuiHBView();
                 luaElement = hbView;
                 hbView->setPath(themePath);
-                if (mxmlElementGetAttr(node, "script") != NULL)
-                    hbView->loadScriptFile(mxmlElementGetAttr(node, "script"));
-
+                if (scriptPath != "") {
+                    hbView->loadScriptFile(scriptPath.c_str());
+                }
             } else if (xmlElement == "luaelement") {
                 luaElement = new GuiLuaElement();
                 luaElement->setPath(themePath);
-                if (mxmlElementGetAttr(node, "script") != NULL)
-                    luaElement->loadScriptFile(mxmlElementGetAttr(node, "script"));
+                if (scriptPath != "") {
+                    luaElement->loadScriptFile(scriptPath.c_str());
+                }
             }
 
             if (luaElement == NULL) {
@@ -300,6 +309,7 @@ static void loadThemeWindow(const char* themePath, GuiWindow* win, mxml_node_t* 
 }
 
 bool loadTheme(const char* themePath, GuiWindow* masterWindow) {
+    std::string luaEnvPath;
     char tempPath[PATH_MAX];
     size_t len = strlen(themePath);
 
@@ -326,6 +336,10 @@ bool loadTheme(const char* themePath, GuiWindow* masterWindow) {
         sprintf(tempPath, "%s/", themePath);
     else
         strcpy(tempPath, themePath);
+
+    //Set environment for lua interpreter (used by 'require')
+    luaEnvPath = std::string(tempPath) + "/?;" + std::string(tempPath) + "/?.luac;" + std::string(tempPath) + "/?.lua";
+    setenv("LUA_PATH", luaEnvPath.c_str(), 1);
 
     loadThemeWindow(tempPath, masterWindow, themeNode);
     mxmlDelete(xmlTree);

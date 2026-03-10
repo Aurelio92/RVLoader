@@ -23,3 +23,7 @@ void luaRegisterAnimLib(lua_State* L);
 void luaRegisterGcpLib(lua_State* L);
 void luaRegisterPMS2Lib(lua_State* L);
 void luaRegisterUAMPLib(lua_State* L);
+
+namespace LuaUtils {
+    std::string getRelativeToBasePath(lua_State* L, const std::string& path);
+}

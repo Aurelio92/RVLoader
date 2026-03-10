@@ -32,8 +32,11 @@ public:
     GCSave(std::string filename, u32 gameCodeMatch);
     GCSave(std::string filename) : GCSave(filename, 0) {}
     GCSave(const GCSave& src);
+    GCSave(GCSave&& src) noexcept;
     ~GCSave();
     GCSave& operator = (const GCSave& src);
+    GCSave& operator=(GCSave&& src) noexcept;
 
+    void loadSave(std::string filename, u32 gameCodeMatch = 0);
     void drawIcon(f32* corners);
 };

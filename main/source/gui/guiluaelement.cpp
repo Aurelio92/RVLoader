@@ -37,18 +37,12 @@ void GuiLuaElement::onActiveEvent() {
 
         hasToLoadScript = false;
 
-        char oldPath[PATH_MAX];
-        getcwd(oldPath, PATH_MAX);
-        if (basePath[0])
-            chdir(basePath);
-
-
         luaSetGuiParentWindow((GuiWindow*)this->parentElement);
 
         if (int err = luaL_loadfile(L, scriptPath.c_str())) {
             systemError("LUA error! loadScript", "Error %d %s", err, lua_tostring(L, -1));
         }
-
+        
         //Read the last compiled script SHA1 hash
         SHA1Fp = fopen((scriptPath + ".sha").c_str(), "rb");
         if (SHA1Fp) {
@@ -56,9 +50,9 @@ void GuiLuaElement::onActiveEvent() {
                 memset(compiledScriptSHA1, 0, 20);
             fclose(SHA1Fp);
         }
-
+        
         SHA1File(scriptPath.c_str(), scriptSHA1);
-
+        
         //Check if the LUA script was changed wrt the last compiled one
         if (memcmp(scriptSHA1, compiledScriptSHA1, 20)) {
             //Compile source again
@@ -70,7 +64,7 @@ void GuiLuaElement::onActiveEvent() {
                     fclose(compiledFP);
                 }
             }
-
+            
             //Save script SHA1
             SHA1Fp = fopen((scriptPath + ".sha").c_str(), "wb");
             if (SHA1Fp) {
@@ -78,9 +72,9 @@ void GuiLuaElement::onActiveEvent() {
                 fclose(SHA1Fp);
             }
         }
-
-        if (int err = lua_pcall(L, 0, LUA_MULTRET, 0)) {
-            systemError("LUA error! loadScript", "Error %d %s", err, lua_tostring(L, -1));
+    
+    if (int err = lua_pcall(L, 0, LUA_MULTRET, 0)) {
+        systemError("LUA error! loadScript", "Error %d %s", err, lua_tostring(L, -1));
         }
 
         //Call init in LUA if it exists
@@ -89,8 +83,6 @@ void GuiLuaElement::onActiveEvent() {
             if (err != LUA_ERRRUN)
                 systemError("LUA error! init()", "Error %d %s", err, lua_tostring(L, -1));
         }
-
-        chdir(oldPath);
     }
 }
 
@@ -103,6 +95,9 @@ void GuiLuaElement::initLUA() {
     L = luaL_newstate();
     luaL_openlibs(L);
 
+    lua_pushstring(L, basePath);
+    lua_setfield(L, LUA_REGISTRYINDEX, "basePath");
+
     //Register custom libraries
     luaRegisterCustomLibs(L);
 }
@@ -113,12 +108,6 @@ void GuiLuaElement::setPath(const char* path) {
 
 void GuiLuaElement::loadScript(const char* script) {
     initLUA();
-
-    char oldPath[PATH_MAX];
-    getcwd(oldPath, PATH_MAX);
-    if (basePath[0])
-        chdir(basePath);
-
 
     luaSetGuiParentWindow((GuiWindow*)this->parentElement);
 
@@ -131,8 +120,6 @@ void GuiLuaElement::loadScript(const char* script) {
         if (err != LUA_ERRRUN)
             systemError("LUA error! init()", "Error %d %s", err, lua_tostring(L, -1));
     }
-
-    chdir(oldPath);
 }
 
 void GuiLuaElement::loadScriptFile(const char* script) {
@@ -143,11 +130,6 @@ void GuiLuaElement::loadScriptFile(const char* script) {
 }
 
 void GuiLuaElement::draw(bool onFocus) {
-    char oldPath[PATH_MAX];
-    getcwd(oldPath, PATH_MAX);
-    if (basePath[0])
-        chdir(basePath);
-
     luaSetGuiParentWindow((GuiWindow*)this->parentElement);
 
     //Call draw function in LUA
@@ -156,16 +138,9 @@ void GuiLuaElement::draw(bool onFocus) {
     if (int err = lua_pcall(L, 1, 0, 0)) {
         systemError("LUA error! draw()", "Error %d %s", err, lua_tostring(L, -1));
     }
-
-    chdir(oldPath);
 }
 
 void GuiLuaElement::handleInputs(bool onFocus) {
-    char oldPath[PATH_MAX];
-    getcwd(oldPath, PATH_MAX);
-    if (basePath[0])
-        chdir(basePath);
-
     luaSetGuiParentWindow((GuiWindow*)this->parentElement);
 
     //Call handleInputs function in LUA
@@ -174,16 +149,9 @@ void GuiLuaElement::handleInputs(bool onFocus) {
     if (int err = lua_pcall(L, 1, 0, 0)) {
         systemError("LUA error! handleInputs()", "Error %d %s", err, lua_tostring(L, -1));
     }
-
-    chdir(oldPath);
 }
 
 Vector2 GuiLuaElement::getDimensions() {
-    char oldPath[PATH_MAX];
-    getcwd(oldPath, PATH_MAX);
-    if (basePath[0])
-        chdir(basePath);
-
     luaSetGuiParentWindow((GuiWindow*)this->parentElement);
 
     //Call getDimensions function in LUA
@@ -203,8 +171,6 @@ Vector2 GuiLuaElement::getDimensions() {
     //u32 w = lua_tointeger(L, -2);
     //u32 h = lua_tointeger(L, -1);
     //lua_pop(L, 2); //Pop returned numbers
-
-    chdir(oldPath);
 
     return Vector2(w, h);
 }
@@ -247,10 +213,6 @@ void GuiLuaElement::copyIncomingTable(lua_State* inState) {
 }
 
 void GuiLuaElement::handleMessage(lua_State* inState) {
-    char oldPath[PATH_MAX];
-    getcwd(oldPath, PATH_MAX);
-    if (basePath[0])
-        chdir(basePath);
 
     luaSetGuiParentWindow((GuiWindow*)this->parentElement);
 
@@ -285,6 +247,4 @@ void GuiLuaElement::handleMessage(lua_State* inState) {
     if (int err = lua_pcall(L, 1, 0, 0)) {
         systemError("LUA error! handleMessage()", "Error %d %s", err, lua_tostring(L, -1));
     }
-
-    chdir(oldPath);
 }

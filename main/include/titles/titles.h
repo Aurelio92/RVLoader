@@ -3,10 +3,15 @@
 #include <string>
 #include <gccore.h>
 #include <libgui.h>
+#include <filesystem>
+#include "gcsave.h"
+#include "rvlmutex.h"
+#include "rvltrigger.h"
 
 #define WBFS_MAGIC          0x57424653 //"WBFS"
 #define WBFS_BASE_FOLDER    "/wbfs"
 #define COVER_PATH          "/rvloader/covers"
+#define DUMMY_COVER_PATH    "/rvloader/covers/dummy.png"
 #define CONFIG_PATH         "/rvloader/configs"
 
 typedef struct {
@@ -15,6 +20,7 @@ typedef struct {
 
 class GameContainer {
     public:
+        time_t lastModified;
         std::string name;
         std::string path;
         std::string coverPath;
@@ -23,10 +29,13 @@ class GameContainer {
         std::string gameIDString;
         u32 gameID;
         GuiImage* image;
+        GCSave save;
 
-        GameContainer(std::string _name, std::string _path, std::string _coverPath, std::string _confPath, std::string _cheatPath, std::string _gameIDString, u32 _gameID) : name(_name), path(_path), coverPath(_coverPath), confPath(_confPath), cheatPath(_cheatPath), gameIDString(_gameIDString), gameID(_gameID), image(NULL) {}
+        GameContainer() {}
+        GameContainer(time_t _lastModified, std::string _name, std::string _path, std::string _coverPath, std::string _confPath, std::string _gameIDString, u32 _gameID):
+            lastModified(_lastModified), name(_name), path(_path), coverPath(_coverPath), confPath(_confPath), gameIDString(_gameIDString), gameID(_gameID), image(NULL) {}
 
-        static bool compare(GameContainer gc1, GameContainer gc2) {
+        static bool compare(const GameContainer& gc1, const GameContainer& gc2) {
             const char* buffer1 = gc1.name.c_str();
             const char* buffer2 = gc2.name.c_str();
 
@@ -79,22 +88,140 @@ class HBContainer {
         }
 };
 
-extern std::vector<GameContainer> wiiGames;
-extern std::vector<GameContainer> gcGames;
-extern std::vector<GameContainer> vcGames;
-extern std::vector<GameContainer> wiiChannels;
-extern std::vector<HBContainer> wiiHomebrews;
+class GamesDatabase {
+    protected:
+        std::string dbName;
+        std::string scanPath;
+        std::string cachePath;
+        std::string targetNameOrExtension;
+        bool recursiveScan;
+        bool scanningForDirectories;
+        u8* scanAndUpdateThreadStack;
+        lwp_t scanAndUpdateThreadHandle;
+        u8* coversThreadStack;
+        lwp_t coversThreadHandle;
+        RVLMutex dbMutex;
+        RVLTrigger hasFinishedScanning;
+        void handleDirEntryForScan(const std::filesystem::directory_entry& dir_entry, std::unordered_map<std::string, GameContainer*>& lookup, std::vector<GameContainer>& newGames, std::vector<std::string>& verifiedPaths);
+    public:
+        std::vector<GameContainer> games;
+        GamesDatabase() {
+            dbName = "";
+            scanPath = "";
+            cachePath = "";
+            targetNameOrExtension = "";
+            recursiveScan = false;
+            scanningForDirectories = false;
+            
+            scanAndUpdateThreadStack = NULL;
+            coversThreadStack = NULL;
+            games.reserve(10000);
+        }
+        GamesDatabase(std::string _scanPath, std::string _cachePath, std::string _targetNameOrExtension, bool _recursiveScan = false, bool _scanningForDirectories = false) {
+            scanPath = _scanPath;
+            cachePath = _cachePath;
+            targetNameOrExtension = _targetNameOrExtension;
+            recursiveScan = _recursiveScan;
+            scanningForDirectories = _scanningForDirectories;
 
-extern mutex_t wiiCoversMutex;
-extern mutex_t gcCoversMutex;
-extern mutex_t vcCoversMutex;
-extern mutex_t wiiChanCoversMutex;
+            scanAndUpdateThreadStack = NULL;
+            coversThreadStack = NULL;
+        }
+
+        void lock() { dbMutex.lock(); }
+        void unlock() { dbMutex.unlock(); }
+        
+        bool readCache();
+        bool writeCache();
+        void scanGames();
+        void startScanAndUpdateThread();
+        static void* scanAndUpdateThread(void* arg);
+        static void* loadCoversThread(void* arg);
+        bool hasFinishedScanningGames() { return hasFinishedScanning.check(); }
+        virtual void createGameContainer(std::vector<GameContainer>& newGames, time_t lastModified, const std::string& path) { }
+        virtual void addMetadataToGameContainer(GameContainer& gc) { }
+};
+
+class GamesDatabaseGC : public GamesDatabase {
+    public:
+        GamesDatabaseGC() {
+            dbName = "GC";
+            scanPath = "/games";
+            cachePath = "/rvloader/gc_game_cache.tsv";
+            targetNameOrExtension = "game.iso";
+            recursiveScan = false;
+            scanningForDirectories = true;
+        }
+        void createGameContainer(std::vector<GameContainer>& newGames, time_t lastModified, const std::string& path) override;
+        void addMetadataToGameContainer(GameContainer& gc) override;
+};
+
+class GamesDatabaseWii : public GamesDatabase {
+    public:
+        GamesDatabaseWii() {
+            dbName = "Wii";
+            scanPath = "/wbfs";
+            cachePath = "/rvloader/wii_game_cache.tsv";
+            targetNameOrExtension = ".wbfs";
+            recursiveScan = true;
+            scanningForDirectories = false;
+        }
+        void createGameContainer(std::vector<GameContainer>& newGames, time_t lastModified, const std::string& path) override;
+        void addMetadataToGameContainer(GameContainer& gc) override;
+};
+
+class GamesDatabaseWAD : public GamesDatabase {
+    public:
+        GamesDatabaseWAD() {
+            dbName = "WAD";
+            scanPath = "";
+            cachePath = "";
+            targetNameOrExtension = ".wad";
+            recursiveScan = false;
+            scanningForDirectories = false;
+        }
+        void createGameContainer(std::vector<GameContainer>& newGames, time_t lastModified, const std::string& path) override;
+        void addMetadataToGameContainer(GameContainer& gc) override;
+};
+
+class GamesDatabaseVC : public GamesDatabaseWAD {
+    public:
+        GamesDatabaseVC() {
+            dbName = "VC";
+            scanPath = "/vc";
+            cachePath = "/rvloader/vc_game_cache.tsv";
+            targetNameOrExtension = ".wad";
+            recursiveScan = false;
+            scanningForDirectories = false;
+        }
+};
+
+class GamesDatabaseChannels : public GamesDatabaseWAD {
+    public:
+        GamesDatabaseChannels() {
+            dbName = "Channels";
+            scanPath = "/channels";
+            cachePath = "/rvloader/channels_game_cache.tsv";
+            targetNameOrExtension = ".wad";
+            recursiveScan = false;
+            scanningForDirectories = false;
+        }
+};
+
+extern GamesDatabaseGC gcGamesDatabase;
+extern GamesDatabaseWii wiiGamesDatabase;
+extern GamesDatabaseVC vcGamesDatabase;
+extern GamesDatabaseChannels wiiChannelsDatabase;
+
+extern std::vector<HBContainer> wiiHomebrews;
 
 namespace wiiTDB {
     void parse();
-    std::string getGameName(std::string gameId);
+    std::string getGameName(std::string gameID);
 }
 
+void lockTitlesDBs();
+void unlockTitlesDBs();
 void addWiiGames();
 void addGCGames();
 void addVCGames();

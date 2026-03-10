@@ -1,6 +1,7 @@
 #include <libgui.h>
 #include <gccore.h>
 #include <lua.hpp>
+#include <string>
 #include "main.h"
 #include "luasupport.h"
 
@@ -242,7 +243,8 @@ static int lua_Gfx_loadFont(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    Font* font = new Font(luaL_checkstring(L, 1), luaL_checkinteger(L, 2));
+    std::string fontPath = LuaUtils::getRelativeToBasePath(L, luaL_checkstring(L, 1));
+    Font* font = new Font(fontPath.c_str(), luaL_checkinteger(L, 2));
     lua_pushinteger(L, (lua_Integer)font);
     return 1;
 }
@@ -341,7 +343,8 @@ static int lua_Gfx_loadImage(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    GuiImage* img = new GuiImage(luaL_checkstring(L, 1));
+    std::string imgPath = LuaUtils::getRelativeToBasePath(L, luaL_checkstring(L, 1));
+    GuiImage* img = new GuiImage(imgPath.c_str());
     lua_pushinteger(L, (lua_Integer)img);
     return 1;
 }

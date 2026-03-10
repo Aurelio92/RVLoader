@@ -31,15 +31,18 @@ void GuiHBView::initLUA() {
     L = luaL_newstate();
     luaL_openlibs(L);
 
+    lua_pushstring(L, basePath);
+    lua_setfield(L, LUA_REGISTRYINDEX, "basePath");
+
     //Link some members to global LUA variables
     lua_pushlightuserdata(L, &wiiHomebrews);
-    lua_setglobal(L, "_hbList");
+    lua_setfield(L, LUA_REGISTRYINDEX, "hbList");
     lua_pushlightuserdata(L, &coverWidth);
-    lua_setglobal(L, "_coverWidth");
+    lua_setfield(L, LUA_REGISTRYINDEX, "coverWidth");
     lua_pushlightuserdata(L, &coverHeight);
-    lua_setglobal(L, "_coverHeight");
+    lua_setfield(L, LUA_REGISTRYINDEX, "coverHeight");
     lua_pushlightuserdata(L, this);
-    lua_setglobal(L, "_this");
+    lua_setfield(L, LUA_REGISTRYINDEX, "this");
 
     //Register custom libraries
     luaRegisterCustomLibs(L);
@@ -74,7 +77,7 @@ void GuiHBView::initLUA() {
 
 void GuiHBView::openHBConfig(u32 idx) {
     int tempVal;
-    lua_getglobal(L, "_hbList");
+    lua_getfield(L, LUA_REGISTRYINDEX, "hbList");
     std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
     HBContainer& hbc = hbList->at(idx);
@@ -98,13 +101,13 @@ int GuiHBView::lua_setCoverSize(lua_State* L) {
     int h = luaL_checkinteger(L, 2);
 
     //Get homebrews list and cover dimensions
-    lua_getglobal(L, "_hbList");
+    lua_getfield(L, LUA_REGISTRYINDEX, "hbList");
     std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
-    lua_getglobal(L, "_coverWidth");
+    lua_getfield(L, LUA_REGISTRYINDEX, "coverWidth");
     int* coverWidth = (int*)lua_touserdata(L, -1);
     lua_pop(L, 1);
-    lua_getglobal(L, "_coverHeight");
+    lua_getfield(L, LUA_REGISTRYINDEX, "coverHeight");
     int* coverHeight = (int*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
@@ -131,15 +134,15 @@ int GuiHBView::lua_drawHBCover(lua_State* L) {
     int y = luaL_checkinteger(L, 2);
     u32 idx = luaL_checkinteger(L, 3);
 
-    lua_getglobal(L, "_coverWidth");
+    lua_getfield(L, LUA_REGISTRYINDEX, "coverWidth");
     int* coverWidth = (int*)lua_touserdata(L, -1);
     lua_pop(L, 1);
-    lua_getglobal(L, "_coverHeight");
+    lua_getfield(L, LUA_REGISTRYINDEX, "coverHeight");
     int* coverHeight = (int*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
     //Get homebrews list
-    lua_getglobal(L, "_hbList");
+    lua_getfield(L, LUA_REGISTRYINDEX, "hbList");
     std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
@@ -184,7 +187,7 @@ int GuiHBView::lua_getHBCount(lua_State* L) {
     }
 
     //Get homebrews list
-    lua_getglobal(L, "_hbList");
+    lua_getfield(L, LUA_REGISTRYINDEX, "hbList");
     std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
     lua_pushinteger(L, hbList->size());
@@ -199,7 +202,7 @@ int GuiHBView::lua_getHBName(lua_State* L) {
     }
 
     //Get homebrews list
-    lua_getglobal(L, "_hbList");
+    lua_getfield(L, LUA_REGISTRYINDEX, "hbList");
     std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
@@ -222,10 +225,10 @@ int GuiHBView::lua_bootHB(lua_State* L) {
     }
 
     //Get homebrews list
-    lua_getglobal(L, "_hbList");
+    lua_getfield(L, LUA_REGISTRYINDEX, "hbList");
     std::vector<HBContainer>* hbList = (std::vector<HBContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
-    lua_getglobal(L, "_this");
+    lua_getfield(L, LUA_REGISTRYINDEX, "this");
     GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
@@ -254,7 +257,7 @@ int GuiHBView::lua_openHBConfig(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    lua_getglobal(L, "_this");
+    lua_getfield(L, LUA_REGISTRYINDEX, "this");
     GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
@@ -276,7 +279,7 @@ int GuiHBView::lua_saveHBConfig(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    lua_getglobal(L, "_this");
+    lua_getfield(L, LUA_REGISTRYINDEX, "this");
     GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
@@ -293,7 +296,7 @@ int GuiHBView::lua_setHBConfigValue(lua_State* L) {
         return luaL_error(L, "wrong number of arguments");
     }
 
-    lua_getglobal(L, "_this");
+    lua_getfield(L, LUA_REGISTRYINDEX, "this");
     GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
@@ -310,7 +313,7 @@ int GuiHBView::lua_getHBConfigValue(lua_State* L) {
 
     int val = 0;
 
-    lua_getglobal(L, "_this");
+    lua_getfield(L, LUA_REGISTRYINDEX, "this");
     GuiHBView* thisView = (GuiHBView*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 

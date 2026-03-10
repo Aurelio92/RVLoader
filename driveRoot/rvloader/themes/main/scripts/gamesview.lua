@@ -334,6 +334,18 @@ function draw(onFocus)
 end
 
 function handleInputs(onFocus)
+    if GamesView.hasFinishedScanningGames() then
+        gamesCount = GamesView.getGamesCount()
+
+        if gamesCount <= gamesPerRow then
+            columnsCount = gamesCount
+        elseif gamesCount <= gamesPerPage then
+            columnsCount = gamesPerRow
+        else
+            columnsCount = gamesPerRow + (gamesCount - gamesPerPage + 1) // 2
+        end
+    end
+    
     if onFocus then
         if showingGC2Wiimote then
             topBarDisableWheel()

@@ -13,7 +13,9 @@ namespace LUALibSfx {
             return luaL_error(L, "wrong number of arguments");
         }
 
-        audiogc::player* player = new audiogc::player(audiogc::type::mp3, luaL_checkstring(L, 1),  audiogc::mode::store);
+        std::string path = LuaUtils::getRelativeToBasePath(L, luaL_checkstring(L, 1));
+
+        audiogc::player* player = new audiogc::player(audiogc::type::mp3, path,  audiogc::mode::store);
 
         if (player) {
             players.insert(player);

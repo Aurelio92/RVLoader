@@ -1,5 +1,5 @@
-dofile("scripts/enum.lua")
-dofile("scripts/topbarcmd.lua")
+require 'scripts/enum'
+require 'scripts/topbarcmd'
 
 function myAtan2(y, x) --This always returns an angle in [0; 2pi)
     local angle = math.atan(y, x) + 2 * math.pi
