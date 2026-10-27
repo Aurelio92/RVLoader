@@ -222,11 +222,12 @@ void* GamesDatabase::loadCoversThread(void* arg) {
         for (char& c : name) c = toupper((unsigned char)c);
         coverFiles.insert(std::move(name));
     }
-    auto coverExists = [&](const std::string& gameID) {
+    auto coverExists = [&](std::string gameID) {
+        for (char& c : gameID) c = toupper((unsigned char)c);
         return coverFiles.count(gameID + ".PNG") > 0;
     };
 
-    bool dummyExists = coverFiles.count("DUMMYCOVER.PNG") > 0;
+    bool dummyExists = coverFiles.count("DUMMY.PNG") > 0;
 
     //Make a copy of the cover paths for each game
     {
