@@ -1,54 +1,58 @@
 #include <stdio.h>
 #include <string.h>
-#include <lua.hpp>
+#include <ctype.h>
+#include <fstream>
+#include <string>
+#include <unordered_map>
+
 #include "config.h"
+
+static std::string trim(const std::string& s) {
+    size_t start = 0, end = s.size();
+    while (start < end && isspace((unsigned char)s[start])) start++;
+    while (end > start && isspace((unsigned char)s[end - 1])) end--;
+    return s.substr(start, end - start);
+}
+
+void Config::parseValue(const std::string& key, const std::string& val) {
+    // Case 1: String (Starts and ends with quotes)
+    if (val.size() >= 2 && val.front() == '"' && val.back() == '"') {
+        stringEntries[key] = val.substr(1, val.size() - 2);
+    }
+    // Case 2: Double (Contains a decimal point)
+    else if (val.find('.') != std::string::npos) {
+        try {
+            doubleEntries[key] = std::stod(val);
+        } catch (...) {}
+    }
+    // Case 3: Integer
+    else {
+        try {
+            intEntries[key] = std::stoi(val);
+        } catch (...) {}
+    }
+}
 
 void Config::open(const char* filepath) {
     if (!filepath)
         return;
-
-    printf("Config: Opening %s\n", filepath);
-
     lastPath = filepath;
+    std::ifstream file(filepath);
+    if (!file.is_open()) return;
 
-    lua_State* L = luaL_newstate();
-    luaL_openlibs(L);
-    luaL_dofile(L, filepath);
+    std::string line;
+    while (std::getline(file, line)) {
+        line = trim(line);
+        if (line.empty() || line[0] == '#') continue;
 
-    //Grab all the globally defined variables
-    lua_pushglobaltable(L);
-    lua_pushnil(L);
-    while (lua_next(L, -2) != 0) {
-        if (lua_isstring(L, -2)) { //key must be string to be valid
-            const char* key = lua_tostring(L, -2);
+        size_t delimiterPos = line.find('=');
+        if (delimiterPos == std::string::npos) continue;
 
-            //Skip the LUA defined global
-            if (strcmp(key, "_VERSION")) {
-                lua_getglobal(L, key);
+        std::string key = trim(line.substr(0, delimiterPos));
+        std::string value = trim(line.substr(delimiterPos + 1));
 
-                //lua_isstring returns 1 also for numbers (because convertible to string)
-                if (lua_isinteger(L, -1)) {
-                    int value = lua_tointeger(L, -1);
-                    intEntries.insert(std::pair<std::string, int>(key, value));
-                    printf("%s: (integer): %d\n", key, value);
-                } else if (lua_isnumber(L, -1)) {
-                    double value = lua_tonumber(L, -1);
-                    doubleEntries.insert(std::pair<std::string, double>(key, value));
-                    printf("%s: (double): %lf\n", key, value);
-                } else if (lua_isstring(L, -1)) {
-                    const char* value = lua_tostring(L, -1);
-                    stringEntries.insert(std::pair<std::string, std::string>(key, value));
-                    printf("%s: (string): %s\n", key, value);
-                }
-
-                lua_pop(L, 1);
-            }
-        }
-      lua_pop(L, 1);
+        parseValue(key, value);
     }
-    lua_pop(L, 1);
-
-    lua_close(L);
 }
 
 void Config::save(const char* filepath) {

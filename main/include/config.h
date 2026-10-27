@@ -1,6 +1,6 @@
 /*
-Config files are nothing more than LUA scripts where only global variables are defined.
-Only string, doubles and int entries are supported
+Config files are plain text, one "key = value" per line. Lines starting with # are comments.
+Strings are quoted, doubles contain a '.', anything else is an int
 */
 
 #pragma once
@@ -16,6 +16,8 @@ class Config {
         std::unordered_map<std::string, std::string> stringEntries;
         std::unordered_map<std::string, int> intEntries;
         std::unordered_map<std::string, double> doubleEntries;
+
+        void parseValue(const std::string& key, const std::string& val);
 
     public:
         void open(const char* filepath);
