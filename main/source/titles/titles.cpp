@@ -11,6 +11,7 @@
 #include "rvlmutex.h"
 #include "utils.h"
 #include "titles.h"
+#include "main.h"
 #include "threadsprofiler.h"
 
 #define THREAD_STACK_SIZE 16384
@@ -211,9 +212,21 @@ void* GamesDatabase::loadCoversThread(void* arg) {
     GamesDatabase* db = (GamesDatabase*)arg;
     std::unordered_map<GameContainer*, std::string> coverMap;
     std::string tempID;
-    std::string tempPath;
 
-    bool dummyExists = fileExists(DUMMY_COVER_PATH);
+    //List the covers folder once instead of probing the drive for every game.
+    //Names are uppercased because FAT lookups are case-insensitive.
+    std::unordered_set<std::string> coverFiles;
+    std::error_code ec;
+    for (const auto& entry : std::filesystem::directory_iterator(COVER_PATH, ec)) {
+        std::string name = entry.path().filename().string();
+        for (char& c : name) c = toupper((unsigned char)c);
+        coverFiles.insert(std::move(name));
+    }
+    auto coverExists = [&](const std::string& gameID) {
+        return coverFiles.count(gameID + ".PNG") > 0;
+    };
+
+    bool dummyExists = coverFiles.count("DUMMYCOVER.PNG") > 0;
 
     //Make a copy of the cover paths for each game
     {
@@ -225,27 +238,21 @@ void* GamesDatabase::loadCoversThread(void* arg) {
 
     //Check for covers
     for (auto& cover : coverMap) {
-        tempID = cover.second;
-        tempPath = std::string(COVER_PATH) + "/" + tempID + ".png";
-        if (!fileExists(tempPath)) {
-            //Try looking for a cover of the same game from a different region
-            bool coverFound = false;
-            for (u32 i = 0; i < sizeof(gamesRegions) && !coverFound; i++) {
-                if (cover.second[3] == gamesRegions[i]) {
-                    continue;
-                }
-                tempID[3] = gamesRegions[i];
-                tempPath = std::string(COVER_PATH) + "/" + tempID + ".png";
-                if (fileExists(tempPath)) {
-                    coverFound = true;
-                }
-            }
-            if (coverFound) {
-                cover.second = tempID;
-            } else {
-                cover.second = "";
-            }
+        if (cover.second.size() < 4 || coverExists(cover.second)) {
+            if (cover.second.size() < 4) cover.second = "";
+            continue;
         }
+        //Try looking for a cover of the same game from a different region
+        tempID = cover.second;
+        bool coverFound = false;
+        for (u32 i = 0; i < sizeof(gamesRegions) && !coverFound; i++) {
+            if (cover.second[3] == gamesRegions[i]) {
+                continue;
+            }
+            tempID[3] = gamesRegions[i];
+            coverFound = coverExists(tempID);
+        }
+        cover.second = coverFound ? tempID : "";
     }
 
     //Update the cover paths
@@ -261,7 +268,8 @@ void* GamesDatabase::loadCoversThread(void* arg) {
                 game->coverPath  = "";
             }
             if (game->image != NULL) {
-                delete game->image;
+                if (game->image != dummyCover) //Shared global, must never be freed
+                    delete game->image;
                 game->image = NULL; //This will force a reload of the cover.
             }
         }
