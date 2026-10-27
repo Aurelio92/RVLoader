@@ -155,25 +155,25 @@ namespace Gfx
         VIDEO_ClearFrameBuffer(rmode, frameBuffer[fb], COLOR_GREEN);
     }
 
+
     void endDrawing() {
         GX_LoadPosMtxImm(viewMatrix, GX_PNMTX0);
 
         GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
         GX_SetColorUpdate(GX_TRUE);
-        
-        //Do this stuff after drawing
-        GX_DrawDone();
-        
         GX_CopyDisp(frameBuffer[fb],GX_TRUE);
 
+        //Do this stuff after drawing
+        GX_DrawDone();
+
         VIDEO_SetNextFramebuffer(frameBuffer[fb]);
+        fb ^= 1; //flip framebuffer
         VIDEO_Flush();
-        
+
         VIDEO_WaitVSync();
         //Interlaced screens require two frames to update
         if (rmode->viTVMode & VI_NON_INTERLACE)
-        VIDEO_WaitVSync();
-        fb ^= 1; //flip framebuffer
+            VIDEO_WaitVSync();
     }
 
     void concatViewMatrix(Mtx mi, Mtx mo) {
