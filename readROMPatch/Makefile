@@ -51,7 +51,6 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	@echo "  LINK      $@"
 	$(CC) -g -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
-	@$(OBJDUMP) -D $(TARGET) > dis.txt
 
 ifneq ($(LDSCRIPT),)
 $(TARGET): $(LDSCRIPT)
