@@ -26,7 +26,8 @@ TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source source/titles source/gui \
 				source/utils \
-				source/luasupport source/peripherals ../common/source
+				source/luasupport source/peripherals ../common/source \
+				../libs/tinysd/src ../libs/tinysd/src/host
 DATA		:=	data
 TEXTURES	:=	textures
 INCLUDES	:=	include include/titles include/gui \
@@ -108,6 +109,7 @@ export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES))) $(addsuffix .h,$(subst
 export INCLUDE	:=	$(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 					$(foreach dir,$(FREETYPE),-I$(dir)) \
+					-I$(CURDIR)/../libs/tinysd/include \
 					-I$(CURDIR)/$(BUILD) \
 					-I$(LIBOGC_INC)
 

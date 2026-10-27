@@ -1,0 +1,3 @@
+[submodule "tinysd"]
+	path = libs/tinysd
+	url = https://github.com/loopj/tinysd.git
