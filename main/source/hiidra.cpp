@@ -27,6 +27,7 @@
 #include "luasupport.h"
 #include "ash.h"
 #include "discAnim.h"
+#include "wifi.h"
 
 #define COPY_LIMIT (128*1024)
 
@@ -944,9 +945,15 @@ static void* bootHiidraThread(void* arg) {
         fclose(fp);
     }
     if (hcfg.Config & HIIDRA_CFG_WIFI) {
+        //Load the Wi-Fi modules for the fitted card
+        char wdPath[64];
         FILE* fp = fopen("/rvloader/Hiidra/modules.txt", "a");
-        fprintf(fp, "/dev/usbfs/rvloader/Hiidra/IOS58/WD.app\n");
-        fprintf(fp, "/dev/usbfs/rvloader/Hiidra/IOS58/WL.app\n");
+        if (Wifi::getModulePath("wd.bin", wdPath, sizeof(wdPath))) {
+            fprintf(fp, "/dev/usbfs%s\n", wdPath);
+        } else {
+            fprintf(fp, "/dev/usbfs/rvloader/Hiidra/IOS58/WD.app\n");
+            fprintf(fp, "/dev/usbfs/rvloader/Hiidra/IOS58/WL.app\n");
+        }
         fclose(fp);
     } else {
         FILE* fp = fopen("/rvloader/Hiidra/modules.txt", "a");
@@ -1005,10 +1012,17 @@ static void* bootHiidraThread(void* arg) {
 
     printf("Total USB modules size: %u\n", totalUSBSize);
 
+    //Start the SO module for the fitted card with the kernel
+    char soPath[64];
+    uint8_t* soModule = NULL;
+    if ((hcfg.Config & HIIDRA_CFG_WIFI) && Wifi::getModulePath("so.bin", soPath, sizeof(soPath)))
+        readFile(soPath, &soModule, NULL);
+
     printf("Forging custom kernel\n");
     hiidraAddLogLine("Forging custom kernel");
-    const uint8_t* customModules[] = {kernelModule, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], usbfsModule, fspluginModule};
-    forgeKernel(kernelAddress, kernelSize, customModules, sizeof(customModules) / sizeof(uint8_t*), 0, 1);
+    const uint8_t* customModules[] = {kernelModule, modulesUSB[0], modulesUSB[1], modulesUSB[2], modulesUSB[3], usbfsModule, fspluginModule, soModule};
+    u32 nCustomModules = sizeof(customModules) / sizeof(uint8_t*) - (soModule ? 0 : 1);
+    forgeKernel(kernelAddress, kernelSize, customModules, nCustomModules, 0, 1);
     
     unmountFAT();
     printf("Injecting Hiidra bootpoint\n");

@@ -1,6 +1,7 @@
 #include <gccore.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "utils.h"
 #include "wifi.h"
 
 extern "C" {
@@ -48,9 +49,27 @@ u16 Wifi::getManufacturer() {
 
 //Decide whether a Wi-Fi setting turns Wi-Fi on
 bool Wifi::isEnabled(int setting) {
-    //Turn Auto on only for the stock card
+    char wdPath[64];
+
+    //Turn Auto on for any card with Wi-Fi modules
     if (setting == WIFI_AUTO)
-        return getManufacturer() == WIFI_MANUFACTURER_BROADCOM;
+        return getManufacturer() == WIFI_MANUFACTURER_BROADCOM || getModulePath("wd.bin", wdPath, sizeof(wdPath));
     return setting == WIFI_ON;
 }
 
+//Find a Wi-Fi module for the fitted card
+bool Wifi::getModulePath(const char* name, char* path, size_t len) {
+    struct tsd_sdio_cis cis;
+
+    if (!identify(&cis))
+        return false;
+
+    //Look in /rvloader/Hiidra/wifi/<manufacturer id>-<card id> first
+    snprintf(path, len, "/rvloader/Hiidra/wifi/%04x-%04x/%s", cis.manufacturer_id, cis.card_id, name);
+    if (fileExists(path))
+        return true;
+
+    //Fall back to /rvloader/Hiidra/wifi/<manufacturer id>
+    snprintf(path, len, "/rvloader/Hiidra/wifi/%04x/%s", cis.manufacturer_id, name);
+    return fileExists(path);
+}

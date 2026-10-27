@@ -11,4 +11,5 @@
 namespace Wifi {
     u16 getManufacturer();
     bool isEnabled(int setting);
+    bool getModulePath(const char* name, char* path, size_t len);
 };
