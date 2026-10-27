@@ -44,7 +44,6 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	@echo "  LINK      $@"
 	@$(CC) -g -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
-	@$(OBJDUMP) -D $(TARGET) > dis.txt
 
 ifneq ($(LDSCRIPT),)
 $(TARGET): $(LDSCRIPT)
@@ -84,7 +83,9 @@ $(TARGET_BIN): $(TARGET)
 	@echo  "  OBJCPY    $@"
 	@$(OBJCOPY) -O binary $< $@
 	@cp $@ ../main/data/
+	@mkdir -p ../bootloader/data
 	@cp $@ ../bootloader/data/
+	@cp $@ ../installer/data/
 
 clean: myclean
 

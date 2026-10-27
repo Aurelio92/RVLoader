@@ -34,6 +34,7 @@ all: $(TARGET)
 	@$(STRIP) $(STRIPFLAGS) $@
 	@echo " OBJCOPY     $<"
 	@$(OBJCOPY) $(OCFLAGS) $@
+	@mkdir -p ../driveRoot/rvloader/Hiidra/
 	@cp $@ ../driveRoot/rvloader/Hiidra/
 clean:
 	-$(RM) $(TARGET) $(TARGET:.h=.bin)

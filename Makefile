@@ -4,7 +4,7 @@ ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
 
-SUBPROJECTS := dolbooter bootloader installer discloader codehandler libGUI main copy
+SUBPROJECTS := dolbooter bootloader installer discloader codehandler readROMPatch libGUI main copy
 .PHONY: all forced clean $(SUBPROJECTS)
 
 all: main
@@ -40,13 +40,19 @@ codehandler:
 	@echo " "
 	$(MAKE) -C codehandler
 
+readROMPatch:
+	@echo " "
+	@echo "Building RVLoader readROMPatch"
+	@echo " "
+	$(MAKE) -C readROMPatch
+
 libGUI:
 	@echo " "
 	@echo "Building RVLoader libGUI"
 	@echo " "
 	$(MAKE) -C libGUI install
 
-main: dolbooter bootloader installer discloader codehandler
+main: dolbooter bootloader installer discloader codehandler readROMPatch
 	@echo " "
 	@echo "Building RVLoader main"
 	@echo " "
