@@ -9,6 +9,7 @@
 #include <ogc/exi.h>
 #include <libgui.h>
 #include <mxml.h>
+#include <unistd.h>
 #include <lua.hpp>
 #include <lauxlib.h>
 
@@ -37,19 +38,12 @@
 #include "hud.h"
 #include "hiidra.h"
 
-#include "textures.h"
-#include "textures_tpl.h"
-#include "notosans_ttf.h"
+#include "poppins_ttf.h"
 
 static Vector2 screenSize;
 static bool VGAEnabled;
 
 static GuiWindow mainWindow;
-GuiImage* AIcon;
-GuiImage* BIcon;
-GuiImage* XIcon;
-GuiImage* YIcon;
-GuiImage* SIcon;
 GuiImage* dummyCover;
 GuiImage* dummyHBIcon;
 
@@ -62,10 +56,6 @@ static bool controlledRedraw = false;
 static bool hasToShutdown = false;
 static lwpq_t redrawQueue;
 static bool runningOnDolphin = false;
-
-extern "C" {
-    extern void udelay(int us);
-};
 
 bool checkRVL();
 
@@ -122,13 +112,13 @@ bool isRunningOnDolphin() {
 }
 
 int main(int argc, char **argv) {
-    TPLFile mainTDF;
-    float mem1Max = (float)SYS_GetArena1Size() / 1048576.0f;
-    float mem2Max = (float)SYS_GetArena2Size() / 1048576.0f;
-
     if (usb_isgeckoalive(EXI_CHANNEL_1)) {
         CON_EnableGecko(EXI_CHANNEL_1, 1);
     }
+    SYS_SetArena1Lo(SYS_GetArena1Hi()); //Fill the rest of MEM1
+    TPLFile mainTDF;
+    float mem1Max = (float)SYS_GetArena1Size() / 1048576.0f;
+    float mem2Max = (float)SYS_GetArena2Size() / 1048576.0f;
 
     printf("Initializing RVLoader\n");
 
@@ -192,17 +182,10 @@ int main(int argc, char **argv) {
     Gfx::startDrawing();
     Gfx::endDrawing();
 
-    TPL_OpenTPLFromMemory(&mainTDF, (void*)textures_tpl, textures_tpl_size);
-    AIcon = new GuiImage(&mainTDF, TEXID_button_A);
-    BIcon = new GuiImage(&mainTDF, TEXID_button_B);
-    XIcon = new GuiImage(&mainTDF, TEXID_button_X);
-    YIcon = new GuiImage(&mainTDF, TEXID_button_Y);
-    SIcon = new GuiImage(&mainTDF, TEXID_button_S);
-    dummyCover = new GuiImage(&mainTDF, TEXID_dummyCover);
-    dummyHBIcon = new GuiImage(&mainTDF, TEXID_dummyHBIcon);
-    GuiImage RVLlogo(&mainTDF, TEXID_logo);
+    dummyCover = NULL;
+    dummyHBIcon = NULL;
 
-    Font font(notosans_ttf, notosans_ttf_size, 20);
+    Font font(poppins_ttf, poppins_ttf_size, 20);
 
     i2c_init();
     if (VGAEnabled) {
@@ -251,6 +234,7 @@ int main(int argc, char **argv) {
     }
 
     {
+        GuiImage RVLlogo(LOGO_PATH);
         const int textHeight = 32;
         int textCenterOffsetY = (textHeight + font.getCharBearingY('O')) / 2 - font.getSize();
         Vector2 pos = (screenSize - RVLlogo.getDimensions()) / 2;
@@ -262,7 +246,10 @@ int main(int argc, char **argv) {
             font.printf(0, RVLlogo.getDimensions().y + textCenterOffsetY + textHeight, "Loading...");
         }
         Gfx::endDrawing();
+        dummyCover = new GuiImage(DUMMYCOVER_PATH);
+        dummyHBIcon = new GuiImage(DUMMYHBICON_PATH);
     }
+
     printf("Initialization complete\n");
 
     HUD::init();
@@ -273,6 +260,7 @@ int main(int argc, char **argv) {
     mkdir("/rvloader/themes", 777);
     mkdir("/rvloader/configs", 777);
     mkdir("/wmemu", 777);
+
     wiiTDB::parse();
     addWiiGames();
     addGCGames();
@@ -312,6 +300,7 @@ int main(int argc, char **argv) {
         mainConfig.save(MAINCONFIG_PATH);
     }
 
+    lockTitlesDBs();
     themePath = "/rvloader/themes/" + curTheme;
     if (!loadTheme(themePath.c_str(), &mainWindow)) {
         //Loading selected theme failed. Try to load default one
@@ -329,6 +318,7 @@ int main(int argc, char **argv) {
     if (mainConfig.getValue("LastView", &lastView)) {
         mainWindow.switchToElement(lastView);
     }
+    unlockTitlesDBs();
 
     while(1) {
         if (controlledRedraw) {
@@ -350,6 +340,7 @@ int main(int argc, char **argv) {
         int down = PAD_ButtonsDown(0);
 
         //mainWindow always on focus
+        lockTitlesDBs();
         mainWindow.handleInputs(true);
 
         Gfx::startDrawing();
@@ -357,6 +348,7 @@ int main(int argc, char **argv) {
         //font.printf(300, 10, "MEM1: %.3f / %.3f", (float)SYS_GetArena1Size() / 1048576.0f, mem1Max);
         //font.printf(300, 30, "MEM2: %.3f / %.3f", (float)SYS_GetArena2Size() / 1048576.0f, mem2Max);
         //font.printf(300, 10, "PADS: %u", connectedPads);
+        unlockTitlesDBs(); //Needs to be before endDrawing
         Gfx::endDrawing();
         //VIDEO_WaitVSync();
 

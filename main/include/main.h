@@ -3,12 +3,10 @@
 #include "config.h"
 
 #define MAINCONFIG_PATH "/rvloader/config.cfg"
+#define LOGO_PATH "/rvloader/assets/logo.png"
+#define DUMMYCOVER_PATH "/rvloader/assets/dummyCover.png"
+#define DUMMYHBICON_PATH "/rvloader/assets/dummyHBIcon.png"
 
-extern GuiImage* AIcon;
-extern GuiImage* BIcon;
-extern GuiImage* XIcon;
-extern GuiImage* YIcon;
-extern GuiImage* SIcon;
 extern GuiImage* dummyCover;
 extern GuiImage* dummyHBIcon;
 extern Config mainConfig;

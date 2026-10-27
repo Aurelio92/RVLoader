@@ -474,20 +474,40 @@ int GuiGamesView::lua_drawGameCover(lua_State* L) {
         if ((tempMtx[0][3] >= -*coverWidth) && (tempMtx[0][3] < getScreenSize().x + *coverWidth)
             && (tempMtx[1][3] >= -*coverHeight) && (tempMtx[1][3] < getScreenSize().y + *coverHeight)) {
             if (gc.image == NULL) {
-                if (gc.coverPath.size() > 0) {
+                if (gc.coverPath.size() > 0)
                     gc.image = new GuiImage(gc.coverPath.c_str());
-                    gc.image->setSize(*coverWidth, *coverHeight);
-                } else {
-                    gc.image = NULL;
+                else
+                    gc.image = dummyCover;
+                if (gc.image != NULL) {
+                   gc.image->setSize(*coverWidth, *coverHeight);
                 }
             }
         } else {
-            if (gc.image != NULL)
+            if (gc.image != NULL && gc.image != dummyCover)
                 delete gc.image;
             gc.image = NULL;
         }
         if (gc.image != NULL)
             gc.image->draw(false);
+
+        //Load the cover if it's inside the screen view
+        // if ((tempMtx[0][3] >= -*coverWidth) && (tempMtx[0][3] < getScreenSize().x + *coverWidth)
+        //     && (tempMtx[1][3] >= -*coverHeight) && (tempMtx[1][3] < getScreenSize().y + *coverHeight)) {
+        //     if (gc.image == NULL) {
+        //         if (gc.coverPath.size() > 0) {
+        //             gc.image = new GuiImage(gc.coverPath.c_str());
+        //             gc.image->setSize(*coverWidth, *coverHeight);
+        //         } else {
+        //             gc.image = NULL;
+        //         }
+        //     }
+        // } else {
+        //     if (gc.image != NULL)
+        //         delete gc.image;
+        //     gc.image = NULL;
+        // }
+        // if (gc.image != NULL)
+        //     gc.image->draw(false);
 
         Gfx::popMatrix();
     } catch (std::out_of_range& e) {
