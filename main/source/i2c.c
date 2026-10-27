@@ -1,8 +1,8 @@
 #include <gccore.h>
 #include <ogc/lwp_watchdog.h>
 #include <ogc/machine/processor.h>
-#include <ogc/lwp_threads.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "gpio.h"
 #include "i2c.h"
 
@@ -13,14 +13,6 @@
 static u8 _i2cMode = I2C_MODE_PUSHPULL;
 static mutex_t _i2cMutex = 0;
 
-extern void udelay(int us);
-
-#define i2c_udelay(us) udelay(us)
-
-/*void i2c_udelay(int us) {
-    u64 now = gettime();
-    while (ticks_to_microsecs(gettime() - now) < us);
-}*/
 
 u8 i2c_getSDA(void) {
     LWP_MutexLock(_i2cMutex);
@@ -88,7 +80,7 @@ void i2c_setSCL(u8 s) {
         //Clock stretching
         if (s == 1) {
             do {
-                i2c_udelay(I2C_CSTRDELAY);
+                usleep(I2C_CSTRDELAY);
             } while(!i2c_getSCL());
         }
     } else {
@@ -141,7 +133,7 @@ inline void i2c_setSCLDir(u8 dir) {
 
     if (dir == 0) {
         do {
-            i2c_udelay(I2C_DELAY);
+            usleep(I2C_DELAY);
             //timeout--;
         } while(!i2c_getSCL() && timeout);
     }*/
@@ -163,43 +155,43 @@ void i2c_init(void) {
     */
     LWP_MutexLock(_i2cMutex);
     i2c_setSDA(0);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     i2c_setSDA(1);
-    i2c_udelay(I2C_DELAY);
-    i2c_udelay(1000);
+    usleep(I2C_DELAY);
+    usleep(1000);
     LWP_MutexUnlock(_i2cMutex);
 #if 0
     i2c_setSDAOut(0);
     i2c_setSDADir(1);
     //i2c_setSDA(0);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 #ifdef SCL_OD_MODE
     i2c_setSCLDir(0);
 #else
     i2c_setSCLOut(1);
 #endif
     //i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     i2c_setSDADir(0);
     //i2c_setSDA(1);
-    i2c_udelay(I2C_DELAY);
-    i2c_udelay(1000);
+    usleep(I2C_DELAY);
+    usleep(1000);
 #ifdef SCL_OD_MODE
     i2c_setSCLOut(0);
 #endif
     i2c_setSDAOut(0);
-    i2c_udelay(1000);
+    usleep(1000);
 #endif
 }
 
 void i2c_deinit(void) {
     LWP_MutexLock(_i2cMutex);
     /*i2c_setSCLDir(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     i2c_setSDADir(1);
-    i2c_udelay(I2C_DELAY);*/
+    usleep(I2C_DELAY);*/
     //HW_GPIOB_OUT &= ~GPIO_I2C;
     //HW_GPIOB_DIR &= ~GPIO_I2C; //On boot both are set as outputs
     //HW_GPIOB_IN &= ~GPIO_I2C;
@@ -209,65 +201,65 @@ void i2c_deinit(void) {
 void i2c_start(void) {
     LWP_MutexLock(_i2cMutex);
     i2c_setSDA(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
     LWP_MutexUnlock(_i2cMutex);
 }
 
 void i2c_stop(void) {
     LWP_MutexLock(_i2cMutex);
     i2c_setSDA(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
     LWP_MutexUnlock(_i2cMutex);
 }
 
 void i2c_restart(void) {
     LWP_MutexLock(_i2cMutex);
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     i2c_setSDA(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     LWP_MutexUnlock(_i2cMutex);
 }
 
 void i2c_ack(void) {
     LWP_MutexLock(_i2cMutex);
     i2c_setSDA(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
     LWP_MutexUnlock(_i2cMutex);
 }
 
 void i2c_nack(void) {
     LWP_MutexLock(_i2cMutex);
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
     LWP_MutexUnlock(_i2cMutex);
 }
 
@@ -280,28 +272,28 @@ u8 i2c_sendByte(u8 byte) {
             i2c_setSDA(1);
         else
             i2c_setSDA(0);
-        i2c_udelay(I2C_HALFDELAY);
+        usleep(I2C_HALFDELAY);
 
         i2c_setSCL(1);
-        i2c_udelay(I2C_DELAY);
+        usleep(I2C_DELAY);
 
         i2c_setSCL(0);
-        i2c_udelay(I2C_HALFDELAY);
+        usleep(I2C_HALFDELAY);
 
         byte <<= 1;
     }
 
     //Shift in ACK
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     if (i2c_getSDA()) {
         //No ACK, generate STOP condition
         i2c_setSCL(0);
-        i2c_udelay(I2C_HALFDELAY);
+        usleep(I2C_HALFDELAY);
 
         i2c_stop();
         LWP_MutexUnlock(_i2cMutex);
@@ -309,7 +301,7 @@ u8 i2c_sendByte(u8 byte) {
     }
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
     LWP_MutexUnlock(_i2cMutex);
 
     return 1;
@@ -323,18 +315,18 @@ u8 i2c_getByte(void) {
 
     //Release SDA
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     for (i = 0; i < 8; i++) {
         byte <<= 1;
 
         i2c_setSCL(1);
-        i2c_udelay(I2C_DELAY);
+        usleep(I2C_DELAY);
 
         if (i2c_getSDA()) byte |= 1;
 
         i2c_setSCL(0);
-        i2c_udelay(I2C_DELAY);
+        usleep(I2C_DELAY);
 
     }
     LWP_MutexUnlock(_i2cMutex);

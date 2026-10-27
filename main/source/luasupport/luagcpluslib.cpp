@@ -1,6 +1,7 @@
 #include <libgui.h>
 #include <gccore.h>
 #include <lua.hpp>
+#include <unistd.h>
 #include "main.h"
 #include "luasupport.h"
 #include "gcplus.h"
@@ -208,8 +209,7 @@ static int lua_Gcp_rebuildLUT(lua_State* L) {
 
     GCPlus::unlock();
     GCPlus::reset();
-    u64 now = gettime();
-    while (ticks_to_millisecs(gettime() - now) < 100);
+    usleep(100000);
 
     return 0;
 }

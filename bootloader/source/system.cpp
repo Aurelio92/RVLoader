@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <gccore.h>
+#include <unistd.h>
 #include <fat.h>
 #include <ogc/lwp_watchdog.h>
 #include <ogc/machine/processor.h>
@@ -15,9 +16,7 @@
 typedef void (*entrypoint) (void);
 
 extern "C" {
-    extern void __exception_closeall();
     extern void VIDEO_SetFramebuffer(void *);
-    extern void udelay(int us);
 }
 
 //Priiloader stuff
@@ -106,7 +105,7 @@ bool initFAT() {
         if (__io_custom_usbstorage.startup() && __io_custom_usbstorage.isInserted()) {
             usbInserted = true;
         }
-        udelay(100000); //100ms
+        usleep(100000); //100ms
     }
 
     if (!usbInserted)
@@ -124,7 +123,7 @@ bool initFAT() {
             _fatInitialized = true;
             return true;
         }
-        udelay(100000); //100ms
+        usleep(100000); //100ms
     }
 
     //Wait up to 2 seconds
@@ -138,7 +137,7 @@ bool initFAT() {
                 }
             }
         }
-        udelay(100000); //100ms
+        usleep(100000); //100ms
     }*/
     return false;
 }
@@ -202,7 +201,6 @@ void bootDOL(const char* path, const char* args) {
 
     SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
     _CPU_ISR_Disable(level);
-    __exception_closeall();
     hbboot_ep();
     _CPU_ISR_Restore(level);
 }
@@ -251,7 +249,7 @@ void systemError(const char* errorType, const char* error, ...) {
 
 
     for (int i = 0; i < 250; i++)
-        udelay(20000);
+        usleep(20000);
 
     reboot();
 }

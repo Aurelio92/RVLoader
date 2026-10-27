@@ -3,9 +3,9 @@
 #include <malloc.h>
 #include <gccore.h>
 #include <math.h>
+#include <unistd.h>
 #include <ogc/lwp_watchdog.h>
 #include <ogc/machine/processor.h>
-#include <ogc/lwp_threads.h>
 #include "i2c.h"
 #include "pms2.h"
 #include "main.h"
@@ -65,10 +65,6 @@
 #define PMS_POLLUPDATE_TIMEOUT  200
 
 #define STACKSIZE 8192
-
-extern "C" {
-    extern void udelay(int us);
-}
 
 namespace PMS2 {
     static lwp_t updateThreadHandle;
@@ -131,7 +127,7 @@ namespace PMS2 {
         printf("PMS2 booting bootloader\n");
         i2c_writeBuffer(curPMSAddress, CMD_BOOTBL, unlockBuffer, 4, &error);
         printf("Waiting...\n");
-        udelay(100000);
+        usleep(100000);
         printf("Reading version\n");
         i2c_readBuffer(curPMSAddress, CMD_GETVER, &error, verBuffer, 3);
         version = verBuffer[1] | (verBuffer[2] << 8);
@@ -170,7 +166,7 @@ namespace PMS2 {
                 fclose(fp);
                 printf("PMS2 booting payload\n");
                 i2c_writeBuffer(curPMSAddress, CMD_BOOTPAYLOAD, unlockBuffer, 4, &error);
-                udelay(100000);
+                usleep(100000);
                 LWP_MutexLock(updateMutex);
                 updateSuccess = false;
                 updating = false;
@@ -190,7 +186,7 @@ namespace PMS2 {
 
         printf("PMS2 booting payload\n");
         i2c_writeBuffer(curPMSAddress, CMD_BOOTPAYLOAD, unlockBuffer, 4, &error);
-        udelay(100000);
+        usleep(100000);
 
         LWP_MutexLock(updateMutex);
         updating = false;

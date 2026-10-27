@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <gccore.h>
 #include <fat.h>
+#include <unistd.h>
 #include <ogc/lwp_watchdog.h>
 #include <ogc/machine/processor.h>
 #include <wiiuse/wpad.h>
@@ -14,9 +15,7 @@
 typedef void (*entrypoint) (void);
 
 extern "C" {
-    extern void __exception_closeall();
     extern void VIDEO_SetFramebuffer(void *);
-    extern void udelay(int us);
 }
 
 #define PRIILOADER_TOMENU       0x50756E65
@@ -106,7 +105,7 @@ bool initFAT() {
         if (__io_custom_usbstorage.startup() && __io_custom_usbstorage.isInserted()) {
             usbInserted = true;
         }
-        udelay(100000); //100ms
+        usleep(100000); //100ms
     }
 
     if (!usbInserted)
@@ -124,7 +123,7 @@ bool initFAT() {
             _fatInitialized = true;
             return true;
         }
-        udelay(100000); //100ms
+        usleep(100000); //100ms
     }
 
     //Wait up to 2 seconds
@@ -138,7 +137,7 @@ bool initFAT() {
                 }
             }
         }
-        udelay(100000); //100ms
+        usleep(100000); //100ms
     }*/
     return false;
 }
@@ -210,7 +209,6 @@ void bootDOL(const char* path, const char* args) {
 
     SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
     _CPU_ISR_Disable(level);
-    __exception_closeall();
     hbboot_ep();
     _CPU_ISR_Restore(level);
 }

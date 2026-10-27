@@ -2,17 +2,13 @@
 #include <ogc/lwp_watchdog.h>
 #include <ogc/machine/processor.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "gpio.h"
 #include "i2c.h"
 
 #define I2C_DELAY 100
 #define I2C_HALFDELAY (I2C_DELAY >> 1)
 //#define SCL_OD_MODE
-
-void i2c_udelay(int us) {
-    u64 now = gettime();
-    while (ticks_to_microsecs(gettime() - now) < us);
-}
 
 inline u8 i2c_getSDA(void) {
     if (HW_GPIOB_IN & GPIO_SDA) return 1;
@@ -32,7 +28,7 @@ inline void i2c_setSCL(u8 s) {
         //Clock stretching
         if (s == 1) {
             do {
-                i2c_udelay(I2C_DELAY);
+                usleep(I2C_DELAY);
             } while(!i2c_getSCL());
         }
 
@@ -79,7 +75,7 @@ inline void i2c_setSCLDir(u8 dir) {
 
     if (dir == 0) {
         do {
-            i2c_udelay(I2C_DELAY);
+            usleep(I2C_DELAY);
             //timeout--;
         } while(!i2c_getSCL() && timeout);
     }*/
@@ -98,22 +94,22 @@ void i2c_init(void) {
      * Generate a stop condition to bring both high.
     */
     i2c_setSDA(0);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     i2c_setSDA(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 }
 
 void i2c_deinit(void) {
     /*i2c_setSCLDir(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     i2c_setSDADir(1);
-    i2c_udelay(I2C_DELAY);*/
+    usleep(I2C_DELAY);*/
     i2c_setSCL(0);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     i2c_setSDA(0);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
     HW_GPIOB_OUT &= ~GPIO_I2C;
     HW_GPIOB_DIR &= ~GPIO_I2C; //On boot both are set as outputs
     //HW_GPIOB_IN &= ~GPIO_I2C;
@@ -121,57 +117,57 @@ void i2c_deinit(void) {
 
 void i2c_start(void) {
     i2c_setSDA(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 }
 
 void i2c_stop(void) {
     i2c_setSDA(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 }
 
 void i2c_restart(void) {
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     i2c_setSDA(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 }
 
 void i2c_ack(void) {
     i2c_setSDA(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 }
 
 void i2c_nack(void) {
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 }
 
 u8 i2c_sendByte(u8 byte) {
@@ -182,35 +178,35 @@ u8 i2c_sendByte(u8 byte) {
             i2c_setSDA(1);
         else
             i2c_setSDA(0);
-        i2c_udelay(I2C_HALFDELAY);
+        usleep(I2C_HALFDELAY);
 
         i2c_setSCL(1);
-        i2c_udelay(I2C_DELAY);
+        usleep(I2C_DELAY);
 
         i2c_setSCL(0);
-        i2c_udelay(I2C_HALFDELAY);
+        usleep(I2C_HALFDELAY);
 
         byte <<= 1;
     }
 
     //Shift in ACK
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     i2c_setSCL(1);
-    i2c_udelay(I2C_DELAY);
+    usleep(I2C_DELAY);
 
     if (i2c_getSDA()) {
         //No ACK, generate STOP condition
         i2c_setSCL(0);
-        i2c_udelay(I2C_HALFDELAY);
+        usleep(I2C_HALFDELAY);
 
         i2c_stop();
         return 0;
     }
 
     i2c_setSCL(0);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     return 1;
 }
@@ -222,18 +218,18 @@ u8 i2c_getByte(void) {
 
     //Release SDA
     i2c_setSDA(1);
-    i2c_udelay(I2C_HALFDELAY);
+    usleep(I2C_HALFDELAY);
 
     for (i = 0; i < 8; i++) {
         byte <<= 1;
 
         i2c_setSCL(1);
-        i2c_udelay(I2C_DELAY);
+        usleep(I2C_DELAY);
 
         if (i2c_getSDA()) byte |= 1;
 
         i2c_setSCL(0);
-        i2c_udelay(I2C_DELAY);
+        usleep(I2C_DELAY);
 
     }
 

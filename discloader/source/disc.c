@@ -29,7 +29,6 @@ GXRModeObj *disc_vmode = NULL;
 GXRModeObj *vmode = NULL;
 u32 vmode_reg = 0;
 
-extern void __exception_closeall();
 
 static u8 Tmd_Buffer[0x49e4 + 0x1C] ALIGNED(32);
 
@@ -368,10 +367,8 @@ s32 Disc_BootPartition(u64 offset, u8 vidMode)
     memcpy((void*)0x800000F4,(char *) &temp_data, 4);
     */
 
-    extern void __exception_closeall();
     u32 level = IRQ_Disable();
     __IOS_ShutdownSubsystems();
-    __exception_closeall();
 
     // Originally from tueidj - taken from NeoGamme (thx)
     *(vu32*)0xCC003024 = 1;

@@ -66,7 +66,6 @@ volatile bool hideLogLines = false;
 
 extern "C" {
     extern void* SYS_AllocArena2MemLo(u32 size,u32 align);
-    extern void udelay(u32 us);
 }
 
 /* Full HW 0x0D8000000 Access */
@@ -116,13 +115,13 @@ raw_irq_handler_t BeforeIOSReload() {
 void AfterIOSReload(raw_irq_handler_t handle, u32 rev) {
     while (read32(0x80003140) != rev) {
         DCInvalidateRange((void*)0x80003140, 0x20);
-        udelay(1000);
+        usleep(1000);
     }
 
     u32 counter;
     for (counter = 0; !(read32(0x8d000004) & 2); counter++)
     {
-        udelay(1000);
+        usleep(1000);
         if (counter >= 40000)
             break;
     }
@@ -760,8 +759,14 @@ int loadIOSModules(void) {
 
 void setESBootpoint(u32 IOSVersion, u32 bootPoint) {
     unsigned char ESBootPatch[] = {
-        0x48, 0x03, 0x49, 0x04, 0x47, 0x78, 0x46, 0xC0, 0xE6, 0x00, 0x08, 0x70, 0xE1, 0x2F, 0xFF, 0x1E,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x48, 0x03, //ldr r0, =bootPoint
+        0x49, 0x04, //ldr r1, =IOSVersion
+        0x47, 0x78, //bx pc //Switch to ARM mode
+        0x46, 0xC0, //mov r8, r8 (nop)
+        0xE6, 0x00, 0x08, 0x70, //boot_new_ios_kernel syscall
+        0xE1, 0x2F, 0xFF, 0x1E, //bx lr
+        0x00, 0x00, 0x00, 0x00, //bootPoint
+        0x00, 0x00, 0x00, 0x00, //IOSVersion
     };
     *((vu32*)&ESBootPatch[0x10]) = MEM_VIRTUAL_TO_PHYSICAL(bootPoint);
     *((vu32*)&ESBootPatch[0x14]) = IOSVersion;
@@ -1023,7 +1028,7 @@ static void* bootHiidraThread(void* arg) {
     printf("Hiidra is running\n");
     hiidraAddLogLine("Hiidra is running");
 
-    udelay(100000);
+    usleep(100000);
 
     write16(MEM_PROT, 0);
 
@@ -1031,7 +1036,7 @@ static void* bootHiidraThread(void* arg) {
     printf("Waiting for ES\n");
     hiidraAddLogLine("Waiting for ES");
     do {
-        udelay(1000);
+        usleep(1000);
         fd = IOS_Open("/dev/es", 0);
     } while (fd < 0);
 
@@ -1085,7 +1090,7 @@ static void* bootHiidraThread(void* arg) {
     printf("Booting discloader\n");
     hiidraAddLogLine("Booting discloader");
     insertDisc = 1; // This flag tells discAnim() to enter the last part of the animation where the disc is inserted in the tray
-    udelay(1000000); // 1 second delay to allow for the disc to enter the tray before loading bootDiscLoader which changes the scene
+    usleep(1000000); // 1 second delay to allow for the disc to enter the tray before loading bootDiscLoader which changes the scene
     bootDiscLoader(hideLogLines);
     
     return NULL;

@@ -7,6 +7,7 @@
 #include <ogc/machine/processor.h>
 #include <ogc/es.h>
 #include <ogc/ipc.h>
+#include <unistd.h>
 
 #include "system.h"
 #include "sha1.h"
@@ -14,10 +15,6 @@
 #include "debug.h"
 #include "haxx_certs.h"
 #include "wd_bin.h"
-
-extern "C" {
-    extern void udelay(int us);
-};
 
 #define IOS36_WAD_PATH "/IOS36-64-v3608.wad"
 #define IOS58_WAD_PATH "/IOS58-64-v6176.wad"
@@ -379,7 +376,7 @@ void loadIOSModules() {
             FILE* fp = fopen(IOSWADPaths[slot], "rb");
             if (!fp) {
                 printf("Couldn't find IOS%u WAD at %s\n", iosSlotList[slot], IOSWADPaths[slot]);
-                udelay(3000000);
+                usleep(3000000);
                 exit(0);
             }
             fclose(fp);
@@ -387,7 +384,7 @@ void loadIOSModules() {
                 printf("Successfully loaded IOS%u WAD\n", iosSlotList[slot]);
             } else {
                 printf("Failed to load IOS%u WAD at %s\n", iosSlotList[slot], IOSWADPaths[slot]);
-                udelay(3000000);
+                usleep(3000000);
                 exit(0);
             }
         } else {
