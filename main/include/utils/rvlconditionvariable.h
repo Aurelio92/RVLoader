@@ -2,6 +2,7 @@
 
 #include <gccore.h>
 #include <mutex>
+#include <ogc/cond.h>
 #include "rvlmutex.h"
 
 class RVLConditionVariable {
