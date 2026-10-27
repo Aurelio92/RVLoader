@@ -58,6 +58,7 @@ class GameContainer {
 
 class HBContainer {
     public:
+        time_t lastModified;
         std::string name;
         std::string path;
         std::string coverPath;
@@ -65,7 +66,7 @@ class HBContainer {
         std::string confPath;
         GuiImage* image;
 
-        HBContainer(std::string _name, std::string _path, std::string _coverPath, hbMeta _meta, std::string _confPath) : name(_name), path(_path), coverPath(_coverPath), meta(_meta), confPath(_confPath), image(NULL) {}
+        HBContainer(std::string _name, std::string _path, std::string _coverPath, hbMeta _meta, std::string _confPath) : lastModified(0), name(_name), path(_path), coverPath(_coverPath), meta(_meta), confPath(_confPath), image(NULL) {}
 
         static bool compare(HBContainer hbc1, HBContainer hbc2) {
             const char* buffer1 = hbc1.name.c_str();
@@ -214,6 +215,7 @@ extern GamesDatabaseVC vcGamesDatabase;
 extern GamesDatabaseChannels wiiChannelsDatabase;
 
 extern std::vector<HBContainer> wiiHomebrews;
+extern RVLMutex wiiHomebrewsMutex;
 
 namespace wiiTDB {
     void parse();

@@ -285,9 +285,11 @@ void lockTitlesDBs() {
     wiiGamesDatabase.lock();
     vcGamesDatabase.lock();
     wiiChannelsDatabase.lock();
+    wiiHomebrewsMutex.lock();
 }
 
 void unlockTitlesDBs() {
+    wiiHomebrewsMutex.unlock();
     gcGamesDatabase.unlock();
     wiiGamesDatabase.unlock();
     vcGamesDatabase.unlock();
