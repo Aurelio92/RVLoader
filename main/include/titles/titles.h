@@ -4,6 +4,8 @@
 #include <gccore.h>
 #include <libgui.h>
 
+#include "gcsave.h"
+
 #define WBFS_MAGIC          0x57424653 //"WBFS"
 #define WBFS_BASE_FOLDER    "/wbfs"
 #define COVER_PATH          "/rvloader/covers"
@@ -23,6 +25,7 @@ class GameContainer {
         std::string gameIDString;
         u32 gameID;
         GuiImage* image;
+        GCSave save;
 
         GameContainer(std::string _name, std::string _path, std::string _coverPath, std::string _confPath, std::string _cheatPath, std::string _gameIDString, u32 _gameID) : name(_name), path(_path), coverPath(_coverPath), confPath(_confPath), cheatPath(_cheatPath), gameIDString(_gameIDString), gameID(_gameID), image(NULL) {}
 
