@@ -112,6 +112,8 @@ bool isRunningOnDolphin() {
 }
 
 int main(int argc, char **argv) {
+    // Waits for EXI probe debouncing. Timeout after 50ms
+    for (int i = 0; i < 50 && EXI_ProbeEx(EXI_CHANNEL_1) == 0; i++) usleep(10000);
     if (usb_isgeckoalive(EXI_CHANNEL_1)) {
         CON_EnableGecko(EXI_CHANNEL_1, 1);
     }
