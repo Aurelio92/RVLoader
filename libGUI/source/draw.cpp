@@ -45,7 +45,6 @@ Texture createTextureARGB8(u8* buffer, u16 width, u16 height) {
     u8* d;
     u8* s;
     int r;
-    int idx;
     Texture tex;
 
     tex.textureFormat = GX_TF_RGBA8;
@@ -60,38 +59,20 @@ Texture createTextureARGB8(u8* buffer, u16 width, u16 height) {
     }
 
     d = tex.data;
-    s = tex.data;
     for (y = 0; y < tex.height; y += 4) {
         for (x = 0; x < tex.width; x += 4) {
-            for (r = 0; r < 4; ++r) {
-                idx = x + (y + r) * width;
-                if (idx < height * width) {
-                    s = &buffer[idx * 4];
-                    *d++ = s[0];  *d++ = s[1];
-                    *d++ = s[4];  *d++ = s[5];
-                    *d++ = s[8];  *d++ = s[9];
-                    *d++ = s[12]; *d++ = s[13];
-                } else {
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                }
+            //AR block, then GB block. Padding texels must be fully transparent
+            for (r = 0; r < 16; ++r) {
+                u16 px = x + (r & 3), py = y + (r >> 2);
+                bool in = px < width && py < height;
+                s = &buffer[(px + py * width) * 4];
+                *d++ = in ? s[0] : 0; *d++ = in ? s[1] : 0;
             }
-            for (r = 0; r < 4; ++r) {
-                idx = x + (y + r) * width;
-                if (idx < height * width) {
-                    s = &buffer[idx * 4];
-                    *d++ = s[2];  *d++ = s[3];
-                    *d++ = s[6];  *d++ = s[7];
-                    *d++ = s[10]; *d++ = s[11];
-                    *d++ = s[14]; *d++ = s[15];
-                } else {
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                }
+            for (r = 0; r < 16; ++r) {
+                u16 px = x + (r & 3), py = y + (r >> 2);
+                bool in = px < width && py < height;
+                s = &buffer[(px + py * width) * 4];
+                *d++ = in ? s[2] : 0; *d++ = in ? s[3] : 0;
             }
         }
     }
@@ -107,7 +88,6 @@ Texture createTextureRGB8(u8* buffer, u16 width, u16 height) {
     u8* d;
     u8* s;
     int r;
-    int idx;
     Texture tex;
 
     tex.textureFormat = GX_TF_RGBA8;
@@ -122,38 +102,20 @@ Texture createTextureRGB8(u8* buffer, u16 width, u16 height) {
     }
 
     d = tex.data;
-    s = tex.data;
     for (y = 0; y < tex.height; y += 4) {
         for (x = 0; x < tex.width; x += 4) {
-            for (r = 0; r < 4; ++r) {
-                idx = x + (y + r) * width;
-                if (idx < height * width) {
-                    s = &buffer[idx * 3];
-                    *d++ = 0xFF;  *d++ = s[0];
-                    *d++ = 0xFF;  *d++ = s[3];
-                    *d++ = 0xFF;  *d++ = s[6];
-                    *d++ = 0xFF; *d++ = s[9];
-                } else {
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                }
+            //AR block, then GB block. Padding texels must be fully transparent
+            for (r = 0; r < 16; ++r) {
+                u16 px = x + (r & 3), py = y + (r >> 2);
+                bool in = px < width && py < height;
+                s = &buffer[(px + py * width) * 3];
+                *d++ = in ? 0xFF : 0; *d++ = in ? s[0] : 0;
             }
-            for (r = 0; r < 4; ++r) {
-                idx = x + (y + r) * width;
-                if (idx < height * width) {
-                    s = &buffer[idx * 3];
-                    *d++ = s[1];  *d++ = s[2];
-                    *d++ = s[4];  *d++ = s[5];
-                    *d++ = s[7]; *d++ = s[8];
-                    *d++ = s[10]; *d++ = s[11];
-                } else {
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                }
+            for (r = 0; r < 16; ++r) {
+                u16 px = x + (r & 3), py = y + (r >> 2);
+                bool in = px < width && py < height;
+                s = &buffer[(px + py * width) * 3];
+                *d++ = in ? s[1] : 0; *d++ = in ? s[2] : 0;
             }
         }
     }
@@ -167,9 +129,7 @@ Texture createTextureRGB8(u8* buffer, u16 width, u16 height) {
 Texture createTextureA8(u8* buffer, u16 width, u16 height) {
     u16 x, y;
     u8* d;
-    u8* s;
     int r;
-    int idx;
     Texture tex;
 
     tex.textureFormat = GX_TF_RGBA8;
@@ -184,39 +144,17 @@ Texture createTextureA8(u8* buffer, u16 width, u16 height) {
     }
 
     d = tex.data;
-    s = tex.data;
     for (y = 0; y < tex.height; y += 4) {
         for (x = 0; x < tex.width; x += 4) {
-            for (r = 0; r < 4; ++r) {
-                idx = x + (y + r) * width;
-                if (idx < height * width) {
-                    s = &buffer[idx];
-                    *d++ = s[0];  *d++ = 0xFF;
-                    *d++ = s[1];  *d++ = 0xFF;
-                    *d++ = s[2];  *d++ = 0xFF;
-                    *d++ = s[3]; *d++ = 0xFF;
-                } else {
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                }
+            //AR block: alpha = glyph coverage, red = white. Padding texels must be fully transparent
+            for (r = 0; r < 16; ++r) {
+                u16 px = x + (r & 3), py = y + (r >> 2);
+                *d++ = (px < width && py < height) ? buffer[px + py * width] : 0;
+                *d++ = 0xFF;
             }
-            for (r = 0; r < 4; ++r) {
-                idx = x + (y + r) * width;
-                if (idx < height * width) {
-                    s = &buffer[idx];
-                    *d++ = 0xFF;  *d++ = 0xFF;
-                    *d++ = 0xFF;  *d++ = 0xFF;
-                    *d++ = 0xFF; *d++ = 0xFF;
-                    *d++ = 0xFF; *d++ = 0xFF;
-                } else {
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                    *d++ = 0; *d++ = 0;
-                }
-            }
+            //GB block: always white
+            memset(d, 0xFF, 32);
+            d += 32;
         }
     }
 
