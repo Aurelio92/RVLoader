@@ -19,6 +19,8 @@
 #include <string>
 #include <dirent.h>
 #include <malloc.h>
+#include <cstring>
+#include <sys/iosupport.h>
 #include "titles.h"
 #include "genpad.h"
 #include "main.h"
@@ -111,11 +113,39 @@ bool isRunningOnDolphin() {
     return runningOnDolphin;
 }
 
+static devoptab_t timestampedStdout;
+static ssize_t (*geckoWrite)(struct _reent *, void *, const char *, size_t);
+static u64 bootTime;
+
+// Prefixes every stdout line with ms since boot, to spot slow init steps.
+// shortcut: lineStart is shared between threads, so concurrent prints may misplace a prefix; fine for debugging
+static ssize_t timestampedWrite(struct _reent *r, void *fd, const char *ptr, size_t len) {
+    static bool lineStart = true;
+    for (size_t i = 0; i < len;) {
+        if (lineStart) {
+            char ts[16];
+            int n = snprintf(ts, sizeof(ts), "[%6u] ", diff_msec(bootTime, gettime()));
+            geckoWrite(r, fd, ts, n);
+        }
+        const char *nl = (const char *)memchr(ptr + i, '\n', len - i);
+        size_t chunk = nl ? (size_t)(nl - (ptr + i)) + 1 : len - i;
+        geckoWrite(r, fd, ptr + i, chunk);
+        lineStart = nl != NULL;
+        i += chunk;
+    }
+    return len;
+}
+
 int main(int argc, char **argv) {
     // Waits for EXI probe debouncing. Timeout after 50ms
     for (int i = 0; i < 50 && EXI_ProbeEx(EXI_CHANNEL_1) == 0; i++) usleep(10000);
     if (usb_isgeckoalive(EXI_CHANNEL_1)) {
         CON_EnableGecko(EXI_CHANNEL_1, 1);
+        bootTime = gettime();
+        timestampedStdout = *devoptab_list[STD_OUT];
+        geckoWrite = timestampedStdout.write_r;
+        timestampedStdout.write_r = timestampedWrite;
+        devoptab_list[STD_OUT] = &timestampedStdout;
     }
     SYS_SetArena1Lo(SYS_GetArena1Hi()); //Fill the rest of MEM1
     TPLFile mainTDF;
