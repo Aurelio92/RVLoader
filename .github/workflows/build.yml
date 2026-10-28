@@ -1,6 +1,11 @@
-name: DOL
-
-on: [push, pull_request]
+name: Automated DOL Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -23,8 +28,4 @@ jobs:
       with:
         name: SD Card Files
         path: ./driveRoot/
-
-    - name: Setup tmate session
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 15
+        
