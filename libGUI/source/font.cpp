@@ -4,6 +4,8 @@
 
 FT_Library Font::library = NULL;
 std::map<std::string, Font::My_Face> Font::faceCache;
+//faceCache key of each font file already loaded, so it isn't read and hashed again
+static std::map<std::string, std::string> faceKeyByPath;
 
 Font::Font() {
     this->face = NULL;
@@ -32,6 +34,18 @@ Font::Font(const char* filename, u16 size) {
 
     //Load font
     //error = FT_New_Face(Font::library, filename, 0, &face);
+    // shortcut: a font file changed on disk while running is not re-read; fine as theme fonts are static
+    auto keyIt = faceKeyByPath.find(filename);
+    if (keyIt != faceKeyByPath.end()) {
+        My_Face& f = faceCache[keyIt->second];
+        error = FT_New_Memory_Face(Font::library, f.memory, f.size, 0, &face);
+        error = FT_Set_Pixel_Sizes(this->face, 0, size);
+        this->size = size;
+        color = RGBA8(0xFF, 0xFF, 0xFF, 0xFF);
+        verticalAlignment = TOP;
+        return;
+    }
+
     FILE* fp = fopen(filename, "rb");
     if (fp) {
         fseek(fp, 0, SEEK_END);
@@ -46,6 +60,7 @@ Font::Font(const char* filename, u16 size) {
         SHA1(faceMemory, faceMemorySize, hash);
         for (u32 i = 0; i < sizeof(hash); i++)
             sprintf(&tempString[2 * i], "%02X", hash[i]);
+        faceKeyByPath[filename] = tempString;
         auto it = faceCache.find(tempString);
         if (it == faceCache.end()) {
             //Font not cached. Add it

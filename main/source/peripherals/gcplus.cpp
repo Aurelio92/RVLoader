@@ -29,7 +29,7 @@ namespace GCPlus {
     static bool updateSuccess = false;
     static std::string updatePath;
 
-    static bool gotPadAnswer = false;
+    static volatile bool gotPadAnswer = false;
 
     static void padCallback(s32 chan, u32 type) {
         gotPadAnswer = true;
@@ -47,11 +47,11 @@ namespace GCPlus {
         gotPadAnswer = false;
         SI_Transfer(0, out, out_len, in, in_len, padCallback, 0);
         u64 now = gettime();
-        while ((ticks_to_millisecs(gettime() - now) < GCP_TRANSFER_DELAY) && !gotPadAnswer);
-        now = gettime();
+        //Sleep instead of spinning so lower priority threads (e.g. game scans) can run meanwhile
+        while ((ticks_to_millisecs(gettime() - now) < GCP_TRANSFER_DELAY) && !gotPadAnswer) usleep(500);
         if (out_len > 8)
             PAD_Reset(0xf0000000);
-        while (ticks_to_microsecs(gettime() - now) < GCP_AFTERTRANSFER_DELAY);
+        usleep(GCP_AFTERTRANSFER_DELAY);
         unlockSIMutex();
         return gotPadAnswer;
     }
