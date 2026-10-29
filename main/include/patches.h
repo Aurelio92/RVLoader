@@ -11,5 +11,5 @@ typedef struct {
 } DOLFunction;
 
 u32 computeCodeChecksum(u8* data, u32 len);
-void listFunctionsInDOL(dolhdr* dol, std::vector<DOLFunction>& functions);
+void listFunctionsInDOL(dolhdr dol, std::vector<DOLFunction>& functions);
 void injectMXPatch(u8* address);

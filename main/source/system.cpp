@@ -9,6 +9,7 @@
 #include <ogc/machine/processor.h>
 #include <wiiuse/wpad.h>
 #include <unistd.h>
+#include <fstream>
 #include "dolbooter_bin.h"
 #include "stub_bin.h"
 #include "usbstorage_ogc.h"
@@ -20,12 +21,26 @@
 #include "main.h"
 #include "virtualsysconf.h"
 #include "patches.h"
+#include "system.h"
 #include "DOL.h"
 
 #include "discloader_dol.h"
 
-#define __SYS_ReadROM_checksum  0x6e9de751
-#define __SYS_ReadROM_len       0x00000158
+//Signatures of __SYS_ReadROM from multiple libogc versions
+static const DOLFunction __SYS_ReadROM_signatures[] = {
+    {0, 0, 0x288584A4, 0x130},
+    {0, 0, 0x33C152B9, 0x150},
+    {0, 0, 0x387E3DCD, 0x15C},
+    {0, 0, 0x675222CF, 0x13C},
+    {0, 0, 0x8DB9C2CD, 0x140},
+    {0, 0, 0x930BE4EF, 0x164},
+    {0, 0, 0x940BA547, 0x17C},
+    {0, 0, 0x9CEC6A40, 0x170},
+    {0, 0, 0xD315E87C, 0x174},
+    {0, 0, 0xE8CEC2A6, 0x15C},
+    {0, 0, 0xF2770D45, 0x160},
+    {0, 0, 0xFA7B58DA, 0x130},
+};
 
 typedef void (*entrypoint) (void);
 
@@ -69,7 +84,7 @@ static bool patchAHBPROT() {
         //Disable memory protection
         write16(MEM2_PROT, 2);
 
-        for (u16* patchme = ES_MODULE_START; patchme < ES_MODULE_START + 0x4000; ++patchme) {
+        for (u16* patchme = ES_MODULE_START; patchme < ES_MODULE_START + 0x4000 - sizeof(ticket_check); ++patchme) {
             if (!memcmp(patchme, ticket_check, sizeof(ticket_check))) {
                 patchme[4] = 0x23FF; // li r3, 0xFF
                 DCFlushRange(patchme + 4, 2);
@@ -255,26 +270,6 @@ void bootDOL(const char* path, const char* args, bool patchMX) {
 
     i2c_deinit();
 
-    FILE* fp = fopen(path, "rb");
-    if (!fp)
-        return;
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    rewind(fp);
-    fread(EXECUTE_ADDR, 1, size, fp);
-    fclose(fp);
-    listFunctionsInDOL((dolhdr*)EXECUTE_ADDR, DOLFunctions);
-    for (auto fun : DOLFunctions) {
-        if (patchMX) {
-            if (fun.checksum == __SYS_ReadROM_checksum &&
-                fun.len == __SYS_ReadROM_len) {
-                printf("Patching __SYS_ReadROM at %08X\n", fun.offset);
-                injectMXPatch(&EXECUTE_ADDR[fun.offset]);
-            }
-        }
-    }
-    DCFlushRange(EXECUTE_ADDR, size);
-
     memset(&arg, 0, sizeof(arg));
     if (args != NULL) {
         arg.argvMagic = ARGV_MAGIC;
@@ -290,14 +285,7 @@ void bootDOL(const char* path, const char* args, bool patchMX) {
         DCFlushRange(arg.commandLine, len + 1);
     }
 
-    memmove(ARGS_ADDR, &arg, sizeof(arg));
-    DCFlushRange(ARGS_ADDR, sizeof(arg));
-
-    memcpy(BOOTER_ADDR, dolbooter_bin, dolbooter_bin_size);
-    DCFlushRange(BOOTER_ADDR, dolbooter_bin_size);
-    ICInvalidateRange(BOOTER_ADDR, dolbooter_bin_size);
-
-    entrypoint hbboot_ep = (entrypoint)BOOTER_ADDR;
+    entrypoint hbboot_ep = (entrypoint)relocateDolFromFile(path, &arg, patchMX);
 
     shutdown();
 
@@ -329,16 +317,6 @@ void bootGCGame(NIN_CFG cfg) {
 
     i2c_deinit();
 
-    FILE* fp = fopen(ninPath, "rb");
-    if (!fp)
-        return;
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    rewind(fp);
-    fread(EXECUTE_ADDR, 1, size, fp);
-    fclose(fp);
-    DCFlushRange(EXECUTE_ADDR, size);
-
     memset(&arg, 0, sizeof(arg));
     arg.argvMagic = ARGV_MAGIC;
     arg.argc = 2;
@@ -350,14 +328,8 @@ void bootGCGame(NIN_CFG cfg) {
     arg.endARGV = arg.argv + 1;
     DCFlushRange(arg.commandLine, arg.length);
 
-    memmove(ARGS_ADDR, &arg, sizeof(arg));
-    DCFlushRange(ARGS_ADDR, sizeof(arg));
 
-    memcpy(BOOTER_ADDR, dolbooter_bin, dolbooter_bin_size);
-    DCFlushRange(BOOTER_ADDR, dolbooter_bin_size);
-    ICInvalidateRange(BOOTER_ADDR, dolbooter_bin_size);
-
-    entrypoint hbboot_ep = (entrypoint)BOOTER_ADDR;
+    entrypoint hbboot_ep = (entrypoint)relocateDolFromFile(ninPath, &arg, false);
 
     shutdown();
 
@@ -459,6 +431,74 @@ void bootDiscLoader(bool hideLog) {
     _CPU_ISR_Disable(level);
     hbboot_ep();
     _CPU_ISR_Restore(level);
+}
+
+u32 relocateDolFromFile(std::string path, struct __argv* argv, bool patchMX) {
+    dolhdr hdr;
+
+    std::ifstream ifs(path, std::ios::binary);
+    
+    if (!ifs.is_open())
+        return NULL;
+    
+    ifs.read(reinterpret_cast<char*>(&hdr), sizeof(dolhdr));
+
+    u8 set_bss = (hdr.addressBSS >= 0x80003400 && hdr.addressBSS + hdr.sizeBSS <= 0x817FFFFF);
+
+    //Load text sections
+    for (int i = 0; i < 7; i++) {
+        if (!hdr.sizeText[i] || hdr.offsetText[i] < 0x100)
+            continue;
+
+        printf("Relocating %08X\n", hdr.addressText[i]);
+        ifs.seekg(hdr.offsetText[i], std::ios::beg);
+        ifs.read(reinterpret_cast<char*>(hdr.addressText[i]), hdr.sizeText[i]);
+        DCFlushRange(reinterpret_cast<void*>(hdr.addressText[i]), hdr.sizeText[i]);
+        ICInvalidateRange(reinterpret_cast<void*>(hdr.addressText[i]), hdr.sizeText[i]);
+    }
+
+    //Load data sections
+    for (int i = 0; i < 11; i++) {
+        if (!hdr.sizeData[i] || hdr.offsetData[i] < 0x100)
+            continue;
+        set_bss = set_bss &&
+            (hdr.addressData[i] + hdr.sizeData[i] <= hdr.addressBSS ||
+            hdr.addressData[i] >= hdr.addressBSS + hdr.sizeBSS);
+        printf("Relocating %08X\n", hdr.addressData[i]);
+        ifs.seekg(hdr.offsetData[i], std::ios::beg);
+        ifs.read(reinterpret_cast<char*>(hdr.addressData[i]), hdr.sizeData[i]);
+        DCFlushRange(reinterpret_cast<void*>(hdr.addressData[i]), hdr.sizeData[i]);
+        ICInvalidateRange(reinterpret_cast<void*>(hdr.addressData[i]), hdr.sizeData[i]);
+    }
+
+    ifs.close();
+
+    //Clear BSS
+    if (set_bss) {
+        memset((void*)hdr.addressBSS, 0, hdr.sizeBSS);
+        DCFlushRange((void*)hdr.addressBSS, hdr.sizeBSS);
+    }
+
+    if (argv && argv->argvMagic == ARGV_MAGIC) {
+        memcpy((void*)(hdr.entrypoint + 8), (void*)argv, sizeof(*argv));
+        DCFlushRange((void*)(hdr.entrypoint + 8), sizeof(*argv));
+    }
+
+    if (patchMX) {
+        std::vector<DOLFunction> DOLFunctions;
+        listFunctionsInDOL(hdr, DOLFunctions);
+        for (auto fun : DOLFunctions) {
+            for (auto sig : __SYS_ReadROM_signatures) {
+                if (sig.checksum == fun.checksum && sig.len == fun.len) {
+                    printf("Patching __SYS_ReadROM at %08X\n", fun.address);
+                    injectMXPatch((u8*)fun.address);
+                    ICInvalidateRange(reinterpret_cast<void*>(fun.address), 0x2C);
+                }
+            }
+        }
+    }
+    
+    return hdr.entrypoint | 0x80000000;
 }
 
 void powerOff() {
