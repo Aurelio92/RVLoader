@@ -26,6 +26,10 @@ namespace Gfx
     std::list<MtxContainer> viewMatrixStack;
     std::list<Rect> scissorBoxStack;
 
+    static bool isInMEM1(void* p) {
+        return MEM_VIRTUAL_TO_PHYSICAL(p) < 0x01800000;
+    }
+
     void init() {
         f32 yscale;
         VIDEO_Init();
@@ -39,9 +43,15 @@ namespace Gfx
             rmode->viXOrigin = (VI_MAX_WIDTH_NTSC - rmode->viWidth) / 2;
         }
 
+        void *gp_fifo = memalign(32, DEFAULT_FIFO_SIZE);
+        memset(gp_fifo, 0, DEFAULT_FIFO_SIZE);
+
         // allocate 2 framebuffers for double buffering
         frameBuffer[0] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
         frameBuffer[1] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+
+        if (!isInMEM1(gp_fifo) || !isInMEM1(frameBuffer[0]) || !isInMEM1(frameBuffer[1]))
+            printf("Gfx: WARNING, GPU buffers not in MEM1 (FIFO %p, XFBs %p %p): the GPU will hang\n", gp_fifo, frameBuffer[0], frameBuffer[1]);
 
         VIDEO_ClearFrameBuffer(rmode, frameBuffer[0], COLOR_BLACK);
         VIDEO_ClearFrameBuffer(rmode, frameBuffer[1], COLOR_BLACK);
@@ -58,11 +68,7 @@ namespace Gfx
                 VIDEO_WaitVSync();
         }
 
-        // setup the fifo and then init the flipper
-        void *gp_fifo = NULL;
-        gp_fifo = memalign(32, DEFAULT_FIFO_SIZE);
-        memset(gp_fifo, 0, DEFAULT_FIFO_SIZE);
-
+        // init the flipper
         GX_Init(gp_fifo, DEFAULT_FIFO_SIZE);
 
         // clears the bg to color and clears the z buffer
@@ -134,6 +140,10 @@ namespace Gfx
         VIDEO_SetBlack(FALSE);
     }
 
+    void waitDrawDone() {
+        GX_DrawDone();
+    }
+
     void setClearColor(u8 r, u8 g, u8 b) {
         GX_SetCopyClear((GXColor){r, g, b, 0xff}, 0x00ffffff);
     }
@@ -164,7 +174,7 @@ namespace Gfx
         GX_CopyDisp(frameBuffer[fb],GX_TRUE);
 
         //Do this stuff after drawing
-        GX_DrawDone();
+        waitDrawDone();
 
         VIDEO_SetNextFramebuffer(frameBuffer[fb]);
         fb ^= 1; //flip framebuffer

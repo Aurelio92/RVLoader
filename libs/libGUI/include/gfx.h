@@ -13,6 +13,7 @@ namespace Gfx
     void fillScreen();
     void startDrawing();
     void endDrawing();
+    void waitDrawDone();
     void concatViewMatrix(Mtx mi, Mtx mo);
     void restoreViewMatrix();
     void identity();
