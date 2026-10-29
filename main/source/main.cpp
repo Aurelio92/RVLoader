@@ -390,6 +390,7 @@ int main(int argc, char **argv) {
         //font.printf(300, 10, "MEM1: %.3f / %.3f", (float)SYS_GetArena1Size() / 1048576.0f, mem1Max);
         //font.printf(300, 30, "MEM2: %.3f / %.3f", (float)SYS_GetArena2Size() / 1048576.0f, mem2Max);
         //font.printf(300, 10, "PADS: %u", connectedPads);
+        Gfx::waitDrawDone(); //Make sure GX is done rendering all covers
         unlockTitlesDBs(); //Needs to be before endDrawing
         Gfx::endDrawing();
         //VIDEO_WaitVSync();
