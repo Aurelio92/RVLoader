@@ -13,6 +13,7 @@
 #include "gc2wiimote.h"
 #include "rvldd.h"
 #include "mx.h"
+#include "wifi.h"
 
 GuiGamesView::GuiGamesView(TitleType _titlesType) {
     //Set default cover size
@@ -165,6 +166,9 @@ void GuiGamesView::initLUA() {
     //Create GamesView.hiidra table
     lua_pushstring(L, "hiidra");
     lua_newtable(L);
+    luaSetTableIntField(L, "WIFI_OFF", WIFI_OFF);
+    luaSetTableIntField(L, "WIFI_ON", WIFI_ON);
+    luaSetTableIntField(L, "WIFI_AUTO", WIFI_AUTO);
     luaSetTableIntField(L, "PADREAD_AUTO", HIIDRA_PADREAD_AUTO);
     luaSetTableIntField(L, "PADREAD_BYPASS", HIIDRA_PADREAD_BYPASS);
     luaSetTableIntField(L, "PADREAD_REDIRECT", HIIDRA_PADREAD_REDIRECT);
@@ -278,7 +282,7 @@ void GuiGamesView::openGameConfig(u32 idx) {
 
         case WII_GAME:
             if (!gameConfig.getValue("Enable WiFi", &tempVal))
-                gameConfig.setValue("Enable WiFi", 0);
+                gameConfig.setValue("Enable WiFi", WIFI_AUTO);
             if (!gameConfig.getValue("Enable Bluetooth", &tempVal))
                 gameConfig.setValue("Enable Bluetooth", 0);
             if (!gameConfig.getValue("Enable USB saves", &tempVal))
@@ -299,7 +303,7 @@ void GuiGamesView::openGameConfig(u32 idx) {
 
         case WII_CHANNEL:
             if (!gameConfig.getValue("Enable WiFi", &tempVal))
-                gameConfig.setValue("Enable WiFi", 0);
+                gameConfig.setValue("Enable WiFi", WIFI_AUTO);
             if (!gameConfig.getValue("Enable Bluetooth", &tempVal))
                 gameConfig.setValue("Enable Bluetooth", 0);
             if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
@@ -318,7 +322,7 @@ void GuiGamesView::openGameConfig(u32 idx) {
 
         case WII_VC:
             if (!gameConfig.getValue("Enable WiFi", &tempVal))
-                gameConfig.setValue("Enable WiFi", 0);
+                gameConfig.setValue("Enable WiFi", WIFI_AUTO);
             if (!gameConfig.getValue("Enable Bluetooth", &tempVal))
                 gameConfig.setValue("Enable Bluetooth", 0);
             if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
@@ -697,7 +701,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
             tempVal = 0;
             thisView->gameConfig.getValue("Enable WiFi", &tempVal);
-            if (tempVal)
+            if (Wifi::isEnabled(tempVal))
                 cfg.Config |= HIIDRA_CFG_WIFI;
 
             tempVal = 0;
@@ -849,7 +853,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
             tempVal = 0;
             thisView->gameConfig.getValue("Enable WiFi", &tempVal);
-            if (tempVal)
+            if (Wifi::isEnabled(tempVal))
                 cfg.Config |= HIIDRA_CFG_WIFI;
 
             tempVal = 0;
@@ -915,7 +919,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
             tempVal = 0;
             thisView->gameConfig.getValue("Enable WiFi", &tempVal);
-            if (tempVal)
+            if (Wifi::isEnabled(tempVal))
                 cfg.Config |= HIIDRA_CFG_WIFI;
 
             tempVal = 0;
