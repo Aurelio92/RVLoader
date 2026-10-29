@@ -191,6 +191,7 @@ void GamesDatabase::scanGames() {
 }
 
 void GamesDatabase::startScanAndUpdateThread() {
+    games.reserve(1000);
     readCache();
     scanAndUpdateThreadStack = (u8*)memalign(32, THREAD_STACK_SIZE);
     //ThreadsProfiler::createThreadAndProfile(dbName + " ScanAndUpdateThread", &scanAndUpdateThreadHandle, scanAndUpdateThread, (void*)this, scanAndUpdateThreadStack, THREAD_STACK_SIZE, 30);

@@ -116,7 +116,6 @@ class GamesDatabase {
             
             scanAndUpdateThreadStack = NULL;
             coversThreadStack = NULL;
-            games.reserve(10000);
         }
         GamesDatabase(std::string _scanPath, std::string _cachePath, std::string _targetNameOrExtension, bool _recursiveScan = false, bool _scanningForDirectories = false) {
             scanPath = _scanPath;
