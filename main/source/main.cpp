@@ -136,6 +136,12 @@ static ssize_t timestampedWrite(struct _reent *r, void *fd, const char *ptr, siz
     return len;
 }
 
+// freetype only uses this for WOFF2 fonts, which RVLoader never loads.
+// Stub function to avoid wasting ~170kB
+extern "C" int BrotliDecoderDecompress(size_t encoded_size, const uint8_t* encoded, size_t* decoded_size, uint8_t* decoded) {
+    return 0; // BROTLI_DECODER_RESULT_ERROR
+}
+
 int main(int argc, char **argv) {
     // Waits for EXI probe debouncing. Timeout after 50ms
     for (int i = 0; i < 50 && EXI_ProbeEx(EXI_CHANNEL_1) == 0; i++) usleep(10000);
