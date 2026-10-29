@@ -22,6 +22,7 @@
 #include "virtualsysconf.h"
 #include "patches.h"
 #include "system.h"
+#include "titles.h"
 #include "DOL.h"
 
 #include "discloader_dol.h"
@@ -236,6 +237,8 @@ bool initFAT() {
 }
 
 void unmountFAT() {
+    stopTitlesThreads();
+
     if (_fatInitialized) {
         _fatInitialized = false;
         fatUnmount("usb:/");

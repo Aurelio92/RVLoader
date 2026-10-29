@@ -16,6 +16,9 @@
 
 #define THREAD_STACK_SIZE 16384
 
+std::atomic<bool> titlesThreadsStopping(false);
+static lwp_t titlesDBsOwner = LWP_THREAD_NULL;
+
 void GamesDatabase::handleDirEntryForScan(const std::filesystem::directory_entry& dir_entry, std::unordered_map<std::string, GameContainer*>& lookup, std::vector<GameContainer>& newGames, std::vector<std::string>& verifiedPaths) {
     if ((scanningForDirectories && !dir_entry.is_directory())
         || (!scanningForDirectories && !dir_entry.is_regular_file())
@@ -146,10 +149,14 @@ void GamesDatabase::scanGames() {
     printf("%s: Scanning games\n", dbName.c_str());
     if (recursiveScan) {
         for (const auto& dir_entry : std::filesystem::recursive_directory_iterator(scanPath)) {
+            if (titlesThreadsStopping)
+                return;
             handleDirEntryForScan(dir_entry, lookup, newGames, verifiedPaths);
         }
     } else {
         for (const auto& dir_entry : std::filesystem::directory_iterator(scanPath)) {
+            if (titlesThreadsStopping)
+                return;
             handleDirEntryForScan(dir_entry, lookup, newGames, verifiedPaths);
         }
     }
@@ -219,6 +226,8 @@ void* GamesDatabase::loadCoversThread(void* arg) {
     std::unordered_set<std::string> coverFiles;
     std::error_code ec;
     for (const auto& entry : std::filesystem::directory_iterator(COVER_PATH, ec)) {
+        if (titlesThreadsStopping)
+            return NULL;
         std::string name = entry.path().filename().string();
         for (char& c : name) c = toupper((unsigned char)c);
         coverFiles.insert(std::move(name));
@@ -281,15 +290,36 @@ void* GamesDatabase::loadCoversThread(void* arg) {
     return NULL;
 }
 
+void GamesDatabase::joinThreads() {
+    if (scanAndUpdateThreadHandle != LWP_THREAD_NULL)
+        LWP_JoinThread(scanAndUpdateThreadHandle, NULL);
+    if (coversThreadHandle != LWP_THREAD_NULL)
+        LWP_JoinThread(coversThreadHandle, NULL);
+}
+
+void stopTitlesThreads() {
+    if (titlesThreadsStopping.exchange(true))
+        return;
+    if (titlesDBsOwner == LWP_GetSelf())
+        unlockTitlesDBs();
+    gcGamesDatabase.joinThreads();
+    wiiGamesDatabase.joinThreads();
+    vcGamesDatabase.joinThreads();
+    wiiChannelsDatabase.joinThreads();
+    joinHomebrewsThread();
+}
+
 void lockTitlesDBs() {
     gcGamesDatabase.lock();
     wiiGamesDatabase.lock();
     vcGamesDatabase.lock();
     wiiChannelsDatabase.lock();
     wiiHomebrewsMutex.lock();
+    titlesDBsOwner = LWP_GetSelf();
 }
 
 void unlockTitlesDBs() {
+    titlesDBsOwner = LWP_THREAD_NULL;
     wiiHomebrewsMutex.unlock();
     gcGamesDatabase.unlock();
     wiiGamesDatabase.unlock();

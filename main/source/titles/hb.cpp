@@ -82,7 +82,7 @@ static bool parseMetaXML(const char* filepath, hbMeta* meta, std::string* name) 
 #define HB_CACHE_PATH "/rvloader/hb_cache.tsv"
 
 static u8* hbScanThreadStack = NULL;
-static lwp_t hbScanThreadHandle;
+static lwp_t hbScanThreadHandle = LWP_THREAD_NULL;
 
 static time_t getLastModified(const char* path) {
     struct stat result;
@@ -156,6 +156,8 @@ static void scanHomebrews() {
     }
 
     while ((dirp = readdir(dp)) != NULL) {
+        if (titlesThreadsStopping)
+            break;
         if (dirp->d_name[0] == '.' || dirp->d_type != DT_DIR)
             continue;
 
@@ -196,6 +198,8 @@ static void scanHomebrews() {
         newHomebrews.back().lastModified = lastModified;
     }
     closedir(dp);
+    if (titlesThreadsStopping)
+        return;
 
     std::lock_guard<RVLMutex> lock(wiiHomebrewsMutex);
 
@@ -228,4 +232,9 @@ void addWiiHomebrews() {
     readHBCache();
     hbScanThreadStack = (u8*)memalign(32, THREAD_STACK_SIZE);
     LWP_CreateThread(&hbScanThreadHandle, hbScanThread, NULL, hbScanThreadStack, THREAD_STACK_SIZE, 30);
+}
+
+void joinHomebrewsThread() {
+    if (hbScanThreadHandle != LWP_THREAD_NULL)
+        LWP_JoinThread(hbScanThreadHandle, NULL);
 }

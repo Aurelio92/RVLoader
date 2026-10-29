@@ -4,6 +4,7 @@
 #include <gccore.h>
 #include <libgui.h>
 #include <filesystem>
+#include <atomic>
 #include "gcsave.h"
 #include "rvlmutex.h"
 #include "rvltrigger.h"
@@ -98,9 +99,9 @@ class GamesDatabase {
         bool recursiveScan;
         bool scanningForDirectories;
         u8* scanAndUpdateThreadStack;
-        lwp_t scanAndUpdateThreadHandle;
+        lwp_t scanAndUpdateThreadHandle = LWP_THREAD_NULL;
         u8* coversThreadStack;
-        lwp_t coversThreadHandle;
+        lwp_t coversThreadHandle = LWP_THREAD_NULL;
         RVLMutex dbMutex;
         RVLTrigger hasFinishedScanning;
         void handleDirEntryForScan(const std::filesystem::directory_entry& dir_entry, std::unordered_map<std::string, GameContainer*>& lookup, std::vector<GameContainer>& newGames, std::vector<std::string>& verifiedPaths);
@@ -138,6 +139,7 @@ class GamesDatabase {
         static void* scanAndUpdateThread(void* arg);
         static void* loadCoversThread(void* arg);
         bool hasFinishedScanningGames() { return hasFinishedScanning.check(); }
+        void joinThreads();
         virtual void createGameContainer(std::vector<GameContainer>& newGames, time_t lastModified, const std::string& path) { }
         virtual void addMetadataToGameContainer(GameContainer& gc) { }
 };
@@ -220,6 +222,10 @@ namespace wiiTDB {
     void parse();
     std::string getGameName(std::string gameID);
 }
+
+extern std::atomic<bool> titlesThreadsStopping;
+void stopTitlesThreads();
+void joinHomebrewsThread();
 
 void lockTitlesDBs();
 void unlockTitlesDBs();
