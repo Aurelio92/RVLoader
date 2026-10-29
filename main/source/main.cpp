@@ -113,6 +113,11 @@ bool isRunningOnDolphin() {
     return runningOnDolphin;
 }
 
+
+//rvloader.ld puts some libraries' code at the start of MEM2: MEM2's arena starts after it
+extern "C" u8 __mem2_end[];
+extern "C" void* __myArena2Lo = __mem2_end;
+
 static devoptab_t timestampedStdout;
 static ssize_t (*geckoWrite)(struct _reent *, void *, const char *, size_t);
 static u64 bootTime;
@@ -153,7 +158,6 @@ int main(int argc, char **argv) {
         timestampedStdout.write_r = timestampedWrite;
         devoptab_list[STD_OUT] = &timestampedStdout;
     }
-    SYS_SetArena1Lo(SYS_GetArena1Hi()); //Fill the rest of MEM1
     TPLFile mainTDF;
     float mem1Max = (float)SYS_GetArena1Size() / 1048576.0f;
     float mem2Max = (float)SYS_GetArena2Size() / 1048576.0f;

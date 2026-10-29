@@ -14,6 +14,8 @@ RVLOADERVERSION_MAJOR	:= 2
 RVLOADERVERSION_MINOR	:= 1
 RVLOADERVERSION_NAME	:= ""
 
+LINKER_SCRIPT			:= rvloader.ld
+
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -41,6 +43,9 @@ CXXFLAGS	=	$(CFLAGS) -std=c++20
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x81330000 #,-wrap=__thread_dispatch
 
+# Replaces devkitPPC's rvl.ld with our own
+LDFLAGS	+=	-T$(LINKER_SCRIPT_PATH)
+
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
@@ -62,6 +67,7 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export LINKER_SCRIPT_PATH	:=	$(CURDIR)/$(LINKER_SCRIPT)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
