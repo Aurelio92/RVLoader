@@ -26,6 +26,7 @@
 
 std::vector<HBContainer> wiiHomebrews;
 RVLMutex wiiHomebrewsMutex;
+RVLTrigger wiiHomebrewsFinishedScanning;
 
 
 static std::string getElemCDATA(mxml_node_t* node, const char* element) {
@@ -225,6 +226,7 @@ static void scanHomebrews() {
 
 static void* hbScanThread(void* arg) {
     scanHomebrews();
+    wiiHomebrewsFinishedScanning.send();
     return NULL;
 }
 

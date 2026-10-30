@@ -128,6 +128,11 @@ function draw(onFocus)
 end
 
 function handleInputs(onFocus)
+    if HBView.hasFinishedScanningHB() then
+        hbCount = HBView.getHBCount()
+        rowsCount = (hbCount + hbPerRow - 1) // hbPerRow
+    end
+
     if onFocus then
         if showingHBConfig then
             handleHBConfig()

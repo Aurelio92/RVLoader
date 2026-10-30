@@ -217,6 +217,7 @@ extern GamesDatabaseChannels wiiChannelsDatabase;
 
 extern std::vector<HBContainer> wiiHomebrews;
 extern RVLMutex wiiHomebrewsMutex;
+extern RVLTrigger wiiHomebrewsFinishedScanning;
 
 namespace wiiTDB {
     void parse();

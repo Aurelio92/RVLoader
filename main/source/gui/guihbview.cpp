@@ -51,6 +51,7 @@ void GuiHBView::initLUA() {
     static const luaL_Reg GuiHBView_functions[] = {
         {"setCoverSize", lua_setCoverSize},
         {"drawHBCover", lua_drawHBCover},
+        {"hasFinishedScanningHB", lua_hasFinishedScanningHB},
         {"getHBCount", lua_getHBCount},
         {"getHBName", lua_getHBName},
         {"bootHB", lua_bootHB},
@@ -178,6 +179,17 @@ int GuiHBView::lua_drawHBCover(lua_State* L) {
     }
 
     return 0;
+}
+
+int GuiHBView::lua_hasFinishedScanningHB(lua_State* L) {
+    int argc = lua_gettop(L);
+    if (argc != 0) {
+        return luaL_error(L, "wrong number of arguments");
+    }
+
+    lua_pushboolean(L, wiiHomebrewsFinishedScanning.check());
+
+    return 1;
 }
 
 int GuiHBView::lua_getHBCount(lua_State* L) {

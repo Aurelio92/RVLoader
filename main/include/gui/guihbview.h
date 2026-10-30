@@ -26,6 +26,7 @@ class GuiHBView : public GuiLuaElement {
 
         static int lua_setCoverSize(lua_State* L);
         static int lua_drawHBCover(lua_State* L);
+        static int lua_hasFinishedScanningHB(lua_State* L);
         static int lua_getHBCount(lua_State* L);
         static int lua_getHBName(lua_State* L);
         static int lua_bootHB(lua_State* L);
