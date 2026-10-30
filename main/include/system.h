@@ -13,6 +13,7 @@ void bootGCGame(NIN_CFG cfg);
 void bootWiiGame(HIIDRA_CFG cfg, u32 gameIDU32, std::string gameIDString, std::vector<uint32_t> cheats, bool forceReinstall);
 void bootDiscLoader(bool hideLog);
 u32 relocateDolFromFile(std::string path, struct __argv* argv, bool patchMX);
+u32 relocateElfFromFile(std::string path, struct __argv* argv, bool patchMX);
 void bootPriiloader();
 void bootSysMenu();
 void powerOff();

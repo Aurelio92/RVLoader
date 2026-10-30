@@ -24,6 +24,7 @@
 #include "system.h"
 #include "titles.h"
 #include "DOL.h"
+#include "ELF.h"
 
 #include "discloader_dol.h"
 
@@ -436,6 +437,21 @@ void bootDiscLoader(bool hideLog) {
     _CPU_ISR_Restore(level);
 }
 
+//Looks for every known __SYS_ReadROM in the text sections and redirects it to the MX patch
+static void patchReadROM(dolhdr hdr) {
+    std::vector<DOLFunction> DOLFunctions;
+    listFunctionsInDOL(hdr, DOLFunctions);
+    for (auto fun : DOLFunctions) {
+        for (auto sig : __SYS_ReadROM_signatures) {
+            if (sig.checksum == fun.checksum && sig.len == fun.len) {
+                printf("Patching __SYS_ReadROM at %08X\n", fun.address);
+                injectMXPatch((u8*)fun.address);
+                ICInvalidateRange(reinterpret_cast<void*>(fun.address), 0x2C);
+            }
+        }
+    }
+}
+
 u32 relocateDolFromFile(std::string path, struct __argv* argv, bool patchMX) {
     dolhdr hdr;
 
@@ -445,6 +461,11 @@ u32 relocateDolFromFile(std::string path, struct __argv* argv, bool patchMX) {
         return NULL;
     
     ifs.read(reinterpret_cast<char*>(&hdr), sizeof(dolhdr));
+
+    if (!memcmp(&hdr, "\x7F" "ELF", 4)) {
+        ifs.close();
+        return relocateElfFromFile(path, argv, patchMX);
+    }
 
     u8 set_bss = (hdr.addressBSS >= 0x80003400 && hdr.addressBSS + hdr.sizeBSS <= 0x817FFFFF);
 
@@ -487,21 +508,60 @@ u32 relocateDolFromFile(std::string path, struct __argv* argv, bool patchMX) {
         DCFlushRange((void*)(hdr.entrypoint + 8), sizeof(*argv));
     }
 
-    if (patchMX) {
-        std::vector<DOLFunction> DOLFunctions;
-        listFunctionsInDOL(hdr, DOLFunctions);
-        for (auto fun : DOLFunctions) {
-            for (auto sig : __SYS_ReadROM_signatures) {
-                if (sig.checksum == fun.checksum && sig.len == fun.len) {
-                    printf("Patching __SYS_ReadROM at %08X\n", fun.address);
-                    injectMXPatch((u8*)fun.address);
-                    ICInvalidateRange(reinterpret_cast<void*>(fun.address), 0x2C);
-                }
-            }
-        }
-    }
+    if (patchMX)
+        patchReadROM(hdr);
     
     return hdr.entrypoint | 0x80000000;
+}
+
+u32 relocateElfFromFile(std::string path, struct __argv* argv, bool patchMX) {
+    Elf32_Ehdr ehdr;
+    dolhdr hdr; //Executable segments, so the DOL function scanner can look for __SYS_ReadROM
+    u32 textCount = 0;
+
+    std::ifstream ifs(path, std::ios::binary);
+
+    if (!ifs.is_open())
+        return NULL;
+
+    ifs.read(reinterpret_cast<char*>(&ehdr), sizeof(ehdr));
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.entrypoint = ehdr.e_entry | 0x80000000;
+
+    //Load PT_LOAD segments, zeroing the part not backed by the file (BSS)
+    for (int i = 0; i < ehdr.e_phnum; i++) {
+        Elf32_Phdr phdr;
+        ifs.seekg(ehdr.e_phoff + i * ehdr.e_phentsize, std::ios::beg);
+        ifs.read(reinterpret_cast<char*>(&phdr), sizeof(phdr));
+        if (phdr.p_type != PT_LOAD || !phdr.p_memsz)
+            continue;
+
+        u32 address = phdr.p_vaddr | 0x80000000;
+        printf("Relocating %08X\n", address);
+        ifs.seekg(phdr.p_offset, std::ios::beg);
+        ifs.read(reinterpret_cast<char*>(address), phdr.p_filesz);
+        if (phdr.p_memsz > phdr.p_filesz)
+            memset((void*)(address + phdr.p_filesz), 0, phdr.p_memsz - phdr.p_filesz);
+        DCFlushRange(reinterpret_cast<void*>(address), phdr.p_memsz);
+        ICInvalidateRange(reinterpret_cast<void*>(address), phdr.p_memsz);
+
+        if ((phdr.p_flags & PF_X) && textCount < 7) {
+            hdr.addressText[textCount] = address;
+            hdr.sizeText[textCount++] = phdr.p_filesz;
+        }
+    }
+
+    ifs.close();
+
+    if (argv && argv->argvMagic == ARGV_MAGIC) {
+        memcpy((void*)(hdr.entrypoint + 8), (void*)argv, sizeof(*argv));
+        DCFlushRange((void*)(hdr.entrypoint + 8), sizeof(*argv));
+    }
+
+    if (patchMX)
+        patchReadROM(hdr);
+
+    return hdr.entrypoint;
 }
 
 void powerOff() {
