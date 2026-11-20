@@ -66,6 +66,18 @@ s32 Apploader_Run(entry_point* entry) {
 
     DCFlushRange(APPLOADER_START, appldr_len);
 
+    // Standalone Retro Rewind checks the reserved homebrew stub area.
+    // Clear it before the disc apploader can install code in low memory.
+    const void* const discId = (const void*)0x80000000;
+    if (memcmp(discId, "RMCPTO", 6) == 0 ||
+        memcmp(discId, "RMCETO", 6) == 0 ||
+        memcmp(discId, "RMCJTO", 6) == 0) {
+        void* const stub = (void*)0x80001800;
+        constexpr u32 stubSize = 0x1800;
+        memset(stub, 0, stubSize);
+        DCFlushRange(stub, stubSize);
+    }
+
     /* Set apploader entry function */
     app_entry appldr_entry = (app_entry)buffer[4];
 
