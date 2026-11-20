@@ -78,11 +78,14 @@ s32 Apploader_Run(entry_point* entry) {
     appldr_init(__noprint);
 
     //Read hiidraCfg
+    bool configLoaded = false;
     s32 hiidraCfgFD = IOS_Open("$rvloader/Hiidra/boot.cfg", 1);
     if (hiidraCfgFD >= 0) {
-        IOS_Read(hiidraCfgFD, (void*)&hiidraCfg, sizeof(HIIDRA_CFG));
+        s32 bytesRead = IOS_Read(hiidraCfgFD, (void*)&hiidraCfg, sizeof(HIIDRA_CFG));
         IOS_Close(hiidraCfgFD);
-    } else {
+        configLoaded = bytesRead == static_cast<s32>(sizeof(HIIDRA_CFG));
+    }
+    if (!configLoaded) {
         hiidraCfg.DeflickerMode = HIIDRA_DEFLICKER_AUTO;
     }
 
@@ -111,7 +114,9 @@ s32 Apploader_Run(entry_point* entry) {
     /* Set entry point from apploader */
     *entry = (entry_point)appldr_final();
 
-    readCheats();
+    if (configLoaded && (hiidraCfg.Config & HIIDRA_CFG_CHEATS)) {
+        readCheats();
+    }
 
     // IOSReloadBlock(IOS_GetVersion());
     *(vu32 *)0x80003140 = *(vu32 *)0x80003188; // IOS Version Check
