@@ -743,6 +743,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
                 for (auto& cheat : thisView->cheatCodes) {
                     std::string cheatConfName = "Cheat_" + Cheat::getCheatNameHash(cheat.first);
+                    tempVal = 0; //Cheats without a saved state are disabled
                     thisView->gameConfig.getValue(cheatConfName.c_str(), &tempVal);
                     thisView->cheatCodes.setCheatActive(cheat.first, tempVal);
                 }
@@ -892,6 +893,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
                 for (auto& cheat : thisView->cheatCodes) {
                     std::string cheatConfName = "Cheat_" + Cheat::getCheatNameHash(cheat.first);
+                    tempVal = 0; //Cheats without a saved state are disabled
                     thisView->gameConfig.getValue(cheatConfName.c_str(), &tempVal);
                     thisView->cheatCodes.setCheatActive(cheat.first, tempVal);
                 }
@@ -958,6 +960,7 @@ int GuiGamesView::lua_bootGame(lua_State* L) {
 
                 for (auto& cheat : thisView->cheatCodes) {
                     std::string cheatConfName = "Cheat_" + Cheat::getCheatNameHash(cheat.first);
+                    tempVal = 0; //Cheats without a saved state are disabled
                     thisView->gameConfig.getValue(cheatConfName.c_str(), &tempVal);
                     thisView->cheatCodes.setCheatActive(cheat.first, tempVal);
                 }
