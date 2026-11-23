@@ -205,140 +205,139 @@ void GuiGamesView::initLUA() {
     lua_setglobal(L, "GamesView");
 }
 
+//Version written to per-game config files. Files without it were saved by older
+//releases, which stored a full snapshot of every setting instead of overrides only.
+#define GAME_CONFIG_VERSION_KEY "ConfigVersion"
+#define GAME_CONFIG_VERSION 2
+
+static void getBuiltinDefaults(TitleType type, Config& config) {
+    switch (type) {
+        case GC_GAME:
+            config.setValue("Force progressive", 0);
+            config.setValue("Force widescreen", 0);
+            config.setValue("Force RVL-DD stretching", 0);
+            config.setValue("Native SI", 0);
+            config.setValue("Video mode", NIN_VID_AUTO);
+            config.setValue("Language", NIN_LAN_AUTO);
+            config.setValue("Enable Cheats", 0);
+            config.setValue("Memory Card Emulation", 1);
+            config.setValue("Max Pads", 4);
+            config.setValue("Video Width", 0);
+
+            //GC+2.0 mapping
+            config.setValue("GCPMap_A", PAD_BUTTON_A);
+            config.setValue("GCPMap_B", PAD_BUTTON_B);
+            config.setValue("GCPMap_X", PAD_BUTTON_X);
+            config.setValue("GCPMap_Y", PAD_BUTTON_Y);
+            config.setValue("GCPMap_UP", PAD_BUTTON_UP);
+            config.setValue("GCPMap_DOWN", PAD_BUTTON_DOWN);
+            config.setValue("GCPMap_RIGHT", PAD_BUTTON_RIGHT);
+            config.setValue("GCPMap_LEFT", PAD_BUTTON_LEFT);
+            config.setValue("GCPMap_Z", PAD_TRIGGER_Z);
+            config.setValue("GCPMap_R", PAD_TRIGGER_R);
+            config.setValue("GCPMap_L", PAD_TRIGGER_L);
+            config.setValue("GCPMap_START", PAD_BUTTON_START);
+        break;
+
+        case WII_GAME:
+            config.setValue("Enable USB saves", 1);
+            //fall through
+        case WII_CHANNEL:
+        case WII_VC:
+            config.setValue("Enable WiFi", WIFI_AUTO);
+            config.setValue("Enable Bluetooth", 0);
+            config.setValue("Enable GC2Wiimote", 0);
+            config.setValue("Patch MX chip", MX::isConnected() ? 0 : 1);
+            config.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
+            config.setValue("Deflicker Mode", HIIDRA_DEFLICKER_AUTO);
+            config.setValue("Enable Cheats", 0);
+            config.setValue("Cheats Hooktype", HIIDRA_HOOKTYPE_VBI);
+        break;
+    }
+}
+
+static std::string getMediaDefaultsPath(TitleType type) {
+    switch (type) {
+        case GC_GAME:
+            return std::string(DEFAULTS_PATH) + "/gc.cfg";
+        case WII_GAME:
+            return std::string(DEFAULTS_PATH) + "/wii.cfg";
+        case WII_CHANNEL:
+            return std::string(DEFAULTS_PATH) + "/chan.cfg";
+        case WII_VC:
+            return std::string(DEFAULTS_PATH) + "/vc.cfg";
+    }
+    return "";
+}
+
 void GuiGamesView::openGameConfig(u32 idx) {
-    int tempVal;
     lua_getfield(L, LUA_REGISTRYINDEX, "gamesList");
     std::vector<GameContainer>* gamesList = (std::vector<GameContainer>*)lua_touserdata(L, -1);
     lua_pop(L, 1);
     GameContainer& gc = gamesList->at(idx);
-    //Load settings
-    gameConfig.close(); //Make sure config lists are empty
-    gameConfig.open(gc.confPath.c_str());
 
-    //Set default values for missing configs
-    switch (titlesType) {
-        case GC_GAME:
-            if (!gameConfig.getValue("Force progressive", &tempVal))
-                gameConfig.setValue("Force progressive", 0);
-            if (!gameConfig.getValue("Force widescreen", &tempVal))
-                gameConfig.setValue("Force widescreen", 0);
-            if (!gameConfig.getValue("Force RVL-DD stretching", &tempVal))
-                gameConfig.setValue("Force RVL-DD stretching", 0);
-            if (!gameConfig.getValue("Native SI", &tempVal))
-                gameConfig.setValue("Native SI", 0);
-            if (!gameConfig.getValue("Video mode", &tempVal))
-                gameConfig.setValue("Video mode", NIN_VID_AUTO);
-            if (!gameConfig.getValue("Language", &tempVal))
-                gameConfig.setValue("Language", NIN_LAN_AUTO);
-            if (!gameConfig.getValue("Enable Cheats", &tempVal))
-                gameConfig.setValue("Enable Cheats", 0);
-            if (!gameConfig.getValue("Memory Card Emulation", &tempVal))
-                gameConfig.setValue("Memory Card Emulation", 1);
-            if (!gameConfig.getValue("Max Pads", &tempVal))
-                gameConfig.setValue("Max Pads", 4);
-            if (!gameConfig.getValue("Video Width", &tempVal))
-                gameConfig.setValue("Video Width", 0);
+    //Built-in defaults, overridden by the optional media defaults file
+    Config builtinConfig;
+    getBuiltinDefaults(titlesType, builtinConfig);
 
-            //GC+2.0 mapping
-            if (!gameConfig.getValue("GCPMap_A", &tempVal))
-                gameConfig.setValue("GCPMap_A", PAD_BUTTON_A);
-            if (!gameConfig.getValue("GCPMap_B", &tempVal))
-                gameConfig.setValue("GCPMap_B", PAD_BUTTON_B);
-            if (!gameConfig.getValue("GCPMap_X", &tempVal))
-                gameConfig.setValue("GCPMap_X", PAD_BUTTON_X);
-            if (!gameConfig.getValue("GCPMap_Y", &tempVal))
-                gameConfig.setValue("GCPMap_Y", PAD_BUTTON_Y);
-            if (!gameConfig.getValue("GCPMap_UP", &tempVal))
-                gameConfig.setValue("GCPMap_UP", PAD_BUTTON_UP);
-            if (!gameConfig.getValue("GCPMap_DOWN", &tempVal))
-                gameConfig.setValue("GCPMap_DOWN", PAD_BUTTON_DOWN);
-            if (!gameConfig.getValue("GCPMap_RIGHT", &tempVal))
-                gameConfig.setValue("GCPMap_RIGHT", PAD_BUTTON_RIGHT);
-            if (!gameConfig.getValue("GCPMap_LEFT", &tempVal))
-                gameConfig.setValue("GCPMap_LEFT", PAD_BUTTON_LEFT);
-            if (!gameConfig.getValue("GCPMap_Z", &tempVal))
-                gameConfig.setValue("GCPMap_Z", PAD_TRIGGER_Z);
-            if (!gameConfig.getValue("GCPMap_R", &tempVal))
-                gameConfig.setValue("GCPMap_R", PAD_TRIGGER_R);
-            if (!gameConfig.getValue("GCPMap_L", &tempVal))
-                gameConfig.setValue("GCPMap_L", PAD_TRIGGER_L);
-            if (!gameConfig.getValue("GCPMap_START", &tempVal))
-                gameConfig.setValue("GCPMap_START", PAD_BUTTON_START);
+    Config mediaConfig;
+    mediaConfig.open(getMediaDefaultsPath(titlesType).c_str());
 
-            memset(gcpMap, 0, sizeof(int) * GCP_MAP_N_BUTTONS);
-            gameConfig.getValue("GCPMap_A", &gcpMap[GCP_MAP_BUTTON_A_ID]);
-            gameConfig.getValue("GCPMap_B", &gcpMap[GCP_MAP_BUTTON_B_ID]);
-            gameConfig.getValue("GCPMap_X", &gcpMap[GCP_MAP_BUTTON_X_ID]);
-            gameConfig.getValue("GCPMap_Y", &gcpMap[GCP_MAP_BUTTON_Y_ID]);
-            gameConfig.getValue("GCPMap_UP", &gcpMap[GCP_MAP_BUTTON_DU_ID]);
-            gameConfig.getValue("GCPMap_DOWN", &gcpMap[GCP_MAP_BUTTON_DD_ID]);
-            gameConfig.getValue("GCPMap_RIGHT", &gcpMap[GCP_MAP_BUTTON_DR_ID]);
-            gameConfig.getValue("GCPMap_LEFT", &gcpMap[GCP_MAP_BUTTON_DL_ID]);
-            gameConfig.getValue("GCPMap_Z", &gcpMap[GCP_MAP_BUTTON_Z_ID]);
-            gameConfig.getValue("GCPMap_R", &gcpMap[GCP_MAP_BUTTON_RD_ID]);
-            gameConfig.getValue("GCPMap_L", &gcpMap[GCP_MAP_BUTTON_LD_ID]);
-            gameConfig.getValue("GCPMap_START", &gcpMap[GCP_MAP_BUTTON_ST_ID]);
-        break;
+    inheritedConfig.close();
+    inheritedConfig.merge(builtinConfig);
+    inheritedConfig.merge(mediaConfig);
 
-        case WII_GAME:
-            if (!gameConfig.getValue("Enable WiFi", &tempVal))
-                gameConfig.setValue("Enable WiFi", WIFI_AUTO);
-            if (!gameConfig.getValue("Enable Bluetooth", &tempVal))
-                gameConfig.setValue("Enable Bluetooth", 0);
-            if (!gameConfig.getValue("Enable USB saves", &tempVal))
-                gameConfig.setValue("Enable USB saves", 1);
-            if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
-                gameConfig.setValue("Enable GC2Wiimote", 0);
-            if (!gameConfig.getValue("Patch MX chip", &tempVal))
-                gameConfig.setValue("Patch MX chip", MX::isConnected() ? 0 : 1);
-            if (!gameConfig.getValue("PADRead Mode", &tempVal))
-                gameConfig.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
-            if (!gameConfig.getValue("Deflicker Mode", &tempVal))
-                gameConfig.setValue("Deflicker Mode", HIIDRA_DEFLICKER_AUTO);
-            if (!gameConfig.getValue("Enable Cheats", &tempVal))
-                gameConfig.setValue("Enable Cheats", 0);
-            if (!gameConfig.getValue("Cheats Hooktype", &tempVal))
-                gameConfig.setValue("Cheats Hooktype", HIIDRA_HOOKTYPE_VBI);
-        break;
+    //Per-game overrides
+    gameConfigPath = gc.confPath;
+    gameOverrides.close();
+    gameOverrides.open(gameConfigPath.c_str());
 
-        case WII_CHANNEL:
-            if (!gameConfig.getValue("Enable WiFi", &tempVal))
-                gameConfig.setValue("Enable WiFi", WIFI_AUTO);
-            if (!gameConfig.getValue("Enable Bluetooth", &tempVal))
-                gameConfig.setValue("Enable Bluetooth", 0);
-            if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
-                gameConfig.setValue("Enable GC2Wiimote", 0);
-            if (!gameConfig.getValue("Patch MX chip", &tempVal))
-                gameConfig.setValue("Patch MX chip", MX::isConnected() ? 0 : 1);
-            if (!gameConfig.getValue("PADRead Mode", &tempVal))
-                gameConfig.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
-            if (!gameConfig.getValue("Deflicker Mode", &tempVal))
-                gameConfig.setValue("Deflicker Mode", HIIDRA_DEFLICKER_AUTO);
-            if (!gameConfig.getValue("Enable Cheats", &tempVal))
-                gameConfig.setValue("Enable Cheats", 0);
-            if (!gameConfig.getValue("Cheats Hooktype", &tempVal))
-                gameConfig.setValue("Cheats Hooktype", HIIDRA_HOOKTYPE_VBI);
-        break;
-
-        case WII_VC:
-            if (!gameConfig.getValue("Enable WiFi", &tempVal))
-                gameConfig.setValue("Enable WiFi", WIFI_AUTO);
-            if (!gameConfig.getValue("Enable Bluetooth", &tempVal))
-                gameConfig.setValue("Enable Bluetooth", 0);
-            if (!gameConfig.getValue("Enable GC2Wiimote", &tempVal))
-                gameConfig.setValue("Enable GC2Wiimote", 0);
-            if (!gameConfig.getValue("Patch MX chip", &tempVal))
-                gameConfig.setValue("Patch MX chip", MX::isConnected() ? 0 : 1);
-            if (!gameConfig.getValue("PADRead Mode", &tempVal))
-                gameConfig.setValue("PADRead Mode", HIIDRA_PADREAD_AUTO);
-            if (!gameConfig.getValue("Deflicker Mode", &tempVal))
-                gameConfig.setValue("Deflicker Mode", HIIDRA_DEFLICKER_AUTO);
-            if (!gameConfig.getValue("Enable Cheats", &tempVal))
-                gameConfig.setValue("Enable Cheats", 0);
-            if (!gameConfig.getValue("Cheats Hooktype", &tempVal))
-                gameConfig.setValue("Cheats Hooktype", HIIDRA_HOOKTYPE_VBI);
-        break;
+    if (!gameOverrides.hasKey(GAME_CONFIG_VERSION_KEY)) {
+        //Older releases saved every setting of the game, so values equal to the built-in
+        //defaults were most likely never chosen. Drop them so the media defaults can apply.
+        gameOverrides.removeEntriesEqualTo(builtinConfig);
+        //Its built-in default depends on the hardware, so the saved value is just a snapshot
+        gameOverrides.erase("Patch MX chip");
     }
+    gameOverrides.erase(GAME_CONFIG_VERSION_KEY);
+
+    //Effective settings
+    gameConfig.close();
+    gameConfig.merge(inheritedConfig);
+    gameConfig.merge(gameOverrides);
+
+    if (titlesType == GC_GAME) {
+        memset(gcpMap, 0, sizeof(int) * GCP_MAP_N_BUTTONS);
+        gameConfig.getValue("GCPMap_A", &gcpMap[GCP_MAP_BUTTON_A_ID]);
+        gameConfig.getValue("GCPMap_B", &gcpMap[GCP_MAP_BUTTON_B_ID]);
+        gameConfig.getValue("GCPMap_X", &gcpMap[GCP_MAP_BUTTON_X_ID]);
+        gameConfig.getValue("GCPMap_Y", &gcpMap[GCP_MAP_BUTTON_Y_ID]);
+        gameConfig.getValue("GCPMap_UP", &gcpMap[GCP_MAP_BUTTON_DU_ID]);
+        gameConfig.getValue("GCPMap_DOWN", &gcpMap[GCP_MAP_BUTTON_DD_ID]);
+        gameConfig.getValue("GCPMap_RIGHT", &gcpMap[GCP_MAP_BUTTON_DR_ID]);
+        gameConfig.getValue("GCPMap_LEFT", &gcpMap[GCP_MAP_BUTTON_DL_ID]);
+        gameConfig.getValue("GCPMap_Z", &gcpMap[GCP_MAP_BUTTON_Z_ID]);
+        gameConfig.getValue("GCPMap_R", &gcpMap[GCP_MAP_BUTTON_RD_ID]);
+        gameConfig.getValue("GCPMap_L", &gcpMap[GCP_MAP_BUTTON_LD_ID]);
+        gameConfig.getValue("GCPMap_START", &gcpMap[GCP_MAP_BUTTON_ST_ID]);
+    }
+}
+
+void GuiGamesView::setGameConfigValue(const char* key, int val) {
+    gameConfig.setValue(key, val);
+    gameOverrides.setValue(key, val);
+}
+
+void GuiGamesView::saveGameConfig() {
+    if (gameConfigPath.empty())
+        return;
+
+    //Only keep the values that differ from what the game would inherit anyway
+    Config toSave;
+    toSave.merge(gameOverrides);
+    toSave.removeEntriesEqualTo(inheritedConfig);
+    toSave.setValue(GAME_CONFIG_VERSION_KEY, GAME_CONFIG_VERSION);
+    toSave.save(gameConfigPath.c_str());
 }
 
 void GuiGamesView::loadDefaultGC2WiimoteConfig() {
@@ -1013,7 +1012,7 @@ int GuiGamesView::lua_saveGameConfig(lua_State* L) {
 
 
     //Save config
-    thisView->gameConfig.save();
+    thisView->saveGameConfig();
 
     return 0;
 }
@@ -1028,7 +1027,7 @@ int GuiGamesView::lua_setGameConfigValue(lua_State* L) {
     GuiGamesView* thisView = (GuiGamesView*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
-    thisView->gameConfig.setValue(luaL_checkstring(L, 1), luaL_checkinteger(L, 2));
+    thisView->setGameConfigValue(luaL_checkstring(L, 1), luaL_checkinteger(L, 2));
 
     return 0;
 }
@@ -1486,18 +1485,18 @@ int GuiGamesView::lua_saveGCPMapGameConfig(lua_State* L) {
     GuiGamesView* thisView = (GuiGamesView*)lua_touserdata(L, -1);
     lua_pop(L, 1);
 
-    thisView->gameConfig.setValue("GCPMap_A", thisView->gcpMap[GCP_MAP_BUTTON_A_ID]);
-    thisView->gameConfig.setValue("GCPMap_B", thisView->gcpMap[GCP_MAP_BUTTON_B_ID]);
-    thisView->gameConfig.setValue("GCPMap_X", thisView->gcpMap[GCP_MAP_BUTTON_X_ID]);
-    thisView->gameConfig.setValue("GCPMap_Y", thisView->gcpMap[GCP_MAP_BUTTON_Y_ID]);
-    thisView->gameConfig.setValue("GCPMap_UP", thisView->gcpMap[GCP_MAP_BUTTON_DU_ID]);
-    thisView->gameConfig.setValue("GCPMap_DOWN", thisView->gcpMap[GCP_MAP_BUTTON_DD_ID]);
-    thisView->gameConfig.setValue("GCPMap_RIGHT", thisView->gcpMap[GCP_MAP_BUTTON_DR_ID]);
-    thisView->gameConfig.setValue("GCPMap_LEFT", thisView->gcpMap[GCP_MAP_BUTTON_DL_ID]);
-    thisView->gameConfig.setValue("GCPMap_Z", thisView->gcpMap[GCP_MAP_BUTTON_Z_ID]);
-    thisView->gameConfig.setValue("GCPMap_R", thisView->gcpMap[GCP_MAP_BUTTON_RD_ID]);
-    thisView->gameConfig.setValue("GCPMap_L", thisView->gcpMap[GCP_MAP_BUTTON_LD_ID]);
-    thisView->gameConfig.setValue("GCPMap_START", thisView->gcpMap[GCP_MAP_BUTTON_ST_ID]);
+    thisView->setGameConfigValue("GCPMap_A", thisView->gcpMap[GCP_MAP_BUTTON_A_ID]);
+    thisView->setGameConfigValue("GCPMap_B", thisView->gcpMap[GCP_MAP_BUTTON_B_ID]);
+    thisView->setGameConfigValue("GCPMap_X", thisView->gcpMap[GCP_MAP_BUTTON_X_ID]);
+    thisView->setGameConfigValue("GCPMap_Y", thisView->gcpMap[GCP_MAP_BUTTON_Y_ID]);
+    thisView->setGameConfigValue("GCPMap_UP", thisView->gcpMap[GCP_MAP_BUTTON_DU_ID]);
+    thisView->setGameConfigValue("GCPMap_DOWN", thisView->gcpMap[GCP_MAP_BUTTON_DD_ID]);
+    thisView->setGameConfigValue("GCPMap_RIGHT", thisView->gcpMap[GCP_MAP_BUTTON_DR_ID]);
+    thisView->setGameConfigValue("GCPMap_LEFT", thisView->gcpMap[GCP_MAP_BUTTON_DL_ID]);
+    thisView->setGameConfigValue("GCPMap_Z", thisView->gcpMap[GCP_MAP_BUTTON_Z_ID]);
+    thisView->setGameConfigValue("GCPMap_R", thisView->gcpMap[GCP_MAP_BUTTON_RD_ID]);
+    thisView->setGameConfigValue("GCPMap_L", thisView->gcpMap[GCP_MAP_BUTTON_LD_ID]);
+    thisView->setGameConfigValue("GCPMap_START", thisView->gcpMap[GCP_MAP_BUTTON_ST_ID]);
 
     return 0;
 }

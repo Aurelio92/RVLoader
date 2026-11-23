@@ -158,6 +158,36 @@ Save a cover shown on the right and place in `USB:/rvloader/covers/`.
 
 Covers are 160px × 224px PNG files and need to be named the same as the game ID (Eg. GMSE01.png)
 
+### Default Game Settings
+
+Each game's settings are resolved in three layers, each one overriding the previous:
+
+ 1. RVLoader's built-in defaults
+ 2. An optional per-media defaults file on your USB drive
+ 3. The game's own settings, saved from the per-game configuration menu in `/rvloader/configs/<GAMEID>.cfg`
+
+The per-media defaults files are plain text and are never created or overwritten by RVLoader:
+
+```
+USB://
+  rvloader/
+    defaults/
+      gc.cfg      <- Gamecube games
+      wii.cfg     <- Wii games
+      vc.cfg      <- VirtualConsole/WiiWare titles
+      chan.cfg    <- Wii channels
+```
+
+Each line is `Setting name = value`, using the same names as the per-game configuration menu. `0` means No and `1` means Yes. Settings with more choices take the same number RVLoader writes into a game's config file when that choice is picked. Lines starting with `#` are comments. For example, `wii.cfg` could contain:
+
+```
+# Enable Bluetooth for every Wii game, unless a game says otherwise
+Enable Bluetooth = 1
+Enable Cheats = 1
+```
+
+A game's own config file only stores the settings that differ from the defaults it inherits. Changing a defaults file therefore applies to every game that wasn't explicitly set to something else.
+
 
 ## Support
 

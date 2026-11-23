@@ -14,6 +14,15 @@ static std::string trim(const std::string& s) {
     return s.substr(start, end - start);
 }
 
+std::string Config::normalizeKey(const std::string& key) {
+    std::string normalized = key;
+    for (char& c : normalized) {
+        if (c == ' ' || c == '-')
+            c = '_';
+    }
+    return normalized;
+}
+
 void Config::parseValue(const std::string& key, const std::string& val) {
     // Case 1: String (Starts and ends with quotes)
     if (val.size() >= 2 && val.front() == '"' && val.back() == '"') {
@@ -48,7 +57,7 @@ void Config::open(const char* filepath) {
         size_t delimiterPos = line.find('=');
         if (delimiterPos == std::string::npos) continue;
 
-        std::string key = trim(line.substr(0, delimiterPos));
+        std::string key = normalizeKey(trim(line.substr(0, delimiterPos)));
         std::string value = trim(line.substr(delimiterPos + 1));
 
         parseValue(key, value);
@@ -82,15 +91,52 @@ void Config::close() {
     doubleEntries.clear();
 }
 
-bool Config::getValue(const char* key, std::string* val) {
-    char tempKey[256];
-    strcpy(tempKey, key);
-    while (char* c = strchr(tempKey, ' '))
-        *c = '_';
-    while (char* c = strchr(tempKey, '-'))
-        *c = '_';
+void Config::merge(const Config& over) {
+    for (auto& val : over.stringEntries) {
+        erase(val.first.c_str());
+        stringEntries[val.first] = val.second;
+    }
+    for (auto& val : over.intEntries) {
+        erase(val.first.c_str());
+        intEntries[val.first] = val.second;
+    }
+    for (auto& val : over.doubleEntries) {
+        erase(val.first.c_str());
+        doubleEntries[val.first] = val.second;
+    }
+}
 
-    std::unordered_map<std::string, std::string>::iterator it = stringEntries.find(tempKey);
+void Config::erase(const char* key) {
+    std::string normKey = normalizeKey(key);
+    stringEntries.erase(normKey);
+    intEntries.erase(normKey);
+    doubleEntries.erase(normKey);
+}
+
+template<typename T>
+static void removeEqual(std::unordered_map<std::string, T>& entries, const std::unordered_map<std::string, T>& base) {
+    for (auto it = entries.begin(); it != entries.end();) {
+        auto baseIt = base.find(it->first);
+        if (baseIt != base.end() && baseIt->second == it->second)
+            it = entries.erase(it);
+        else
+            ++it;
+    }
+}
+
+void Config::removeEntriesEqualTo(const Config& base) {
+    removeEqual(stringEntries, base.stringEntries);
+    removeEqual(intEntries, base.intEntries);
+    removeEqual(doubleEntries, base.doubleEntries);
+}
+
+bool Config::hasKey(const char* key) {
+    std::string normKey = normalizeKey(key);
+    return stringEntries.count(normKey) || intEntries.count(normKey) || doubleEntries.count(normKey);
+}
+
+bool Config::getValue(const char* key, std::string* val) {
+    auto it = stringEntries.find(normalizeKey(key));
 
     if (it != stringEntries.end()) {
         if (val != NULL)
@@ -102,14 +148,7 @@ bool Config::getValue(const char* key, std::string* val) {
 }
 
 bool Config::getValue(const char* key, int* val) {
-    char tempKey[256];
-    strcpy(tempKey, key);
-    while (char* c = strchr(tempKey, ' '))
-        *c = '_';
-    while (char* c = strchr(tempKey, '-'))
-        *c = '_';
-
-    std::unordered_map<std::string, int>::iterator it = intEntries.find(tempKey);
+    auto it = intEntries.find(normalizeKey(key));
 
     if (it != intEntries.end()) {
         if (val != NULL)
@@ -121,14 +160,7 @@ bool Config::getValue(const char* key, int* val) {
 }
 
 bool Config::getValue(const char* key, double* val) {
-    char tempKey[256];
-    strcpy(tempKey, key);
-    while (char* c = strchr(tempKey, ' '))
-        *c = '_';
-    while (char* c = strchr(tempKey, '-'))
-        *c = '_';
-
-    std::unordered_map<std::string, double>::iterator it = doubleEntries.find(tempKey);
+    auto it = doubleEntries.find(normalizeKey(key));
 
     if (it != doubleEntries.end()) {
         if (val != NULL)
@@ -140,34 +172,13 @@ bool Config::getValue(const char* key, double* val) {
 }
 
 void Config::setValue(const char* key, std::string val) {
-    char tempKey[256];
-    strcpy(tempKey, key);
-    while (char* c = strchr(tempKey, ' '))
-        *c = '_';
-    while (char* c = strchr(tempKey, '-'))
-        *c = '_';
-
-    stringEntries[tempKey] = val;
+    stringEntries[normalizeKey(key)] = val;
 }
 
 void Config::setValue(const char* key, int val) {
-    char tempKey[256];
-    strcpy(tempKey, key);
-    while (char* c = strchr(tempKey, ' '))
-        *c = '_';
-    while (char* c = strchr(tempKey, '-'))
-        *c = '_';
-
-    intEntries[tempKey] = val;
+    intEntries[normalizeKey(key)] = val;
 }
 
 void Config::setValue(const char* key, double val) {
-    char tempKey[256];
-    strcpy(tempKey, key);
-    while (char* c = strchr(tempKey, ' '))
-        *c = '_';
-    while (char* c = strchr(tempKey, '-'))
-        *c = '_';
-
-    doubleEntries[tempKey] = val;
+    doubleEntries[normalizeKey(key)] = val;
 }

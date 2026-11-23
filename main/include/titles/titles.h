@@ -14,6 +14,7 @@
 #define COVER_PATH          "/rvloader/covers"
 #define DUMMY_COVER_PATH    "/rvloader/covers/dummy.png"
 #define CONFIG_PATH         "/rvloader/configs"
+#define DEFAULTS_PATH       "/rvloader/defaults"
 
 typedef struct {
     bool ahbAccess;

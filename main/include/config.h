@@ -20,10 +20,21 @@ class Config {
         void parseValue(const std::string& key, const std::string& val);
 
     public:
+        //Keys are stored with spaces and dashes replaced by underscores
+        static std::string normalizeKey(const std::string& key);
+
         void open(const char* filepath);
         void save(const char* filepath);
         void save();
         void close();
+
+        //Copy every entry of "over" into this config, replacing existing keys
+        void merge(const Config& over);
+        //Remove a key whatever its type
+        void erase(const char* key);
+        //Remove every entry whose key exists in "base" with the same type and value
+        void removeEntriesEqualTo(const Config& base);
+        bool hasKey(const char* key);
 
         bool getValue(const char* key, std::string* val);
         bool getValue(const char* key, int* val);
