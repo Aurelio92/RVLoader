@@ -26,7 +26,14 @@ class GuiGamesView : public GuiLuaElement {
         int coverHeight;
         TitleType titlesType;
 
-        Config gameConfig;
+        //Settings layers: built-in defaults <- media defaults file <- per-game overrides
+        Config inheritedConfig; //Built-in defaults merged with the media defaults file
+        Config gameOverrides; //Values set for the current game only
+        Config gameConfig; //Effective settings: inheritedConfig merged with gameOverrides
+        std::string gameConfigPath;
+
+        void setGameConfigValue(const char* key, int val);
+        void saveGameConfig();
 
         Cheat cheatCodes;
 
